@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" fill="none" role="img" aria-label="gaming portfolio piece">
+  <rect width="800" height="1000" fill="#ebe5ff"/>
+  <rect x="0" y="131" width="800" height="140" fill="#6a4fd1" opacity="0.41"/>
+  <rect x="0" y="274" width="800" height="102" fill="#c13584" opacity="0.44"/>
+  <rect x="0" y="373" width="800" height="187" fill="#ffffff" opacity="0.49"/>
+  <rect x="0" y="555" width="800" height="98" fill="#111111" opacity="0.32"/>
+  <rect x="0" y="646" width="800" height="168" fill="#6a4fd1" opacity="0.33"/>
+  <circle cx="250" cy="192" r="70" fill="#c13584" opacity="0.8"/>
+  <defs>  <filter id="gp" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="linear" slope="0.055"/></feComponentTransfer>
+  </filter></defs><rect width="800" height="1000" filter="url(#gp)" opacity="0.55"/>
+</svg>

@@ -1,0 +1,14 @@
+# https://houseofcollabs.example
+User-agent: *
+Allow: /
+Disallow: /brand/
+Disallow: /brand$
+Disallow: /creator/
+Disallow: /creator$
+Disallow: /admin
+Disallow: /onboarding
+Disallow: /auth/
+Disallow: /reset-password
+
+Sitemap: https://houseofcollabs.example/sitemap.xml
+Sitemap: https://houseofcollabs.example/sitemap-creators.xml

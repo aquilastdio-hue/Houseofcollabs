@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" fill="none" role="img" aria-label="parenting portfolio piece">
+  <rect width="800" height="1000" fill="#dcf4e7"/>
+  <rect x="22" y="22" width="237.33" height="222.5" rx="13" fill="#111111" opacity="0.9"/>
+  <rect x="281.33" y="22" width="237.33" height="222.5" rx="10" fill="#111111" opacity="0.69"/>
+  <rect x="540.67" y="22" width="237.33" height="222.5" rx="14" fill="#dcf4e7" opacity="0.72"/>
+  <rect x="22" y="266.5" width="237.33" height="222.5" rx="20" fill="#d4622f" opacity="0.58"/>
+  <rect x="281.33" y="266.5" width="237.33" height="222.5" rx="18" fill="#111111" opacity="0.68"/>
+  <rect x="540.67" y="266.5" width="237.33" height="222.5" rx="26" fill="#1d8656" opacity="0.87"/>
+  <rect x="22" y="511" width="237.33" height="222.5" rx="19" fill="#1d8656" opacity="0.46"/>
+  <rect x="281.33" y="511" width="237.33" height="222.5" rx="12" fill="#ffffff" opacity="0.95"/>
+  <rect x="540.67" y="511" width="237.33" height="222.5" rx="19" fill="#1d8656" opacity="0.87"/>
+  <rect x="22" y="755.5" width="237.33" height="222.5" rx="22" fill="#dcf4e7" opacity="0.56"/>
+  <rect x="281.33" y="755.5" width="237.33" height="222.5" rx="27" fill="#d4622f" opacity="0.72"/>
+  <rect x="540.67" y="755.5" width="237.33" height="222.5" rx="14" fill="#111111" opacity="0.89"/>
+  <defs>  <filter id="gp" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="linear" slope="0.055"/></feComponentTransfer>
+  </filter></defs><rect width="800" height="1000" filter="url(#gp)" opacity="0.55"/>
+</svg>

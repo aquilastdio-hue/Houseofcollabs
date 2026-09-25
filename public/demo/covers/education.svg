@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="400" viewBox="0 0 1600 400" fill="none" role="img" aria-label="education cover">
+  <rect width="1600" height="400" fill="#e0edff"/>
+  <path d="M0 193 Q 378 -54.5 800 94 T 1600 61 L 1600 400 L 0 400 Z" fill="#2f67d8" opacity="0.31"/>
+  <path d="M0 125 Q 405 -20.5 800 66.80000000000001 T 1600 47.400000000000006 L 1600 400 L 0 400 Z" fill="#936712" opacity="0.28"/>
+  <path d="M0 105 Q 410 -16.5 800 56.4 T 1600 40.2 L 1600 400 L 0 400 Z" fill="#ffffff" opacity="0.3"/>
+  <path d="M0 107 Q 377 -97 800 25.400000000000006 T 1600 -1.7999999999999972 L 1600 400 L 0 400 Z" fill="#2f67d8" opacity="0.29"/>
+  <circle cx="407" cy="245" r="28" fill="#936712" opacity="0.38"/>
+  <circle cx="1455" cy="179" r="22" fill="#2f67d8" opacity="0.29"/>
+  <circle cx="549" cy="347" r="10" fill="#936712" opacity="0.3"/>
+  <circle cx="243" cy="118" r="24" fill="#2f67d8" opacity="0.4"/>
+  <circle cx="786" cy="88" r="29" fill="#936712" opacity="0.33"/>
+  <circle cx="594" cy="94" r="28" fill="#2f67d8" opacity="0.22"/>
+  <circle cx="558" cy="64" r="7" fill="#936712" opacity="0.18"/>
+  <circle cx="576" cy="162" r="12" fill="#2f67d8" opacity="0.24"/>
+  <circle cx="1556" cy="186" r="30" fill="#936712" opacity="0.46"/>
+  <rect x="0" y="386" width="1600" height="14" fill="#2f67d8" opacity="0.85"/>
+  <defs>  <filter id="gc" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="linear" slope="0.05"/></feComponentTransfer>
+  </filter></defs><rect width="1600" height="400" filter="url(#gc)" opacity="0.5"/>
+</svg>

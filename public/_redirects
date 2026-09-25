@@ -1,0 +1,18 @@
+# Netlify redirects, kept here (not only in netlify.toml) so that a drag-and-drop
+# deploy of dist/ still gets them — netlify.toml is only read from the repo root.
+#
+# Netlify reads this file BEFORE netlify.toml, and the first match wins, so any
+# rule that has to beat the SPA catch-all below has to live here too.
+
+# Creator storefront sitemap is streamed by the `sitemap` Edge Function.
+/sitemap-creators.xml   https://sxndiarrdfqiepnnczmy.supabase.co/functions/v1/sitemap   200!
+
+# There is no favicon. Without these, the catch-all answers an icon request with
+# the whole app, and a browser that asked for an image and got a page of HTML
+# falls back to whatever it cached instead of its own default icon.
+/favicon.ico            /index.html                                                     404
+/apple-touch-icon.png   /index.html                                                     404
+
+# SPA fallback. Netlify serves a matching static file first, so this never
+# shadows /assets, /demo, robots.txt or sitemap.xml.
+/*                      /index.html                                                     200

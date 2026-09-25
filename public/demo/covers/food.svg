@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="400" viewBox="0 0 1600 400" fill="none" role="img" aria-label="food cover">
+  <rect width="1600" height="400" fill="#ffe7d9"/>
+  <path d="M0 274 Q 370 31 800 176.8 T 1600 144.4 L 1600 400 L 0 400 Z" fill="#d4622f" opacity="0.25"/>
+  <path d="M0 230 Q 611 3.5 800 139.4 T 1600 109.2 L 1600 400 L 0 400 Z" fill="#936712" opacity="0.28"/>
+  <path d="M0 92 Q 457 -52 800 34.400000000000006 T 1600 15.200000000000003 L 1600 400 L 0 400 Z" fill="#ffffff" opacity="0.16"/>
+  <path d="M0 299 Q 350 81.5 800 212 T 1600 183 L 1600 400 L 0 400 Z" fill="#d4622f" opacity="0.34"/>
+  <circle cx="239" cy="185" r="27" fill="#936712" opacity="0.41"/>
+  <circle cx="799" cy="60" r="13" fill="#d4622f" opacity="0.31"/>
+  <circle cx="994" cy="190" r="8" fill="#936712" opacity="0.26"/>
+  <circle cx="1222" cy="104" r="8" fill="#d4622f" opacity="0.39"/>
+  <circle cx="1187" cy="178" r="30" fill="#936712" opacity="0.39"/>
+  <circle cx="855" cy="335" r="27" fill="#d4622f" opacity="0.36"/>
+  <circle cx="1483" cy="295" r="7" fill="#936712" opacity="0.28"/>
+  <circle cx="806" cy="354" r="28" fill="#d4622f" opacity="0.44"/>
+  <rect x="0" y="386" width="1600" height="14" fill="#d4622f" opacity="0.85"/>
+  <defs>  <filter id="gc" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="linear" slope="0.05"/></feComponentTransfer>
+  </filter></defs><rect width="1600" height="400" filter="url(#gc)" opacity="0.5"/>
+</svg>

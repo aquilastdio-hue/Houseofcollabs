@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en-IN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#141214" />
+    <!-- No favicon by design: nothing is declared and no icon file is shipped,
+         so every browser falls back to its own default page icon. The hosting
+         rules below answer /favicon.ico and /apple-touch-icon.png with a 404
+         rather than the SPA's index.html — a browser handed HTML where it asked
+         for an image falls back unpredictably instead of just using its own. -->
+    <link rel="preconnect" href="https://checkout.razorpay.com" crossorigin />
+    <title>House of Collabs</title>
+    <meta
+      name="description"
+      content="House of Collabs is the creator marketplace for brands in India. Discover vetted creators, compare fixed prices and delivery times, and order UGC, reels and reviews in minutes."
+    />
+  </head>
+  <body>
+    <noscript>House of Collabs needs JavaScript enabled to run.</noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

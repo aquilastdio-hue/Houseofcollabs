@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="400" viewBox="0 0 1600 400" fill="none" role="img" aria-label="skincare cover">
+  <rect width="1600" height="400" fill="#dcf4e7"/>
+  <path d="M0 245 Q 340 114.5 800 192.8 T 1600 175.4 L 1600 400 L 0 400 Z" fill="#1d8656" opacity="0.31"/>
+  <path d="M0 255 Q 377 -19.5 800 145.2 T 1600 108.6 L 1600 400 L 0 400 Z" fill="#c13584" opacity="0.33"/>
+  <path d="M0 301 Q 618 71.5 800 209.2 T 1600 178.6 L 1600 400 L 0 400 Z" fill="#ffffff" opacity="0.3"/>
+  <path d="M0 139 Q 468 -126.5 800 32.8 T 1600 -2.6000000000000014 L 1600 400 L 0 400 Z" fill="#1d8656" opacity="0.32"/>
+  <circle cx="894" cy="280" r="27" fill="#c13584" opacity="0.34"/>
+  <circle cx="129" cy="148" r="16" fill="#1d8656" opacity="0.45"/>
+  <circle cx="958" cy="89" r="20" fill="#c13584" opacity="0.45"/>
+  <circle cx="993" cy="41" r="29" fill="#1d8656" opacity="0.24"/>
+  <circle cx="1069" cy="264" r="18" fill="#c13584" opacity="0.4"/>
+  <circle cx="405" cy="333" r="11" fill="#1d8656" opacity="0.39"/>
+  <circle cx="1101" cy="58" r="30" fill="#c13584" opacity="0.22"/>
+  <circle cx="396" cy="351" r="16" fill="#1d8656" opacity="0.39"/>
+  <circle cx="555" cy="41" r="15" fill="#c13584" opacity="0.28"/>
+  <rect x="0" y="386" width="1600" height="14" fill="#1d8656" opacity="0.85"/>
+  <defs>  <filter id="gc" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="linear" slope="0.05"/></feComponentTransfer>
+  </filter></defs><rect width="1600" height="400" filter="url(#gc)" opacity="0.5"/>
+</svg>

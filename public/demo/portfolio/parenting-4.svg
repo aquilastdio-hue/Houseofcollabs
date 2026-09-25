@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" fill="none" role="img" aria-label="parenting portfolio piece">
+  <rect width="800" height="1000" fill="#dcf4e7"/>
+  <path d="M760 1000 L 941 1000 L 1229 0 L 1025 0 Z" fill="#d4622f" opacity="0.34"/>
+  <path d="M317 1000 L 522 1000 L 909 0 L 613 0 Z" fill="#1d8656" opacity="0.27"/>
+  <path d="M656 1000 L 925 1000 L 1191 0 L 1053 0 Z" fill="#d4622f" opacity="0.54"/>
+  <path d="M165 1000 L 325 1000 L 678 0 L 444 0 Z" fill="#1d8656" opacity="0.27"/>
+  <path d="M516 1000 L 708 1000 L 1043 0 L 768 0 Z" fill="#d4622f" opacity="0.27"/>
+  <path d="M213 1000 L 510 1000 L 695 0 L 594 0 Z" fill="#1d8656" opacity="0.45"/>
+  <circle cx="502" cy="459" r="139" fill="#ffffff" opacity="0.72"/>
+  <defs>  <filter id="gp" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="linear" slope="0.055"/></feComponentTransfer>
+  </filter></defs><rect width="800" height="1000" filter="url(#gp)" opacity="0.55"/>
+</svg>

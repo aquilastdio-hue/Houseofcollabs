@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" fill="none" role="img" aria-label="Illustrated creator avatar">
+  <rect width="400" height="400" fill="#dcf4e7"/>
+  <path d="M0 265 Q 200 169 400 235 L 400 400 L 0 400 Z" fill="#c13584" opacity="0.3"/>
+  <path d="M83.5 400 Q 200 270 316.5 400 Z" fill="#1d8656"/>
+  <rect x="176" y="230" width="48" height="66" rx="22" fill="#e8c4a0"/>
+  <circle cx="200" cy="173" r="83" fill="#e8c4a0"/>
+  <path d="M117 171 a 83 83 0 0 1 166 0 q -83 -51.46 -166 0 Z" fill="#1d8656"/>
+  <circle cx="273" cy="129.84" r="13" fill="#1d8656"/>
+  <circle cx="171" cy="174" r="5.5" fill="#111111"/>
+  <circle cx="229" cy="174" r="5.5" fill="#111111"/>
+  <path d="M181 201 q 19 22 38 0" stroke="#111111" stroke-width="5" stroke-linecap="round"/>
+  <defs>  <filter id="g" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="linear" slope="0.05"/></feComponentTransfer>
+  </filter></defs>
+  <rect width="400" height="400" filter="url(#g)" opacity="0.5"/>
+</svg>
