@@ -1,13 +1,13 @@
 import * as React from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Building2, Check, Copy, ExternalLink, FileVideo, Inbox, MailWarning, Sparkles, UserPlus } from 'lucide-react'
+import { Building2, Check, Copy, Inbox, MailWarning, Sparkles, UserPlus } from 'lucide-react'
 import { RatingStars } from '@/components/admin/rating-stars'
+import { ApplicationSubmission } from '@/components/admin/application-detail'
 import { rateApplication } from '@/services/admin.service'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatDateTime, formatNumber, formatRelative, titleCase } from '@/lib/format'
 import {
-  applicationFileUrl,
   getApplicationStats,
   listApplications,
   reviewApplication,
@@ -117,29 +117,6 @@ const columns: Column<ApplicationRow>[] = [
   },
   { key: 'open', header: '', className: 'w-px whitespace-nowrap', cell: () => <span className="text-xs font-medium text-brand-ink">Review</span> },
 ]
-
-function VideoLink({ path }: { path: string }) {
-  const [busy, setBusy] = React.useState(false)
-  return (
-    <Button
-      type="button"
-      variant="secondary"
-      size="sm"
-      loading={busy}
-      onClick={async () => {
-        setBusy(true)
-        try {
-          const url = await applicationFileUrl(path)
-          if (url) window.open(url, '_blank', 'noopener,noreferrer')
-        } finally {
-          setBusy(false)
-        }
-      }}
-    >
-      <FileVideo /> Watch intro video <ExternalLink className="size-3.5" />
-    </Button>
-  )
-}
 
 function Line({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -293,7 +270,11 @@ function ReviewDialog({ row, onClose }: { row: ApplicationRow | null; onClose: (
             {row.review_note && <Line label="Our note">{row.review_note}</Line>}
           </dl>
 
-          {row.video_path && <VideoLink path={row.video_path} />}
+          {/* Everything else the form collected. Most of it lives in the
+              `profile` jsonb rather than in columns, so it has to be rendered
+              from there — otherwise the reviewer sees a fraction of what was
+              actually submitted. */}
+          <ApplicationSubmission row={row} />
 
           {row.role === 'creator' && (
             <div className="rounded-card border border-line bg-subtle p-4">
