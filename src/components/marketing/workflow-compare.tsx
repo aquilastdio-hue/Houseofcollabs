@@ -42,7 +42,7 @@ const CLEAN_FLOW = ['Ordered', 'Accepted', 'Delivered', 'Approved', 'Paid']
 
 export function WorkflowCompareSection() {
   return (
-    <section aria-labelledby="workflow-compare-title" className="border-y border-line bg-surface py-section">
+    <section aria-labelledby="workflow-compare-title" className="section-blend py-section">
       <div className="container-page">
         <SectionHeader
           align="center"

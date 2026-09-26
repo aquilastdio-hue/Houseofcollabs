@@ -161,7 +161,7 @@ export function PayoutSection() {
   ]
 
   return (
-    <section aria-labelledby="payouts-title" className="border-y border-line bg-surface py-section">
+    <section aria-labelledby="payouts-title" className="section-blend py-section">
       <div className="container-page">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <SectionHeader

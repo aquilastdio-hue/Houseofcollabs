@@ -228,6 +228,36 @@
    -------------------------------------------------------------------------- */
 
 /** Pink → magenta → violet. The signature fill. */
+/**
+ * A tinted section that doesn't announce where it begins.
+ *
+ * These used to be flat `bg-surface` (pure white) on a `bg-canvas` page, with a
+ * 1px rule top and bottom — a hard step in colour *and* a line drawn exactly on
+ * the seam. Ramping the tint in and out over 6rem means the change happens
+ * across a band rather than at a single pixel, so the eye reads one continuous
+ * page. The middle is still solid `surface`, so the section looks unchanged.
+ */
+@utility section-blend {
+  background-image: linear-gradient(
+    to bottom,
+    var(--color-canvas) 0,
+    var(--color-surface) 6rem,
+    var(--color-surface) calc(100% - 6rem),
+    var(--color-canvas) 100%
+  );
+}
+
+/** Same idea at half strength, for the shorter strip sections. */
+@utility section-blend-soft {
+  background-image: linear-gradient(
+    to bottom,
+    var(--color-canvas) 0,
+    color-mix(in oklab, var(--color-surface) 60%, var(--color-canvas)) 3rem,
+    color-mix(in oklab, var(--color-surface) 60%, var(--color-canvas)) calc(100% - 3rem),
+    var(--color-canvas) 100%
+  );
+}
+
 @utility bg-brand-gradient {
   background-image: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-strong) 52%, var(--color-brand-deep) 100%);
 }

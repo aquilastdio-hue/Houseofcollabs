@@ -99,7 +99,7 @@ const WORDMARKS: { name: string; mark: React.ReactNode }[] = [
 
 export function BrandMarquee({ className }: { className?: string }) {
   return (
-    <section aria-labelledby="brand-strip-title" className={cn('border-y border-line bg-surface/60 py-10', className)}>
+    <section aria-labelledby="brand-strip-title" className={cn('section-blend-soft py-10', className)}>
       <div className="container-page">
         <h2 id="brand-strip-title" className="eyebrow text-center font-sans text-faint">
           Loved by growing D2C brands

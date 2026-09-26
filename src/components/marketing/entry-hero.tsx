@@ -28,7 +28,7 @@ export function EntryHero() {
   return (
     <section
       aria-labelledby="entry-title"
-      className="relative isolate flex min-h-[calc(100dvh-var(--header-height))] flex-col overflow-hidden border-b border-line bg-canvas"
+      className="relative isolate flex min-h-[calc(100dvh-var(--header-height))] flex-col overflow-hidden bg-canvas"
     >
       <DotGrid className="-z-10 opacity-50" />
       <Glow tone="brand" className="-top-64 -left-56 -z-10 size-[30rem] opacity-70" />

@@ -44,7 +44,7 @@ const STEPS: DetailedStep[] = [
 
 export function BrandStepsSection() {
   return (
-    <section aria-labelledby="brand-steps-title" className="border-y border-line bg-surface py-section">
+    <section aria-labelledby="brand-steps-title" className="section-blend py-section">
       <div className="container-page grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] lg:gap-20">
         <div className="lg:sticky lg:top-[calc(var(--header-height)+3rem)] lg:self-start">
           <SectionHeader

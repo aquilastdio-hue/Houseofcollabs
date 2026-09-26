@@ -102,9 +102,7 @@ export default function Home() {
       <HowItWorksSection />
 
       {/* 8 · Creator discovery */}
-      <div className="border-y border-line bg-surface/70">
-        <CategoryDiscoverySection />
-      </div>
+      <CategoryDiscoverySection />
 
       {/* 9 · Order workflow */}
       <OrderJourneySection />

@@ -74,7 +74,7 @@ export function CategoryGrid({ className }: { className?: string }) {
 
 export function CategoryDiscoverySection() {
   return (
-    <section aria-labelledby="category-discovery-title" className="py-section">
+    <section aria-labelledby="category-discovery-title" className="section-blend py-section">
       <div className="container-page">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <SectionHeader

@@ -28,15 +28,19 @@ export function LogoMark({ className, inverted }: { className?: string; inverted
 /**
  * The brand lockup.
  *
- * On light surfaces this is the real House of Collabs artwork. It ships as
- * black ink on an opaque white canvas, so `mix-blend-multiply` drops the white
- * out, and the aspect box crops to the "HOUSE of COLLABS" wordmark — the
- * `CREATORS BRANDS CULTURE` line above it renders under 2px tall at header
- * size, so it is cropped away rather than shown as a smudge.
+ * On light surfaces this is the real House of Collabs artwork. It ships with
+ * real transparency, so — unlike the file it replaced — it needs neither a
+ * blend mode to drop a white canvas nor a horizontal squeeze to swallow a wide
+ * built-in margin.
  *
- * Crop maths, from the artwork's measured ink bounds (1774x887, ink y 166-749,
- * wordmark starting at y 266): a window of y 239-774 keeps the wordmark with
- * ~26px of margin either side, which is 3.316:1 and sits 68% down the frame.
+ * The aspect box crops to the "HOUSE of COLLABS" wordmark. The
+ * `CREATORS BRANDS CULTURE` line above it is 19px of a 512px-tall file, so it
+ * lands under 2px at header size — a smudge rather than words — and is cropped
+ * away rather than shown.
+ *
+ * Crop maths, from the artwork's measured ink (768x512, tagline y 104-122,
+ * wordmark y 147-406): a window of y 135-418 keeps the wordmark with 12px of
+ * margin either side, which is 768:284 and sits 59% down the frame.
  *
  * `inverted` (the dark footer) and `showWordmark={false}` (the collapsed
  * sidebar) keep the geometric mark: the artwork can't be recoloured for a dark
@@ -78,21 +82,15 @@ export function Logo({ className, inverted, showWordmark = true }: { className?:
 
   // `align-middle` because an inline-flex box otherwise sits on the parent's
   // text baseline, which left the mark ~4px above centre in the header bar.
-  //
-  // `scale-x` narrows the wordmark a touch without shortening it. It sits on
-  // the image rather than the box because the box is width-matched by
-  // `object-cover` — narrowing that would scale the artwork down in both
-  // directions instead. The slack it leaves inside the box is the artwork's own
-  // 124px side margin, which `mix-blend-multiply` already renders as nothing.
   return (
     <span className={cn('inline-flex items-center align-middle', className)}>
-      <span className="aspect-[1774/535] h-11 overflow-hidden mix-blend-multiply sm:h-12">
+      <span className="aspect-[768/284] h-11 overflow-hidden sm:h-12">
         <img
-          src="/house-of-collabs-logo-mark.webp"
+          src="/house-of-collabs-logo-header.webp"
           alt={site.name}
-          width={1774}
-          height={887}
-          className="size-full scale-x-[0.88] object-cover [object-position:50%_68%]"
+          width={768}
+          height={512}
+          className="size-full object-cover [object-position:50%_59%]"
         />
       </span>
     </span>

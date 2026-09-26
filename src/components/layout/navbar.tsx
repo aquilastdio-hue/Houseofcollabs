@@ -50,15 +50,17 @@ export function Navbar({ variant = 'light' }: { variant?: 'light' | 'transparent
           spans the window instead, so the logo sits hard left and the actions
           hard right at every size. */}
       <nav className="flex h-(--header-height) w-full items-center justify-between gap-6 px-gutter" aria-label="Main">
-        {/* Two invisible things pad the left of this logo: the artwork's own
-            ~10px side margin, and the slack `scale-x` leaves inside a box that
-            keeps its width. Cancelling just those puts the first inked pixel on
-            the page gutter — the same line the content below starts from — so
-            it reads as deliberate rather than either indented or jammed against
-            the edge. The number tracks the logo height, which steps up at `sm`. */}
+        {/* One invisible thing pads the left of this logo: the artwork's own
+            side margin, 18px of a 768px-wide file, which is ~3px at header
+            size. Cancelling it puts the first inked pixel on the page gutter —
+            the same line the content below starts from — so it reads as
+            deliberate rather than either indented or jammed against the edge.
+            The previous artwork needed ~18px here because it carried a far
+            wider built-in margin and a `scale-x` squeeze; this one ships tight,
+            so a single value covers both logo heights. */}
         <Link
           to="/"
-          className="focus-ring -ml-[18px] rounded-md sm:-ml-[19px]"
+          className="focus-ring -ml-[3px] rounded-md"
           aria-label="House of Collabs home"
         >
           <Logo />
@@ -102,7 +104,11 @@ export function Navbar({ variant = 'light' }: { variant?: 'light' | 'transparent
               <Menu />
             </Button>
           </DrawerTrigger>
-          <DrawerContent side="right" title={<Logo />} description="Navigation">
+          {/* No `description`: it renders visibly when given, and "Navigation"
+              under the logo labelled the obvious. Left out, it falls back to
+              the title as an sr-only description — what Radix needs and what a
+              screen reader should hear. Matches the admin shell. */}
+          <DrawerContent side="right" title={<Logo />}>
             <ul className="flex flex-col gap-1">
               {publicNav.map((item) => {
                 const active = isNavActive(item.href, pathname)
