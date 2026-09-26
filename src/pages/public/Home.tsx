@@ -16,7 +16,7 @@ import { LiveStats } from '@/components/marketing/live-stats'
 import { MarketplacePreviewSection } from '@/components/marketing/marketplace-preview'
 import { OrderJourneySection } from '@/components/marketing/order-journey'
 import { usePlatformTerms } from '@/components/marketing/platform-terms'
-import { Accent, DotGrid, Glow, TextLink, stagger } from '@/components/marketing/primitives'
+import { Accent, DotGrid, TextLink, stagger } from '@/components/marketing/primitives'
 import { TestimonialsSection } from '@/components/marketing/testimonials'
 import { WorkflowCompareSection } from '@/components/marketing/workflow-compare'
 
@@ -37,11 +37,13 @@ export default function Home() {
           is the existing marketing page, untouched. */}
       <EntryHero />
 
-      {/* 1 · Hero */}
+      {/* 1 · Hero
+          No colour wash here. The tinted glows bled out of the section edges,
+          which drew a line between this and everything below it — the opposite
+          of the seamless run the blends are for. The opening screen keeps its
+          glows; from here down the page stays one surface. */}
       <section aria-labelledby="home-hero-title" className="relative isolate overflow-hidden">
         <DotGrid className="-z-10 opacity-70" />
-        <Glow tone="brand" className="-top-48 -right-40 -z-10 size-[36rem]" />
-        <Glow tone="lilac" className="top-1/2 -left-56 -z-10 size-[30rem]" />
         <div className="container-page grid grid-cols-1 items-center gap-12 pt-10 pb-16 sm:pt-14 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,1fr)] lg:gap-10 lg:pt-16 lg:pb-24 xl:gap-16">
           <div>
             <Link

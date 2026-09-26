@@ -165,7 +165,12 @@
   /* ---- Layout ------------------------------------------------------------- */
   --container-page: 82rem;
   --container-prose: 44rem;
-  --spacing-section: clamp(4.5rem, 3rem + 5vw, 8rem);
+  /* Sections carry this as `py-section`, top and bottom. Two stacked sections
+     therefore show double it, so the gap a reader actually sees is 2× this
+     number — which is why the old 3rem + 5vw put 232px of nothing between
+     every section on a laptop. Halved-ish, and the vw term reduced so it grows
+     more slowly on wide screens. */
+  --spacing-section: clamp(3rem, 2rem + 2.5vw, 4.75rem);
   --spacing-gutter: clamp(1rem, 0.6rem + 1.6vw, 2rem);
   --spacing-header: 4.25rem;
 

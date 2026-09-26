@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils'
 import { site } from '@/config/site'
 import { Badge, type BadgeTone } from '@/components/ui/badge'
 import { autoApproveText, responseWindowText, usePlatformTerms, type PlatformTerms } from './platform-terms'
-import { Accent, NightBackdrop, Reveal, SectionHeader } from './primitives'
+import { Accent, Reveal, SectionHeader } from './primitives'
 
 type JourneyStep = {
   key: string
@@ -109,11 +109,9 @@ export function OrderJourneySection() {
   const steps = buildSteps(terms)
 
   return (
-    <section aria-labelledby="order-journey-title" className="relative overflow-hidden bg-night py-section text-white">
-      <NightBackdrop variant="soft" />
-      <div className="container-page relative">
+    <section aria-labelledby="order-journey-title" className="py-section">
+      <div className="container-page">
         <SectionHeader
-          inverse
           titleId="order-journey-title"
           eyebrow="The order workflow"
           title={
@@ -134,7 +132,7 @@ export function OrderJourneySection() {
                   <span
                     className={cn(
                       'relative z-10 size-3 rounded-full',
-                      step.optional ? 'border-2 border-white/60 bg-night' : last ? 'bg-brand ring-4 ring-brand/25' : 'bg-white/70',
+                      step.optional ? 'border-2 border-line-strong bg-canvas' : last ? 'bg-brand ring-4 ring-brand/25' : 'bg-ink/35',
                     )}
                   />
                   {!last && (
@@ -143,22 +141,24 @@ export function OrderJourneySection() {
                         'absolute top-1/2 left-3 -right-4 max-md:hidden',
                         (i + 1) % 2 === 0 && 'md:max-lg:hidden',
                         (i + 1) % 4 === 0 && 'lg:hidden',
-                        step.optional ? 'border-t border-dashed border-white/30' : 'h-px bg-white/20',
+                        step.optional ? 'border-t border-dashed border-line-strong' : 'h-px bg-line-strong',
                       )}
                     />
                   )}
                 </div>
                 <article
                   className={cn(
+                    // The optional step stays dashed and unfilled, so it still
+                    // reads as "only sometimes" now that the contrast is lower.
                     'flex flex-1 flex-col rounded-card border p-5 transition-colors duration-300',
-                    step.optional ? 'border-dashed border-white/25 bg-transparent' : 'border-night-line bg-night-soft/80 hover:border-white/20',
+                    step.optional ? 'border-dashed border-line-strong bg-transparent' : 'border-line bg-surface shadow-card hover:border-line-strong',
                   )}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <Badge tone={step.tone} size="sm" dot>
                       {step.status}
                     </Badge>
-                    <span className="text-xs font-medium text-white/50">
+                    <span className="text-xs font-medium text-faint">
                       {step.optional ? `${step.actor} · optional` : step.actor}
                     </span>
                   </div>
@@ -169,7 +169,7 @@ export function OrderJourneySection() {
                       {step.title}
                     </span>
                   </h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-white/65">{step.body}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted">{step.body}</p>
                 </article>
               </Reveal>
             )

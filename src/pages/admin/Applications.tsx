@@ -16,6 +16,7 @@ import {
   type ApplicationRole,
   type ApplicationRow,
   type ApplicationStatus,
+  type StatusFilter,
 } from '@/services/applications.service'
 import { Seo } from '@/components/shared/seo'
 import { PageHeader } from '@/components/shared/page-header'
@@ -46,7 +47,10 @@ const STATUS_META: Record<ApplicationStatus, { label: string; tone: BadgeTone }>
   approved: { label: 'Approved', tone: 'success' },
   rejected: { label: 'Rejected', tone: 'danger' },
 }
-const STATUS_OPTIONS = (Object.keys(STATUS_META) as ApplicationStatus[]).map((v) => ({ value: v, label: STATUS_META[v].label }))
+const STATUS_OPTIONS = [
+  ...(Object.keys(STATUS_META) as ApplicationStatus[]).map((v) => ({ value: v, label: STATUS_META[v].label })),
+  { value: 'all', label: 'All statuses' },
+]
 const ROLE_OPTIONS = [
   { value: 'creator', label: 'Creators' },
   { value: 'brand', label: 'Brands' },
@@ -340,7 +344,7 @@ export default function Applications() {
   const rawRole = url.get('role')
   const STATUS_VALUES = STATUS_OPTIONS.map((o) => o.value)
   const ROLE_VALUES = ROLE_OPTIONS.map((o) => o.value)
-  const status: ApplicationStatus | '' = isOneOf(STATUS_VALUES, rawStatus) ? rawStatus : ''
+  const status: StatusFilter = isOneOf(STATUS_VALUES, rawStatus) ? (rawStatus as StatusFilter) : ''
   const role: ApplicationRole | '' = isOneOf(ROLE_VALUES, rawRole) ? rawRole : ''
 
   const stats = useQuery({ queryKey: applicationKeys.stats, queryFn: getApplicationStats })
@@ -360,7 +364,7 @@ export default function Applications() {
       <PageHeader
         eyebrow="Accounts"
         title="Applications"
-        description="People who applied through Create your profile. They don’t have accounts yet — approve one and follow up by email to set them up."
+        description="People who applied through Create your profile. Approving or rejecting takes them off this list — switch Status to see decided ones again."
       />
 
       <div className="space-y-6">
@@ -377,7 +381,9 @@ export default function Applications() {
           search={<SearchInput value={search} onCommit={(q) => url.update({ q })} placeholder="Search name, email, brand or handle" label="Search applications" />}
         >
           <FilterField label="Status" htmlFor="app-status">
-            <Select id="app-status" size="sm" value={status} onValueChange={(v) => url.update({ status: v })} options={STATUS_OPTIONS} anyLabel="All statuses" />
+            {/* The empty value is the queue, not "everything" — decided
+                applications are one pick away, never gone. */}
+            <Select id="app-status" size="sm" value={status} onValueChange={(v) => url.update({ status: v })} options={STATUS_OPTIONS} anyLabel="Awaiting decision" />
           </FilterField>
           <FilterField label="Applying as" htmlFor="app-role">
             <Select id="app-role" size="sm" value={role} onValueChange={(v) => url.update({ role: v })} options={ROLE_OPTIONS} anyLabel="Everyone" />
@@ -397,8 +403,8 @@ export default function Applications() {
           empty={
             <EmptyState
               icon={<Inbox />}
-              title={filtered ? 'No applications match' : 'No applications yet'}
-              description={filtered ? 'Try a different filter.' : 'Anyone who applies through Create your profile shows up here for review.'}
+              title={filtered ? 'No applications match' : 'Nothing waiting'}
+              description={filtered ? 'Try a different filter.' : 'You’re all caught up. Anyone who applies shows up here, and decided ones stay under Status.'}
               action={
                 filtered ? (
                   <Button variant="secondary" size="sm" onClick={() => url.update({ status: null, role: null, q: null })}>

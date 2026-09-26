@@ -16,7 +16,7 @@ import {
 import { cn } from '@/lib/utils'
 import { site } from '@/config/site'
 import { Button } from '@/components/ui/button'
-import { Accent, IconChip, NightBackdrop, Reveal, SectionHeader, type Tone } from './primitives'
+import { Accent, IconChip, Reveal, SectionHeader, type Tone } from './primitives'
 
 export type Benefit = { icon: LucideIcon; title: string; body: string; tone?: Tone }
 
@@ -76,34 +76,43 @@ const BRAND_BENEFITS: Benefit[] = [
   },
 ]
 
+// Tones mirror BRAND_BENEFITS so the two halves read as one family. On the
+// dark treatment every chip was the same washed-out white, which is why they
+// had none before.
 const CREATOR_BENEFITS: Benefit[] = [
   {
     icon: Store,
+    tone: 'brand',
     title: 'A storefront that sells for you',
     body: 'Your portfolio, services and reviews on one shareable page that keeps working while you create.',
   },
   {
     icon: Tag,
+    tone: 'lilac',
     title: 'Your prices, your add-ons',
     body: 'Set a fixed price for each service and offer extras like raw footage, faster delivery or ad usage rights.',
   },
   {
     icon: UserRoundSearch,
+    tone: 'sky',
     title: 'Get discovered',
     body: 'Brands search by category, city, language, budget and turnaround — and land on your storefront.',
   },
   {
     icon: ShieldCheck,
+    tone: 'mint',
     title: 'Payment secured upfront',
     body: 'Brands pay before you start. Once they approve your delivery, the earning is yours.',
   },
   {
     icon: Landmark,
+    tone: 'peach',
     title: 'Payouts to UPI or bank',
     body: 'Withdraw your available balance straight to your UPI ID or bank account, with a reference for every transfer.',
   },
   {
     icon: ReceiptIndianRupee,
+    tone: 'rose',
     title: 'No invoices to chase',
     body: 'No advance haggling, no reminder messages, no “we’ll pay next week”. The order takes care of it.',
   },
@@ -146,12 +155,10 @@ export function BrandBenefitsSection() {
 
 export function CreatorBenefitsSection() {
   return (
-    <section aria-labelledby="creator-benefits-title" className="relative overflow-hidden bg-night py-section text-white">
-      <NightBackdrop />
-      <div className="container-page relative">
+    <section aria-labelledby="creator-benefits-title" className="py-section">
+      <div className="container-page">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <SectionHeader
-            inverse
             titleId="creator-benefits-title"
             eyebrow={`Why creators use ${site.name}`}
             title={
@@ -162,22 +169,25 @@ export function CreatorBenefitsSection() {
             description={`${site.name} turns what you already make into a business brands can buy from — without cold pitches or awkward money conversations.`}
           />
           <div className="flex flex-wrap gap-3">
-            <Button asChild variant="accent" size="lg">
+            <Button asChild size="lg">
               <Link to="/get-started?role=creator">
                 Get discovered as a creator <ArrowRight />
               </Link>
             </Button>
-            <Button asChild variant="ghost-inverse" size="lg">
+            <Button asChild variant="secondary" size="lg">
               <Link to="/discover">See live storefronts</Link>
             </Button>
           </div>
         </div>
-        <ul className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-panel border border-night-line bg-night-line sm:grid-cols-2 lg:grid-cols-3">
+        {/* A hairline grid rather than six separate cards: `gap-px` over a
+            `bg-line` parent turns the gaps themselves into the dividers, so the
+            block reads as one panel. */}
+        <ul className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-panel border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
           {CREATOR_BENEFITS.map((benefit) => (
-            <li key={benefit.title} className="group bg-night p-7 transition-colors duration-300 hover:bg-night-soft sm:p-8">
-              <IconChip icon={benefit.icon} tone="night" className="transition-colors duration-300 group-hover:bg-brand group-hover:text-white" />
-              <h3 className="mt-6 font-display text-xl font-semibold tracking-tight">{benefit.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/65">{benefit.body}</p>
+            <li key={benefit.title} className="bg-surface p-7 transition-colors duration-300 hover:bg-subtle sm:p-8">
+              <IconChip icon={benefit.icon} tone={benefit.tone ?? 'brand'} />
+              <h3 className="mt-6 font-display text-xl font-semibold tracking-tight text-ink">{benefit.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{benefit.body}</p>
             </li>
           ))}
         </ul>

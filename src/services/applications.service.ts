@@ -9,6 +9,29 @@ import type { TablesInsert } from '@/types'
 export type ApplicationRole = 'brand' | 'creator'
 export type ApplicationStatus = 'new' | 'reviewing' | 'approved' | 'rejected'
 
+/** Statuses that still need a decision from someone. */
+export const OPEN_STATUSES = ['new', 'reviewing'] as const
+
+/** What the Status filter can ask for. `''` is the queue, `'all'` is everything. */
+export type StatusFilter = ApplicationStatus | 'all' | ''
+
+/**
+ * Which statuses a filter should fetch; `null` means don't filter at all.
+ *
+ * The list is a queue, so approving or rejecting takes an application out of
+ * it. That is a view decision, not a delete: the row has to survive, because
+ * an approved application is what `private.claim_approved_application` looks
+ * up to hand someone their role the first time they sign in with Google, and
+ * what `set_initial_role` checks. Deleting it would lock out the very person
+ * who was just approved. It is also the audit record of who decided what, so
+ * "All statuses" still reaches it.
+ */
+export function statusesFor(filter: StatusFilter): readonly ApplicationStatus[] | null {
+  if (filter === 'all') return null
+  if (filter) return [filter]
+  return OPEN_STATUSES
+}
+
 /** Only the columns an applicant may set — the rest are server-owned. */
 export type ApplicationInput = Pick<
   TablesInsert<'applications'>,
@@ -77,7 +100,7 @@ const range = (page: number, pageSize: number) => [(page - 1) * pageSize, page *
 
 export async function listApplications(p: {
   role?: ApplicationRole | ''
-  status?: ApplicationStatus | ''
+  status?: StatusFilter
   search?: string
   page?: number
   pageSize?: number
@@ -90,7 +113,8 @@ export async function listApplications(p: {
     .order('created_at', { ascending: false })
     .range(...range(page, pageSize))
   if (p.role) q = q.eq('role', p.role)
-  if (p.status) q = q.eq('status', p.status)
+  const statuses = statusesFor(p.status ?? '')
+  if (statuses) q = statuses.length === 1 ? q.eq('status', statuses[0]) : q.in('status', [...statuses])
   if (p.search?.trim()) {
     const term = p.search.trim().replace(/[%,()]/g, '')
     q = q.or(`full_name.ilike.%${term}%,email.ilike.%${term}%,brand_name.ilike.%${term}%,social_handle.ilike.%${term}%`)

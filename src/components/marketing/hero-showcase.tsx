@@ -7,7 +7,7 @@ import type { CreatorSearchParams } from '@/services/creators.service'
 import type { CreatorCard as CreatorCardData } from '@/types'
 import { Avatar } from '@/components/ui/avatar'
 import { CreatorCard, CreatorCardSkeleton } from '@/components/marketplace/creator-card'
-import { Glow, stagger } from './primitives'
+import { stagger } from './primitives'
 
 const HERO_PARAMS: CreatorSearchParams = { sort: 'relevance', pageSize: 6 }
 
@@ -41,11 +41,10 @@ export function HeroShowcase({ className }: { className?: string }) {
   return (
     <div className={cn('relative', className)}>
       {/* Desktop: fanned cards */}
+      {/* The cards used to sit on three tinted glows. They spilled past the
+          section and tinted the page behind it, so the colour now comes from
+          the cards themselves. */}
       <div className="relative isolate hidden h-[42rem] lg:block">
-        <Glow tone="brand" className="top-16 left-8 -z-10 size-80" />
-        <Glow tone="lilac" className="right-0 bottom-16 -z-10 size-80" />
-        <Glow tone="peach" className="top-0 right-24 -z-10 size-48" />
-
         {range(3).map((i) => {
           const creator = creators[i]
           if (state === 'ready' && !creator) return null
