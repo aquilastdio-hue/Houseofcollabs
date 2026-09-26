@@ -116,13 +116,14 @@ export function SidebarShell({
                   <Menu />
                 </Button>
               </DrawerTrigger>
-              <DrawerContent side="left" title={<Logo />} description="Navigation">
+              {/* No `description`: the drawer renders one visibly when given, and
+                  "Navigation" under the logo was label for its own sake. Left
+                  out, it falls back to the title as an sr-only description,
+                  which is what a screen reader needs and Radix expects. */}
+              <DrawerContent side="left" title={<Logo />}>
                 <SideNav sections={sections} onNavigate={() => setOpen(false)} />
               </DrawerContent>
             </Drawer>
-            <Link to={homeHref} className="focus-ring rounded-md" aria-label="Home">
-              <Logo showWordmark={false} />
-            </Link>
           </div>
           <div className="hidden lg:block" />
           <div className="flex items-center gap-1.5">
