@@ -155,7 +155,15 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "https://housecoll.netlify.app"
+# WARNING: `supabase config push` sends this whole [auth] block to the linked
+# project and overwrites the dashboard — including SMTP, which is commented out
+# further down. Pushing as-is would disable the live Brevo configuration.
+# Mirror SMTP here before ever running that command.
+#
+# These values had gone stale: they still named the old Netlify host while the
+# live project had moved to the real domain, so a push would silently have
+# broken every invite and password-reset link. Kept in step deliberately.
+site_url = "https://houseofcollabs.com"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
@@ -164,12 +172,12 @@ site_url = "https://housecoll.netlify.app"
 # is silently replaced with site_url — that is what sent production logins to
 # localhost. Wildcards cover /auth/callback, /reset-password and query strings.
 additional_redirect_urls = [
+  # The apex is what the emailed links use; it 308s to www, and the browser
+  # treats those as separate origins, so both have to be listed.
+  "https://houseofcollabs.com/**",
+  "https://www.houseofcollabs.com/**",
   "https://housecoll.netlify.app/**",
-  "https://housecoll.netlify.app/auth/callback",
-  "https://housecoll.netlify.app/reset-password",
   "http://localhost:5173/**",
-  "http://localhost:5173/auth/callback",
-  "http://localhost:5173/reset-password",
   "http://127.0.0.1:5173/**",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
@@ -257,10 +265,12 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# Sent by `inviteUserByEmail` when an admin approves an application. The reader
+# applied and was accepted, so the default "you have been invited" copy reads
+# wrong — see the template for the full reasoning.
+[auth.email.template.invite]
+subject = "Your House of Collabs application is approved"
+content_path = "./supabase/templates/invite.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

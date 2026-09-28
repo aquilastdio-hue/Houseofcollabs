@@ -193,16 +193,20 @@ export const handle = handler(async (req) => {
   const media: Record<string, unknown> = {}
 
   if (application.role === 'creator') {
-    const photoUrls: string[] = []
-    for (const [i, path] of asList(p.photos).entries()) {
-      const url = await publish(db, path, 'creator-portfolio', `${profileId}/photo-${i + 1}.${extOf(path)}`)
-      if (url) photoUrls.push(url)
-    }
-    const videoUrls: string[] = []
-    for (const [i, path] of asList(p.videos).entries()) {
-      const url = await publish(db, path, 'creator-portfolio', `${profileId}/video-${i + 1}.${extOf(path)}`)
-      if (url) videoUrls.push(url)
-    }
+    // Copied in parallel. Each file is an independent download-then-upload, and
+    // doing them one after another made approving a creator with a full
+    // portfolio take seconds longer than it needed to, on top of the wait for
+    // the invite email. Order is preserved because the results come back
+    // indexed, and `publish` returns null rather than throwing, so one bad
+    // upload cannot reject the batch.
+    const [photoUrls, videoUrls] = await Promise.all([
+      Promise.all(
+        asList(p.photos).map((path, i) => publish(db, path, 'creator-portfolio', `${profileId}/photo-${i + 1}.${extOf(path)}`)),
+      ).then((urls) => urls.filter((u): u is string => !!u)),
+      Promise.all(
+        asList(p.videos).map((path, i) => publish(db, path, 'creator-portfolio', `${profileId}/video-${i + 1}.${extOf(path)}`)),
+      ).then((urls) => urls.filter((u): u is string => !!u)),
+    ])
     media.photos = photoUrls
     media.videos = videoUrls
     if (photoUrls[0]) media.avatar_url = photoUrls[0]

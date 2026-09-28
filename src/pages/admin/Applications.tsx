@@ -27,6 +27,7 @@ import { Badge, type BadgeTone } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { Modal } from '@/components/ui/dialog'
+import { Spinner } from '@/components/ui/spinner'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { FilterBar, FilterField, SearchInput } from '@/components/admin/filter-bar'
 import { isOneOf } from '@/components/admin/admin-utils'
@@ -295,6 +296,17 @@ function ReviewDialog({ row, onClose }: { row: ApplicationRow | null; onClose: (
             </div>
           )}
 
+          {/* Approving waits on Supabase creating the account and the mail
+              server accepting the invitation — a few seconds on a good day. A
+              bare spinner on the button reads as a hang, so say what is
+              happening while it runs. */}
+          {approve.isPending && (
+            <p className="flex items-start gap-2 rounded-card border border-line bg-subtle p-4 text-sm text-ink-soft">
+              <Spinner className="mt-0.5 size-4 shrink-0" />
+              Creating their account and sending the invitation — this takes a few seconds.
+            </p>
+          )}
+
           {approval && <ApprovalPanel result={approval} />}
 
           {!approval && row.profile_id && (
@@ -341,7 +353,7 @@ function ReviewDialog({ row, onClose }: { row: ApplicationRow | null; onClose: (
 
 export default function Applications() {
   const url = useUrlState()
-  const [open, setOpen] = React.useState<ApplicationRow | null>(null)
+  const [openRowSnapshot, setOpenRow] = React.useState<ApplicationRow | null>(null)
   const search = url.get('q')
   const rawStatus = url.get('status')
   const rawRole = url.get('role')
@@ -360,6 +372,17 @@ export default function Applications() {
 
   const s = stats.data
   const filtered = !!status || !!role || !!search
+
+  // The dialog has to follow the *fresh* row, not the snapshot taken when it
+  // was opened — otherwise a rating written from inside it never appears,
+  // because the snapshot still holds the pre-rating copy.
+  //
+  // Falls back to the snapshot once the row leaves the list, which is exactly
+  // what approving does: it becomes `approved` and drops out of the queue,
+  // and the dialog has to stay open to show the invite result.
+  const openRow = openRowSnapshot
+    ? (query.data?.items.find((a) => a.id === openRowSnapshot.id) ?? openRowSnapshot)
+    : null
 
   return (
     <>
@@ -401,7 +424,7 @@ export default function Applications() {
           loading={query.isPending}
           error={query.isError ? query.error : undefined}
           onRetry={() => void query.refetch()}
-          onRowClick={setOpen}
+          onRowClick={setOpenRow}
           mobilePrimary="who"
           empty={
             <EmptyState
@@ -421,7 +444,7 @@ export default function Applications() {
         />
       </div>
 
-      <ReviewDialog row={open} onClose={() => setOpen(null)} />
+      <ReviewDialog row={openRow} onClose={() => setOpenRow(null)} />
     </>
   )
 }

@@ -41,7 +41,10 @@ export function useUrlState() {
           if (!opts.keepPage && !('page' in patch)) next.delete('page')
           return next
         },
-        { replace: !opts.push },
+        // Same reason as the marketplace filters: a filter change is a
+        // navigation, and the router resets scroll on those, which yanked the
+        // admin back to the top mid-search. `setPage` still scrolls on purpose.
+        { replace: !opts.push, preventScrollReset: true },
       )
     },
     [setParams],

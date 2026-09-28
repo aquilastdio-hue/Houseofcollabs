@@ -1,0 +1,84 @@
+<!--
+  Supabase Auth → "Invite user" template.
+
+  Sent by `inviteUserByEmail` when an admin approves an application, so the
+  reader is not a stranger being invited to sign up — they applied, they were
+  accepted, and the only thing left is a password. The default Supabase copy
+  ("You've been invited to create an account. Follow the link below to accept.")
+  reads like a cold invitation and buries that.
+
+  Styling matches `_shared/email.ts` so the platform's emails look like one
+  family: the same gradient header, card border and pill button. Table layout
+  with inline styles is the only thing that renders reliably across Gmail,
+  Outlook and Apple Mail.
+
+  {{ .ConfirmationURL }} is Supabase's; it carries the one-time token and the
+  redirect to /set-password. Do not replace it with a hard-coded link.
+-->
+<body style="margin:0;padding:0;background:#f8f7fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,Helvetica,sans-serif;color:#111111;-webkit-font-smoothing:antialiased">
+  <!-- Inbox preview line, hidden in the body itself. -->
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0">Your application was approved — create your password to get started.</div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f8f7fa">
+    <tr>
+      <td align="center" style="padding:32px 12px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%">
+
+          <tr>
+            <td style="background:#e1306c;background-image:linear-gradient(135deg,#e1306c 0%,#c13584 52%,#833ab4 100%);border-radius:20px 20px 0 0;padding:26px 32px">
+              <span style="font-size:19px;font-weight:700;letter-spacing:0.02em;color:#ffffff">House of Collabs</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#ffffff;border-left:1px solid #e7e4ee;border-right:1px solid #e7e4ee;padding:32px">
+
+              <h1 style="margin:0;font-size:23px;line-height:1.3;font-weight:700;color:#111111">
+                Congratulations — you’re in
+              </h1>
+
+              <p style="margin:16px 0 0;font-size:15px;line-height:1.65;color:#444148">
+                Your application has been approved, and your House of Collabs account is ready.
+              </p>
+
+              <p style="margin:14px 0 0;font-size:15px;line-height:1.65;color:#444148">
+                One last step: create a password. After that you can sign in to your dashboard any time.
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:26px">
+                <tr>
+                  <td style="border-radius:999px;background:#e1306c;background-image:linear-gradient(135deg,#e1306c 0%,#c13584 100%)">
+                    <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:13px 26px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:999px">Create your password</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:24px 0 0;font-size:14px;line-height:1.65;color:#6b6873">
+                Once it’s set, sign in with <strong style="color:#111111">{{ .Email }}</strong> — the address you applied with.
+              </p>
+
+              <!-- Some clients strip buttons; the raw link keeps the email usable. -->
+              <p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#8a8792">
+                If the button doesn’t work, copy and paste this link into your browser:<br />
+                <a href="{{ .ConfirmationURL }}" style="color:#c13584;word-break:break-all">{{ .ConfirmationURL }}</a>
+              </p>
+
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#ffffff;border:1px solid #e7e4ee;border-top:0;border-radius:0 0 20px 20px;padding:22px 32px 26px">
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#8a8792">
+                This link can only be used once and expires after a while. If it stops working, ask us for a new one.
+              </p>
+              <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#8a8792">
+                Didn’t apply to House of Collabs? You can ignore this email — no account is created until the link is used.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>

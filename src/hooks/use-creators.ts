@@ -106,7 +106,11 @@ export function useMarketplaceFilters(fixed: Partial<CreatorSearchParams> = {}) 
       const next = { ...paramsFromSearch(sp), ...patch }
       if (opts.resetPage !== false && !('page' in patch)) next.page = 1
       for (const k of Object.keys(fixed)) delete (next as Record<string, unknown>)[k]
-      setSp(searchFromParams(next), { replace: false })
+      // Changing a filter is a navigation, and the router resets scroll on
+      // those by default — so typing a search from halfway down the results
+      // threw the reader back to the top of the page. Paging still scrolls
+      // deliberately, via `goToPage`.
+      setSp(searchFromParams(next), { replace: false, preventScrollReset: true })
     },
     [sp, setSp, fixed],
   )
