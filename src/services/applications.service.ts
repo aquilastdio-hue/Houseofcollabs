@@ -133,11 +133,20 @@ export async function reviewApplication(id: string, status: ApplicationStatus, n
 export type ApprovalResult = {
   ok: boolean
   profileId: string
+  /** A brand-new auth account was made for them. */
   created: boolean
+  /** Supabase sent its "Invite user" email. False when they already had an
+   *  account and got a password reset instead — invites only work once. */
+  invited: boolean
+  alreadyHadAccount: boolean
+  /** Where the emailed link points — derived from the SITE_URL secret. */
+  redirectTo?: string
   role: ApplicationRole
   emailed: boolean
   emailError: string | null
+  /** Only set when the email failed, for the admin to pass on by hand. */
   inviteLink: string | null
+  copied?: { photos: number; videos: number; logo: number }
 }
 
 /**

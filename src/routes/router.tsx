@@ -69,7 +69,11 @@ const routes: RouteObject[] = [
               { path: 'forgot-password', ...page(() => import('@/pages/auth/ForgotPassword')) },
             ],
           },
+          // Outside `GuestOnly` on purpose: both links arrive carrying a
+          // session, and GuestOnly would bounce the visitor to a dashboard
+          // before they ever got to choose a password.
           { path: 'reset-password', ...page(() => import('@/pages/auth/ResetPassword')) },
+          { path: 'set-password', ...page(() => import('@/pages/auth/SetPassword')) },
           { path: 'auth/callback', ...page(() => import('@/pages/auth/AuthCallback')) },
         ],
       },

@@ -132,9 +132,8 @@ function Line({ label, children }: { label: string; children: React.ReactNode })
 }
 
 /**
- * Shown once an account exists. The invite link is surfaced whether or not the
- * email went out, so an admin is never stuck waiting on a provider that isn't
- * configured yet.
+ * Shown once an account exists. A link to pass on by hand only appears when the
+ * email didn't go out — no point handing an admin a one-time link nobody needs.
  */
 function ApprovalPanel({ result }: { result: ApprovalResult }) {
   const [copied, setCopied] = React.useState(false)
@@ -142,11 +141,15 @@ function ApprovalPanel({ result }: { result: ApprovalResult }) {
     <div className="space-y-3 rounded-card border border-success/30 bg-success-soft p-4">
       <p className="flex items-center gap-2 text-sm font-medium text-success">
         <Check className="size-4 shrink-0" aria-hidden />
-        {result.created ? 'Account created' : 'Linked to their existing account'} — they can sign in as a {result.role}.
+        {result.created ? 'Account created' : 'They already had an account'} — they can sign in as a {result.role}.
       </p>
 
       {result.emailed ? (
-        <p className="text-sm text-ink-soft">We’ve emailed them a link to set a password.</p>
+        <p className="text-sm text-ink-soft">
+          {result.invited
+            ? 'We’ve emailed them an invitation to set their password.'
+            : 'They already had an account, so we’ve emailed them a password-reset link instead of a new invitation.'}
+        </p>
       ) : (
         <p className="flex items-start gap-2 text-sm text-warning">
           <MailWarning className="mt-0.5 size-4 shrink-0" aria-hidden />

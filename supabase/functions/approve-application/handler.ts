@@ -1,25 +1,32 @@
 // POST { applicationId } — admin approves an application and the applicant gets
-// a real account, already filled in with everything they sent us.
+// a real account, already filled in with everything they sent us, plus an email
+// inviting them to choose a password.
 //
 // Creating an auth user needs the service role, which is why this lives in a
 // function rather than the browser. Everything that touches application data is
 // done by `provision_application_account`, which re-checks the caller is an
-// admin, so the service role is only ever used for the two jobs that genuinely
-// need a key: making the account, and moving their uploads.
+// admin, so the service role is only ever used for the three jobs that
+// genuinely need a key: making the account, sending the invite, and moving
+// their uploads.
 //
-// The uploads are the reason this function still exists rather than a plain
-// RPC. They land in the private `applications` bucket, which is right while the
-// application is being reviewed and wrong afterwards — a storefront needs URLs
-// a browser can load. So the bytes are copied into the public buckets first and
-// the resulting URLs are handed to the RPC, which writes them alongside the
-// rest of the form in one transaction.
+// ORDER MATTERS. The account is created and the invite sent *before* the RPC
+// marks the application approved. If the account can't be made, this throws and
+// the application stays exactly as it was — an application must never read as
+// approved when the person behind it has no way in.
 //
-// Idempotent: approving twice reuses the account and re-uses the copied files.
+// IDEMPOTENT. Approving twice must not make a second account or a second
+// invite. `inviteUserByEmail` only works for an address with no account, so an
+// applicant who already has one (they signed in with Google first, or an admin
+// already approved them) gets a password-reset email instead.
 import { handler, HttpError, json, must, readJson } from '../_shared/http.ts'
 import { adminClient, requireAdmin, userClient } from '../_shared/supabase.ts'
-import { getEmailProvider, renderNotificationEmail } from '../_shared/email.ts'
 
 const SITE_URL = (Deno.env.get('SITE_URL') ?? 'http://localhost:5173').replace(/\/$/, '')
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+
+/** Where both emails land. The invite and the reset share one destination. */
+const SET_PASSWORD_URL = `${SITE_URL}/set-password`
 
 type Application = {
   id: string
@@ -37,10 +44,14 @@ type Application = {
 const asList = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.trim() !== '') : []
 
+/** GoTrue says this a few different ways depending on version. */
+const looksAlreadyRegistered = (msg: string) =>
+  /already (been )?registered|already exists|email_exists|user already/i.test(msg)
+
 /**
  * Copies one object out of the private `applications` bucket into a public one
  * and returns a URL a browser can load. Returns null rather than throwing: a
- * missing or unreadable upload must not cost someone their account.
+ * missing upload must not cost someone their account.
  */
 async function publish(
   db: ReturnType<typeof adminClient>,
@@ -54,7 +65,6 @@ async function publish(
       console.error('approve: could not read upload', sourcePath, error?.message)
       return null
     }
-    // `upsert` so re-approving overwrites rather than erroring on a name clash.
     const { error: upErr } = await db.storage.from(bucket).upload(destPath, file, {
       contentType: file.type || 'application/octet-stream',
       upsert: true,
@@ -73,6 +83,31 @@ async function publish(
 const extOf = (p: string) => {
   const m = /\.([a-z0-9]+)$/i.exec(p)
   return m ? m[1].toLowerCase() : 'bin'
+}
+
+/**
+ * Password-reset email for someone who already has an account. There is no
+ * admin method that *sends* one, so this posts to the public recover endpoint —
+ * which goes out through the same Supabase SMTP as the invite.
+ */
+async function sendPasswordReset(email: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/recover?redirect_to=${encodeURIComponent(SET_PASSWORD_URL)}`, {
+      method: 'POST',
+      headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    if (res.ok) return null
+    const body = await res.text()
+    // Never let a mail failure reach the client verbatim.
+    console.error('approve: reset email failed', res.status, body.slice(0, 300))
+    return res.status === 429
+      ? 'Too many emails sent to this address just now. Try again shortly.'
+      : 'We could not send the email. Send them the link below instead.'
+  } catch (e) {
+    console.error('approve: reset email threw', e instanceof Error ? e.message : String(e))
+    return 'We could not send the email. Send them the link below instead.'
+  }
 }
 
 export const handle = handler(async (req) => {
@@ -97,52 +132,79 @@ export const handle = handler(async (req) => {
 
   const application = app as Application
   const email = application.email.trim().toLowerCase()
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    throw new HttpError(422, 'That application has no usable email address.', 'INVALID_EMAIL')
+  }
 
-  // Reuse an account if this email already has one — they may have signed in
-  // with Google before being approved, or applied twice.
+  // ----------------------------------------------------------------- account
+  // An account for this address already? Then this is a re-approval, or they
+  // signed in with Google before we got to them.
   const { data: existing } = await db.from('profiles').select('id').eq('email', email).maybeSingle()
-  let profileId = existing?.id ?? null
+  let profileId: string | null = existing?.id ?? null
   let created = false
+  let invited = false
+  let emailError: string | null = null
 
   if (!profileId) {
-    // `email_confirm` so they aren't stuck behind a verification step, and so
-    // that signing in with Google on the same address links to this account
-    // rather than colliding with it. They set a password through the recovery
-    // link below, or skip it entirely and use Google. The role is whitelisted
-    // by `private.handle_new_user`, which builds the profile from this metadata.
-    const { data, error } = await db.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: { full_name: application.full_name, role: application.role },
+    // Creates the account AND sends Supabase's "Invite user" email, which
+    // lands on /set-password. The role is whitelisted by
+    // `private.handle_new_user`, which builds the profile from this metadata.
+    const { data, error } = await db.auth.admin.inviteUserByEmail(email, {
+      redirectTo: SET_PASSWORD_URL,
+      data: { full_name: application.full_name, role: application.role },
     })
-    if (error || !data.user) throw new HttpError(422, error?.message ?? 'Could not create the account.', 'CREATE_FAILED')
-    profileId = data.user.id
-    created = true
+
+    if (error) {
+      // Two very different failures wear the same shape here.
+      if (looksAlreadyRegistered(error.message)) {
+        // A race, or an account with no profile row. Find the user and carry on.
+        const { data: list } = await db.auth.admin.listUsers()
+        const found = list?.users?.find((u) => (u.email ?? '').toLowerCase() === email)
+        if (!found) throw new HttpError(422, 'That email already has an account we cannot read.', 'ACCOUNT_CONFLICT')
+        profileId = found.id
+      } else {
+        // Most likely SMTP. The invite is atomic enough that no account is left
+        // behind, and crucially the application is NOT marked approved.
+        console.error('approve: invite failed', error.message)
+        throw new HttpError(
+          502,
+          'The account could not be invited — check the SMTP settings in Supabase. The application has been left as it was.',
+          'INVITE_FAILED',
+        )
+      }
+    } else {
+      profileId = data.user?.id ?? null
+      if (!profileId) throw new HttpError(422, 'Could not create the account.', 'CREATE_FAILED')
+      created = true
+      invited = true
+    }
   }
+
+  if (!profileId) throw new HttpError(500, 'Could not resolve the account.', 'NO_PROFILE')
+
+  // Already had an account, so no invite was sent — offer a reset instead, so
+  // they still get a way to set a password.
+  if (!invited) emailError = await sendPasswordReset(email)
 
   // --------------------------------------------------------------- uploads
   // Everything they uploaded, moved somewhere a browser can load it. Keyed by
   // profile id so re-approving lands on the same paths instead of piling up.
   const p = (application.profile ?? {}) as Record<string, unknown>
-  const photos = asList(p.photos)
-  const videos = asList(p.videos)
   const media: Record<string, unknown> = {}
 
   if (application.role === 'creator') {
     const photoUrls: string[] = []
-    for (const [i, path] of photos.entries()) {
+    for (const [i, path] of asList(p.photos).entries()) {
       const url = await publish(db, path, 'creator-portfolio', `${profileId}/photo-${i + 1}.${extOf(path)}`)
       if (url) photoUrls.push(url)
     }
     const videoUrls: string[] = []
-    for (const [i, path] of videos.entries()) {
+    for (const [i, path] of asList(p.videos).entries()) {
       const url = await publish(db, path, 'creator-portfolio', `${profileId}/video-${i + 1}.${extOf(path)}`)
       if (url) videoUrls.push(url)
     }
     media.photos = photoUrls
     media.videos = videoUrls
-    // The first photo doubles as their profile picture, the first video as the
-    // storefront intro — both are what the form put first.
     if (photoUrls[0]) media.avatar_url = photoUrls[0]
     if (videoUrls[0]) media.intro_video_url = videoUrls[0]
   } else if (application.image_path) {
@@ -153,59 +215,48 @@ export const handle = handler(async (req) => {
     }
   }
 
-  // Role, onboarding flag, workspace row, and the whole form.
+  // Role, onboarding flag, workspace row, and the whole form. Only now — with
+  // an account that exists — does the application become approved.
   must(await asAdmin.rpc('provision_application_account', {
     p_application_id: application.id,
     p_profile_id: profileId,
     p_media: media,
   }))
 
-  // A recovery link doubles as "set your password" for a brand-new account.
-  // Signing in with Google works without it; this is for anyone who'd rather
-  // use a password, and for addresses that aren't Google accounts.
-  const { data: link, error: linkError } = await db.auth.admin.generateLink({
-    type: 'recovery',
-    email,
-    options: { redirectTo: `${SITE_URL}/reset-password` },
-  })
-  if (linkError) throw new HttpError(500, linkError.message, 'LINK_FAILED')
-  const inviteLink = link?.properties?.action_link ?? null
+  // A link the admin can pass on by hand, generated only when the email didn't
+  // go out. No point handing out a one-time link nobody needs.
+  let inviteLink: string | null = null
+  if (emailError) {
+    const { data: link } = await db.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: { redirectTo: SET_PASSWORD_URL },
+    })
+    inviteLink = link?.properties?.action_link ?? null
+  }
 
-  // Try to email it. A failure here must not undo the account — the admin can
-  // still copy the link from the response.
-  let emailed = false
-  let emailError: string | null = null
-  const provider = getEmailProvider()
-  if (inviteLink && provider.name !== 'console') {
+  if (!emailError) {
+    // `rpc()` returns a thenable, not a real Promise — it has no `.catch`.
+    // Bookkeeping only, so a failure here must not fail the approval.
     try {
-      const message = renderNotificationEmail({
-        name: application.full_name,
-        title: 'You’re in — your account is ready',
-        message: `Your ${application.role} account on House of Collabs is set up, with everything you sent us already on your profile. Sign in with Google, or set a password using the button below.`,
-        actionUrl: inviteLink,
-        siteUrl: SITE_URL,
-        cta: 'Set my password',
-        preheader: 'Your application was approved.',
-        subject: 'Your House of Collabs account is ready',
-        prefsPath: application.role === 'brand' ? '/brand/settings/security' : '/creator/settings/security',
-      })
-      await provider.send({ to: email, ...message })
-      emailed = true
       await asAdmin.rpc('mark_application_invited', { p_application_id: application.id })
     } catch (e) {
-      emailError = e instanceof Error ? e.message : String(e)
+      console.error('approve: mark_application_invited failed', e instanceof Error ? e.message : String(e))
     }
-  } else if (inviteLink) {
-    // Console mode: nothing left the server, so say so rather than imply it did.
-    emailError = 'No email provider configured — send them the link yourself.'
   }
 
   return json({
     ok: true,
     profileId,
     created,
+    invited,
+    alreadyHadAccount: !created,
     role: application.role,
-    emailed,
+    // Where the emailed link lands. Derived from the SITE_URL secret, so it is
+    // the one place an environment mix-up shows up — surfaced rather than
+    // guessed at. A public URL; nothing secret about it.
+    redirectTo: SET_PASSWORD_URL,
+    emailed: !emailError,
     emailError,
     inviteLink,
     copied: {
