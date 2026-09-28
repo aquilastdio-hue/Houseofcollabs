@@ -25,8 +25,14 @@ export function DialogContent({
   children,
   size = 'md',
   hideClose,
+  closeClassName,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & { size?: keyof typeof SIZES; hideClose?: boolean }) {
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  size?: keyof typeof SIZES
+  hideClose?: boolean
+  /** For dialogs on a dark surface, where the default ink-on-light close vanishes. */
+  closeClassName?: string
+}) {
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -44,7 +50,10 @@ export function DialogContent({
         <div className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
         {!hideClose && (
           <DialogPrimitive.Close
-            className="focus-ring absolute top-4 right-4 inline-flex size-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-subtle hover:text-ink"
+            className={cn(
+              'focus-ring absolute top-4 right-4 inline-flex size-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-subtle hover:text-ink',
+              closeClassName,
+            )}
             aria-label="Close"
           >
             <X className="size-4" />

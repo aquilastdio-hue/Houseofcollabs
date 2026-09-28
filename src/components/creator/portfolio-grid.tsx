@@ -12,6 +12,14 @@ type Item = Pick<PortfolioItem, 'id' | 'type' | 'title' | 'description' | 'media
 export function MediaTile({ item, onOpen, className, children }: { item: Item; onOpen?: () => void; className?: string; children?: React.ReactNode }) {
   const poster = item.type === 'image' ? item.media_url : item.thumbnail_url
   const Icon = item.type === 'video' ? Film : Link2
+  // A video with no stored thumbnail still has a first frame, so let the
+  // browser draw it rather than showing a film icon on a blank tile — which is
+  // what every video copied across from an application looked like, since
+  // nothing generates a poster image for them.
+  //
+  // `#t=0.1` matters: asking for the very start often paints nothing, while
+  // nudging past zero makes the browser decode and hold a real frame.
+  const framePreview = item.type === 'video' && !item.thumbnail_url ? `${item.media_url}#t=0.1` : null
   return (
     <div className={cn('group relative overflow-hidden rounded-card border border-line bg-subtle', className)}>
       <button type="button" onClick={onOpen} className="focus-ring block aspect-[4/5] w-full text-left" aria-label={`Open ${item.title ?? item.type}`}>
@@ -21,10 +29,16 @@ export function MediaTile({ item, onOpen, className, children }: { item: Item; o
           className="absolute inset-0 size-full"
           imgClassName="transition-transform duration-700 ease-spring group-hover:scale-[1.04]"
           fallback={
-            <div className="flex size-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-sand-soft to-lilac-soft p-4 text-center text-ink-soft">
-              <Icon className="size-6" />
-              <span className="line-clamp-2 text-sm font-medium">{item.title ?? (item.type === 'link' ? 'External link' : 'Video')}</span>
-            </div>
+            framePreview ? (
+              // `preload="metadata"` fetches the header and first frame only,
+              // not the whole file, so a grid of these stays cheap to load.
+              <video src={framePreview} preload="metadata" muted playsInline aria-hidden className="size-full object-cover" />
+            ) : (
+              <div className="flex size-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-sand-soft to-lilac-soft p-4 text-center text-ink-soft">
+                <Icon className="size-6" />
+                <span className="line-clamp-2 text-sm font-medium">{item.title ?? (item.type === 'link' ? 'External link' : 'Video')}</span>
+              </div>
+            )
           }
         />
         {item.type !== 'image' && (
@@ -68,14 +82,35 @@ export function PortfolioGrid({ items, className, columns = 'default' }: { items
         ))}
       </div>
       <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
-        <DialogContent size="lg" className="bg-night text-white">
+        {/* The default close is ink-on-light, which disappears against the
+            black letterboxing around a portrait video. */}
+        <DialogContent
+          size="lg"
+          className="bg-night text-white"
+          closeClassName="bg-black/45 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white"
+        >
           <DialogTitle className="sr-only">{open?.title ?? 'Portfolio item'}</DialogTitle>
           <DialogDescription className="sr-only">{open?.description ?? 'Portfolio preview'}</DialogDescription>
           {open && (
             <div className="flex flex-col">
               <div className="flex max-h-[75dvh] items-center justify-center bg-black">
                 {open.type === 'video' ? (
-                  <video src={open.media_url} poster={open.thumbnail_url ?? undefined} controls autoPlay playsInline className="max-h-[75dvh] w-full" />
+                  // `nodownload` drops Download from the player's overflow menu,
+                  // and blocking the context menu removes the "Save video as"
+                  // route. Both are deterrents, not protection: the file sits in
+                  // a public bucket, so anyone reading the network tab can still
+                  // fetch it. Keeping it out of two casual paths is the point.
+                  <video
+                    src={open.media_url}
+                    poster={open.thumbnail_url ?? undefined}
+                    controls
+                    controlsList="nodownload noplaybackrate"
+                    disablePictureInPicture
+                    onContextMenu={(e) => e.preventDefault()}
+                    autoPlay
+                    playsInline
+                    className="max-h-[75dvh] w-full"
+                  />
                 ) : (
                   <img src={open.media_url} alt={open.title ?? ''} className="max-h-[75dvh] w-auto object-contain" />
                 )}

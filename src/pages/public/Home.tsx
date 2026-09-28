@@ -85,17 +85,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2 · Trusted brands */}
+      {/* 2 · Marketplace preview — real creators, straight after the hero.
+             The pitch above it promises storefronts with prices on them; this
+             is the proof, so it comes before the logos rather than four
+             sections later. */}
+      <MarketplacePreviewSection />
+
+      {/* 3 · Trusted brands */}
       <BrandMarquee />
 
-      {/* 3 · Brand benefits */}
+      {/* 4 · Brand benefits */}
       <BrandBenefitsSection />
 
-      {/* 4 · Creator benefits */}
+      {/* 5 · Creator benefits */}
       <CreatorBenefitsSection />
-
-      {/* 5 · Marketplace preview */}
-      <MarketplacePreviewSection />
 
       {/* 6 · Old vs new workflow */}
       <WorkflowCompareSection />

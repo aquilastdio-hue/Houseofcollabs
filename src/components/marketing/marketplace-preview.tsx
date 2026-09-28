@@ -10,7 +10,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { LiveCreatorGrid } from './live-creator-grid'
 import { Accent, SectionHeader } from './primitives'
 
-const PREVIEW_COUNT = 8
+// The homepage shows at most this many, then hands off to the full listing via
+// "Explore all creators" — a preview that grew without limit would push the
+// rest of the page below an ever-lengthening grid.
+const PREVIEW_COUNT = 20
 const CHIP_LIMIT = 7
 
 /** Home: category chips + a grid of top-rated live creators. */

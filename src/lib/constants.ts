@@ -141,4 +141,9 @@ export function labelFor(options: readonly Option[], value?: string | null) {
   return options.find((o) => o.value === value)?.label ?? value ?? ''
 }
 
-export const PAGE_SIZE = 24
+/**
+ * Creators per page on the discover/creators listing. Only the creator search
+ * reads this — the admin tables each carry their own, so changing it here does
+ * not quietly resize those.
+ */
+export const PAGE_SIZE = 20

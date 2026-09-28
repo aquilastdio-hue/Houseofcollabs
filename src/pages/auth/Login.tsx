@@ -61,16 +61,7 @@ export default function Login() {
         <Field label="Email" htmlFor="email" error={errors.email?.message}>
           <Input id="email" type="email" autoComplete="email" placeholder="you@company.com" {...form.register('email')} />
         </Field>
-        <Field
-          label="Password"
-          htmlFor="password"
-          error={errors.password?.message}
-          labelAction={
-            <Link to="/forgot-password" className="text-xs font-medium text-muted underline-offset-2 hover:text-ink hover:underline">
-              Forgot password?
-            </Link>
-          }
-        >
+        <Field label="Password" htmlFor="password" error={errors.password?.message}>
           <PasswordInput id="password" autoComplete="current-password" {...form.register('password')} />
         </Field>
 
@@ -105,6 +96,15 @@ export default function Login() {
         <Button type="submit" size="lg" block loading={isSubmitting}>
           Log in
         </Button>
+
+        {/* Its own line, under the action, at a readable size. It used to be
+            12px tucked beside the Password label — the smallest text on the
+            page, offered to someone who is already locked out. */}
+        <p className="text-center text-sm">
+          <Link to="/forgot-password" className="font-medium text-ink underline-offset-2 hover:underline">
+            Forgot password?
+          </Link>
+        </p>
       </form>
     </>
   )
