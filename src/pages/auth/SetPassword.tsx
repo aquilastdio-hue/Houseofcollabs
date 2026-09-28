@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { KeyRound, LinkIcon, PartyPopper } from 'lucide-react'
 import { resetSchema, type ResetValues } from '@/schemas/auth'
 import { updatePassword } from '@/services/auth.service'
+import { establishSessionFromLink, readAuthLink } from '@/lib/auth-link'
 import { toAppError } from '@/lib/errors'
 import { homeFor, useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
@@ -17,37 +18,48 @@ import { AuthHeading, PasswordInput, PasswordMeter } from '@/components/auth/aut
 /**
  * Landing page for the approval invite.
  *
- * Mechanically this is /reset-password — supabase-js exchanges the code in the
- * URL for a session, and `updateUser` sets the password against it. It exists
- * separately because the words have to differ: someone arriving here has just
- * been approved and has never had a password, so "reset" would be wrong and
- * "this link has expired" needs to send them somewhere that works for an
- * account with no password yet.
+ * The account shown — and the account whose password gets set — comes from the
+ * link, never from whatever session the browser already holds. That matters:
+ * the person most likely to open one of these is the admin who just approved
+ * the application, and they are usually signed in as themselves. Reading the
+ * ambient session there would show their own address and quietly change their
+ * own password.
  *
- * Both Supabase templates — Invite user and Reset password — can point here.
- * The invite is the normal path; the reset is what an already-registered
- * applicant gets when an admin re-approves them.
+ * So: no link, no form. A visitor with nothing to redeem is sent to ask for a
+ * fresh one rather than being offered a password box for the wrong account.
  */
 export default function SetPassword() {
-  const { initializing, session, profile } = useAuth()
+  const { profile } = useAuth()
   const navigate = useNavigate()
-  // The link carries either a PKCE `code` or a token hash; either way the
-  // client needs a moment to turn it into a session before we judge it missing.
-  const hasCode = React.useMemo(() => {
-    const url = new URL(window.location.href)
-    return url.searchParams.has('code') || url.searchParams.has('token_hash') || url.hash.includes('access_token')
-  }, [])
-  const [waited, setWaited] = React.useState(!hasCode)
+
+  // Snapshot during the first render — supabase-js strips `?code=` once it
+  // exchanges it, so reading this from an effect can miss it.
+  const [link] = React.useState(() => readAuthLink())
+  const [state, setState] = React.useState<'checking' | 'ready' | 'invalid'>(link ? 'checking' : 'invalid')
+  const [account, setAccount] = React.useState<string | null>(null)
   const [done, setDone] = React.useState(false)
+
   const form = useForm<ResetValues>({ resolver: zodResolver(resetSchema), defaultValues: { password: '', confirm: '' } })
   const { errors, isSubmitting } = form.formState
   const password = form.watch('password')
 
   React.useEffect(() => {
-    if (!hasCode || session) return
-    const t = window.setTimeout(() => setWaited(true), 4000)
-    return () => window.clearTimeout(t)
-  }, [hasCode, session])
+    if (!link) return
+    let cancelled = false
+    void (async () => {
+      const result = await establishSessionFromLink(link)
+      if (cancelled) return
+      if (result.ok) {
+        setAccount(result.email)
+        setState('ready')
+      } else {
+        setState('invalid')
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [link])
 
   const onSubmit = form.handleSubmit(async ({ password: pw }) => {
     try {
@@ -59,11 +71,9 @@ export default function SetPassword() {
     }
   })
 
-  if (initializing || (!session && !waited)) return <PageLoader label="Verifying your invitation" />
+  if (state === 'checking') return <PageLoader label="Verifying your invitation" />
 
-  // No session: the link was used already, expired, or was opened in a
-  // different browser than it was requested from.
-  if (!session) {
+  if (state === 'invalid') {
     return (
       <div className="text-center">
         <Seo title="Invitation link expired" noindex />
@@ -91,11 +101,10 @@ export default function SetPassword() {
         </span>
         <h1 className="mt-5 font-display text-display-md font-semibold">You’re all set</h1>
         <p className="mt-2 text-muted">
-          Your password has been created successfully. You can sign in with {session.user.email} from now on.
+          Your password has been created successfully. You can sign in with {account} from now on.
         </p>
-        {/* They already hold a session from the invite, so "continue" goes
-            straight to their dashboard rather than making them type the
-            password they just chose. */}
+        {/* The link left them holding a session, so "continue" goes straight to
+            their dashboard rather than making them retype what they just chose. */}
         <Button className="mt-6" onClick={() => navigate(homeFor(profile?.role, profile?.onboarding_completed), { replace: true })}>
           Continue to my dashboard
         </Button>
@@ -111,10 +120,7 @@ export default function SetPassword() {
   return (
     <>
       <Seo title="Set your password" noindex />
-      <AuthHeading
-        title="Set your password"
-        subtitle={`Welcome to House of Collabs. Choose a password for ${session.user.email}.`}
-      />
+      <AuthHeading title="Set your password" subtitle={`Welcome to House of Collabs. Choose a password for ${account}.`} />
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <Field label="New password" htmlFor="password" error={errors.password?.message}>
           <PasswordInput id="password" autoComplete="new-password" {...form.register('password')} />

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { KeyRound, LinkIcon } from 'lucide-react'
 import { resetSchema, type ResetValues } from '@/schemas/auth'
 import { updatePassword } from '@/services/auth.service'
+import { establishSessionFromLink, readAuthLink } from '@/lib/auth-link'
 import { toAppError } from '@/lib/errors'
 import { homeFor, useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
@@ -15,23 +16,42 @@ import { Seo } from '@/components/shared/seo'
 import { AuthHeading, PasswordInput, PasswordMeter } from '@/components/auth/auth-parts'
 
 /**
- * Landing page for the password-recovery email. supabase-js exchanges the
- * PKCE code in the URL for a recovery session automatically.
+ * Landing page for the password-recovery email.
+ *
+ * The account comes from the link, never from a session already in the
+ * browser — see `@/lib/auth-link` for why that distinction is load-bearing.
+ * Resetting while signed in as someone else would otherwise change the wrong
+ * password.
  */
 export default function ResetPassword() {
-  const { initializing, session, profile } = useAuth()
+  const { profile } = useAuth()
   const navigate = useNavigate()
-  const hasCode = React.useMemo(() => new URLSearchParams(window.location.search).has('code'), [])
-  const [waited, setWaited] = React.useState(!hasCode)
+
+  const [link] = React.useState(() => readAuthLink())
+  const [state, setState] = React.useState<'checking' | 'ready' | 'invalid'>(link ? 'checking' : 'invalid')
+  const [account, setAccount] = React.useState<string | null>(null)
+
   const form = useForm<ResetValues>({ resolver: zodResolver(resetSchema), defaultValues: { password: '', confirm: '' } })
   const { errors, isSubmitting } = form.formState
   const password = form.watch('password')
 
   React.useEffect(() => {
-    if (!hasCode || session) return
-    const t = window.setTimeout(() => setWaited(true), 4000)
-    return () => window.clearTimeout(t)
-  }, [hasCode, session])
+    if (!link) return
+    let cancelled = false
+    void (async () => {
+      const result = await establishSessionFromLink(link)
+      if (cancelled) return
+      if (result.ok) {
+        setAccount(result.email)
+        setState('ready')
+      } else {
+        setState('invalid')
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [link])
 
   const onSubmit = form.handleSubmit(async ({ password: pw }) => {
     try {
@@ -43,9 +63,9 @@ export default function ResetPassword() {
     }
   })
 
-  if (initializing || (!session && !waited)) return <PageLoader label="Verifying your link" />
+  if (state === 'checking') return <PageLoader label="Verifying your link" />
 
-  if (!session) {
+  if (state === 'invalid') {
     return (
       <div className="text-center">
         <Seo title="Reset link expired" noindex />
@@ -64,7 +84,7 @@ export default function ResetPassword() {
   return (
     <>
       <Seo title="Choose a new password" noindex />
-      <AuthHeading title="Choose a new password" subtitle={`For ${session.user.email}`} />
+      <AuthHeading title="Choose a new password" subtitle={`For ${account}`} />
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <Field label="New password" htmlFor="password" error={errors.password?.message}>
           <PasswordInput id="password" autoComplete="new-password" {...form.register('password')} />
