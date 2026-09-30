@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/states'
 import { ServiceCard } from '@/components/creator/service-card'
+import { protectedVideoProps } from '@/lib/video'
 import { PortfolioGrid } from '@/components/creator/portfolio-grid'
 import { useCreatorAccess, WithReason } from './creator-actions'
 import { firstName, profileLanguages, scrollToSection, signInHref, visiblePortfolio, visibleServices, type ProfileSectionId } from './profile-utils'
@@ -215,6 +216,7 @@ export function AboutSection({ creator }: { creator: CreatorProfile }) {
         <video
           src={creator.intro_video_url ?? undefined}
           controls
+          {...protectedVideoProps}
           preload="metadata"
           playsInline
           aria-label={`Intro video from ${creator.display_name}`}

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { ExternalLink, Film, Link2, Play } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { protectedVideoProps } from '@/lib/video'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { SmartImage } from '@/components/shared/smart-image'
@@ -104,9 +105,7 @@ export function PortfolioGrid({ items, className, columns = 'default' }: { items
                     src={open.media_url}
                     poster={open.thumbnail_url ?? undefined}
                     controls
-                    controlsList="nodownload noplaybackrate"
-                    disablePictureInPicture
-                    onContextMenu={(e) => e.preventDefault()}
+                    {...protectedVideoProps}
                     autoPlay
                     playsInline
                     className="max-h-[75dvh] w-full"
