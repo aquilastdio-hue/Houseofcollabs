@@ -3,7 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Building2, Check, Copy, Inbox, MailWarning, Sparkles, UserPlus } from 'lucide-react'
 import { RatingStars } from '@/components/admin/rating-stars'
 import { ApplicationSubmission } from '@/components/admin/application-detail'
-import { rateApplication } from '@/services/admin.service'
+import { rateApplication, setApplicationDiscover } from '@/services/admin.service'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatDateTime, formatNumber, formatRelative, titleCase } from '@/lib/format'
@@ -201,6 +201,11 @@ function ReviewDialog({ row, onClose }: { row: ApplicationRow | null; onClose: (
     success: (_d, rating) => (rating ? `Rated ${rating}/5` : 'Rating cleared'),
   })
 
+  const discover = useAdminMutation((pick: boolean) => setApplicationDiscover(row!.id, pick), {
+    invalidate: [applicationKeys.all],
+    success: (_d, pick) => (pick ? 'Added to Discover' : 'Removed from Discover'),
+  })
+
   const approve = useAdminMutation(() => approveApplication(row!.id), {
     invalidate: [applicationKeys.all, applicationKeys.stats],
     success: (r) => (r.emailed ? 'Approved and invited' : 'Approved — send them the link'),
@@ -318,6 +323,21 @@ function ReviewDialog({ row, onClose }: { row: ApplicationRow | null; onClose: (
           <div className="flex flex-wrap gap-2 border-t border-line pt-4">
             <Button type="button" size="sm" loading={approve.isPending} onClick={() => approve.mutate()}>
               <UserPlus /> {row.profile_id ? 'Re-send set-up link' : 'Approve & create account'}
+            </Button>
+
+            {/* A toggle, not an action: it records the decision on the
+                application and is applied when they are approved. Marking it
+                before approving is the point — by the time a creator exists,
+                the reviewer has already moved on. */}
+            <Button
+              type="button"
+              size="sm"
+              variant={row.discover ? 'accent' : 'secondary'}
+              loading={discover.isPending}
+              aria-pressed={!!row.discover}
+              onClick={() => discover.mutate(!row.discover)}
+            >
+              <Sparkles /> {row.discover ? 'In Discover' : 'Discover'}
             </Button>
             <Button
               type="button"

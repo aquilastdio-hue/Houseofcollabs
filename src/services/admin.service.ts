@@ -709,6 +709,8 @@ export type CreatorRanking = {
   review_count: number
   admin_rating: number | null
   pinned_at: string | null
+  /** Hand-placed position from dragging; null means the automatic order applies. */
+  sort_order: number | null
   rank_position: number
   total_count: number
 }
@@ -747,4 +749,21 @@ export async function pinCreator(creatorId: string, pinned: boolean) {
 /** The rating given while reviewing an application, before the creator exists. */
 export async function rateApplication(id: string, rating: number | null) {
   return unwrap(await supabase.rpc('admin_rate_application', { p_id: id, p_rating: rating as number }))
+}
+
+/**
+ * Marks an applicant for Discover while their application is still under
+ * review. Sets `creators.featured` when they are approved — or immediately, if
+ * they already have an account.
+ */
+export async function setApplicationDiscover(id: string, discover: boolean) {
+  return unwrap(await supabase.rpc('admin_set_application_discover', { p_id: id, p_discover: discover }))
+}
+
+/**
+ * Persists a drag on the ranking screen. The whole visible order is sent, not
+ * just the row that moved, so positions cannot collide or leave gaps.
+ */
+export async function reorderCreators(ids: string[]) {
+  return unwrap(await supabase.rpc('admin_reorder_creators', { p_ids: ids }))
 }

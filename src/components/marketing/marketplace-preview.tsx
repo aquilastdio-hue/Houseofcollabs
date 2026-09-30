@@ -16,12 +16,21 @@ import { Accent, SectionHeader } from './primitives'
 const PREVIEW_COUNT = 20
 const CHIP_LIMIT = 7
 
-/** Home: category chips + a grid of top-rated live creators. */
+/** Home: category chips + a grid of live creators, in the admin's own order. */
 export function MarketplacePreviewSection() {
   const categories = useCategories()
   const [category, setCategory] = React.useState('')
+  // `relevance`, not `rating`. `rating` means the star score brands leave on an
+  // order — and until a marketplace has reviews that is zero for everyone, so
+  // the grid silently fell through to follower count and put whoever had the
+  // biggest audience on the homepage.
+  //
+  // Worse, it ignored the Creator ranking screen entirely: an admin who rated
+  // someone 5/5 or pinned them saw the change on /discover and not here, which
+  // is the one page most visitors actually see. `relevance` is the sort that
+  // honours pinning and the admin rating.
   const params = React.useMemo<CreatorSearchParams>(
-    () => ({ sort: 'rating', pageSize: PREVIEW_COUNT, ...(category ? { category } : {}) }),
+    () => ({ sort: 'relevance', pageSize: PREVIEW_COUNT, ...(category ? { category } : {}) }),
     [category],
   )
   const chips = (categories.data ?? []).slice(0, CHIP_LIMIT)
@@ -40,7 +49,7 @@ export function MarketplacePreviewSection() {
                 Real storefronts, <Accent>real prices</Accent>
               </>
             }
-            description={`A live look at top-rated creators on ${site.name}. Every card shows a starting price, turnaround and rating — before you ever send a message.`}
+            description={`A live look at creators on ${site.name}, every profile reviewed by hand. Each card shows a starting price, turnaround and rating — before you ever send a message.`}
           />
           <Button asChild variant="outline" size="lg" className="shrink-0 self-start md:self-auto">
             <Link to={exploreHref}>
@@ -64,7 +73,7 @@ export function MarketplacePreviewSection() {
 
         <div className="mt-8">
           <p className="sr-only" aria-live="polite">
-            {activeName ? `Showing top-rated ${activeName} creators` : 'Showing top-rated creators'}
+            {activeName ? `Showing ${activeName} creators` : 'Showing creators'}
           </p>
           <LiveCreatorGrid
             params={params}

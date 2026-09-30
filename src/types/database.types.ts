@@ -90,6 +90,7 @@ export type Database = {
           categories: string[] | null
           city: string | null
           created_at: string
+          discover: boolean
           email: string
           followers_count: number | null
           full_name: string
@@ -120,6 +121,7 @@ export type Database = {
           categories?: string[] | null
           city?: string | null
           created_at?: string
+          discover?: boolean
           email: string
           followers_count?: number | null
           full_name: string
@@ -150,6 +152,7 @@ export type Database = {
           categories?: string[] | null
           city?: string | null
           created_at?: string
+          discover?: boolean
           email?: string
           followers_count?: number | null
           full_name?: string
@@ -834,6 +837,7 @@ export type Database = {
           creator_id: string
           note: string | null
           pinned_at: string | null
+          sort_order: number | null
           updated_at: string
           updated_by: string | null
         }
@@ -842,6 +846,7 @@ export type Database = {
           creator_id: string
           note?: string | null
           pinned_at?: string | null
+          sort_order?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -850,6 +855,7 @@ export type Database = {
           creator_id?: string
           note?: string | null
           pinned_at?: string | null
+          sort_order?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -2933,6 +2939,7 @@ export type Database = {
           rating: number
           review_count: number
           slug: string
+          sort_order: number
           status: Database["public"]["Enums"]["creator_status"]
           total_count: number
           verified: boolean
@@ -3099,6 +3106,7 @@ export type Database = {
           categories: string[] | null
           city: string | null
           created_at: string
+          discover: boolean
           email: string
           followers_count: number | null
           full_name: string
@@ -3128,6 +3136,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_reorder_creators: { Args: { p_ids: string[] }; Returns: undefined }
       admin_restore_creator: {
         Args: { p_creator_id: string }
         Returns: {
@@ -3192,6 +3201,7 @@ export type Database = {
           categories: string[] | null
           city: string | null
           created_at: string
+          discover: boolean
           email: string
           followers_count: number | null
           full_name: string
@@ -3247,6 +3257,46 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "creator_verifications"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_set_application_discover: {
+        Args: { p_discover: boolean; p_id: string }
+        Returns: {
+          admin_rating: number | null
+          bio: string | null
+          brand_name: string | null
+          budget_range: string | null
+          categories: string[] | null
+          city: string | null
+          created_at: string
+          discover: boolean
+          email: string
+          followers_count: number | null
+          full_name: string
+          id: string
+          image_path: string | null
+          invited_at: string | null
+          looking_for: string | null
+          message: string | null
+          phone: string | null
+          portfolio_url: string | null
+          profile: Json
+          profile_id: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          role: string
+          social_handle: string | null
+          social_platform: string | null
+          status: string
+          video_path: string | null
+          website: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "applications"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -4281,7 +4331,7 @@ export type Database = {
         }
       }
       provision_application_account: {
-        Args: { p_application_id: string; p_profile_id: string }
+        Args: { p_application_id: string; p_media?: Json; p_profile_id: string }
         Returns: {
           admin_rating: number | null
           bio: string | null
@@ -4290,6 +4340,7 @@ export type Database = {
           categories: string[] | null
           city: string | null
           created_at: string
+          discover: boolean
           email: string
           followers_count: number | null
           full_name: string
