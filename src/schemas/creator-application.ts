@@ -28,7 +28,7 @@ export const MAX_PHOTOS = 10
  * the exception — it has no rate, so it keeps an explicit answer.
  */
 export const COLLABORATIONS = [
-  { key: 'ugc_video', label: 'UGC video' },
+  { key: 'ugc_video', label: 'UGC' },
   { key: 'collab_reel', label: 'Collaborative reel' },
   { key: 'static_carousel', label: 'Static / carousel post' },
   { key: 'story', label: 'Instagram story' },

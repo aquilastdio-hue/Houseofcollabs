@@ -22,7 +22,7 @@ const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : v == nul
 const list = (v: unknown): string[] => (Array.isArray(v) ? v.map(str).filter(Boolean) : [])
 
 const LABELS: Record<string, string> = {
-  ugc_video: 'UGC video',
+  ugc_video: 'UGC',
   // Retired from the form. Kept here because this panel lists the figures an
   // applicant actually submitted, and older applications still carry the key.
   extra_usage: 'Extra 30-day usage',

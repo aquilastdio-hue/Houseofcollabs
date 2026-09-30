@@ -171,7 +171,7 @@ begin
     -- storefront has something to sell the day they sign in.
     for v_rate in
       select * from (values
-        ('ugc_video',           'UGC video',                'ugc_video',     5, 'instagram'),
+        ('ugc_video',           'UGC',                      'ugc_video',     5, 'instagram'),
         ('collab_reel',         'Collaborative reel',       'reel',          5, 'instagram'),
         ('static_carousel',     'Static / carousel post',   'post',          4, 'instagram'),
         ('story',               'Instagram story',          'story',         2, 'instagram'),
@@ -355,7 +355,11 @@ where service_id in (
 delete from public.creator_services
 where title = 'Extra 30-day usage' and archived_at is null;
 
--- The licence was never the product; it is part of what a UGC video comes with.
+-- The licence was never the product; it is part of what the work comes with.
+--
+-- Both spellings are matched so this stays correct whether the storefront is
+-- still on the original title or on the shorter one an earlier draft of this
+-- migration wrote.
 update public.creator_services
-set title = 'UGC video', updated_at = now()
-where title = 'UGC video + 30-day usage';
+set title = 'UGC', updated_at = now()
+where title in ('UGC video + 30-day usage', 'UGC video');

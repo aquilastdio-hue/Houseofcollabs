@@ -3,7 +3,7 @@ import type { Enums } from '@/types/database.types'
 export type Option<V extends string = string> = { value: V; label: string; description?: string }
 
 export const CONTENT_TYPES: Option[] = [
-  { value: 'ugc_video', label: 'UGC video' },
+  { value: 'ugc_video', label: 'UGC' },
   { value: 'reel', label: 'Reel' },
   { value: 'story', label: 'Story' },
   { value: 'post', label: 'Feed post' },
