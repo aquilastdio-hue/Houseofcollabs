@@ -38,7 +38,7 @@ export const EXAMPLE_REEL_SERVICE: ExampleService = {
   price: 6000,
   delivery_days: 7,
   revisions_included: 1,
-  includes: ['Concept call on chat', 'Posted on my profile with collab tag', 'Story mention on launch day'],
+  includes: ['Concept agreed in the brief', 'Posted on my profile with collab tag', 'Story mention on launch day'],
   content_type: 'reel',
   requires_shipping: true,
   active: true,

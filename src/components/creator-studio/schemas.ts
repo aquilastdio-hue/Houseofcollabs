@@ -29,7 +29,56 @@ export const ADDON_TYPE_VALUES = [
 // ---------------------------------------------------------------------------
 // Building blocks
 // ---------------------------------------------------------------------------
-const text = (max: number) => z.string().trim().max(max, `Use ${formatNumber(max)} characters or fewer`)
+
+/**
+ * Ways a creator can hand a brand a way to reach them off the platform.
+ *
+ * Hiding the handle on the storefront achieves nothing if the bio underneath
+ * reads "DM me @aromasurimakeovers". A booking that leaves here loses the
+ * creator the platform's protection and the platform its fee, so the rule has
+ * to cover the free text as well as the profile field.
+ *
+ * Each pattern is deliberately narrow, because a false positive blocks a real
+ * creator from saving real work:
+ *
+ * - The *word* Instagram is fine. "I make Instagram Reels" has to keep working;
+ *   it is the handle and the link that are a contact detail.
+ * - Email is tested before the handle, or every address trips the `@` rule and
+ *   reports the wrong reason.
+ * - A phone is 10–13 digits, so a list of prices ("60000 80000 100000") is not
+ *   mistaken for one, while a real Indian mobile is.
+ */
+const CONTACT_RULES: { test: (v: string) => boolean; message: string }[] = [
+  {
+    test: (v) => /[^\s@]+@[^\s@]+\.[a-z]{2,}/i.test(v),
+    message: 'Remove the email address — brands reach you through House of Collabs',
+  },
+  {
+    test: (v) => /(^|[^\w@])@[a-z0-9._]{2,}/i.test(v),
+    message: 'Remove the @handle — brands reach you through House of Collabs',
+  },
+  {
+    test: (v) => /(https?:\/\/|www\.)\S+/i.test(v) || /\b[a-z0-9-]{2,}\.(com|net|org|in|io|co|me|app|link|tv|be)\b/i.test(v),
+    message: 'Remove the link — brands reach you through House of Collabs',
+  },
+  {
+    test: (v) => /\b(?:insta|instagram|ig|snap|snapchat|whatsapp|whatsap|wa|telegram|tg|yt|youtube)\b\s*(?:id|handle)?\s*[:\-–=]\s*\S{2,}/i.test(v),
+    message: 'Remove the social handle — brands reach you through House of Collabs',
+  },
+  {
+    test: (v) => (v.match(/[\d\s()+-]{10,}/g) ?? []).some((run) => { const n = (run.match(/\d/g) ?? []).length; return n >= 10 && n <= 13 }),
+    message: 'Remove the phone number — brands reach you through House of Collabs',
+  },
+]
+
+function rejectContactDetails(value: string, ctx: z.RefinementCtx) {
+  const hit = CONTACT_RULES.find((rule) => rule.test(value))
+  if (hit) ctx.addIssue({ code: 'custom', message: hit.message })
+}
+
+/** Free text a brand will read: length-capped, and with no contact details in it. */
+const text = (max: number) =>
+  z.string().trim().max(max, `Use ${formatNumber(max)} characters or fewer`).superRefine(rejectContactDetails)
 
 /** Strips thousands separators / spaces users commonly type in numbers. */
 const clean = (value: string) => value.replace(/[,\s_]/g, '')
@@ -82,7 +131,16 @@ const httpsUrl = (required: boolean) =>
 export const basicInfoSchema = z.object({
   profile_image_url: z.string().nullable(),
   cover_image_url: z.string().nullable(),
-  display_name: z.string().trim().min(2, 'Use at least 2 characters').max(80, 'Use 80 characters or fewer'),
+  // Same rule as the application form. Without it here, a creator could be
+  // approved under their real name and then rename the storefront to a handle
+  // or a link from their own dashboard, which is the thing the rule exists to
+  // prevent. See `PERSON_NAME_RE` in schemas/creator-application.ts.
+  display_name: z
+    .string()
+    .trim()
+    .min(2, 'Use at least 2 characters')
+    .max(80, 'Use 80 characters or fewer')
+    .regex(/^[\p{L}][\p{L}\p{M}\s'-]*$/u, 'Use letters only — no numbers, symbols or links'),
   headline: text(120),
   bio: text(1500),
   gender: z
@@ -169,7 +227,7 @@ export const INCLUDE_MAX_ITEMS = 12
 export const INCLUDE_MAX_LENGTH = 80
 
 export const serviceSchema = z.object({
-  title: z.string().trim().min(3, 'Use at least 3 characters').max(100, 'Use 100 characters or fewer'),
+  title: z.string().trim().min(3, 'Use at least 3 characters').max(100, 'Use 100 characters or fewer').superRefine(rejectContactDetails),
   description: text(2000),
   price: money(100, 10_000_000, 'Set a price'),
   delivery_days: wholeNumber(1, 90, { required: 'Set a delivery time', range: 'Delivery must be between 1 and 90 days' }),
@@ -178,7 +236,7 @@ export const serviceSchema = z.object({
   platform: optionalPlatform,
   requires_shipping: z.boolean(),
   includes: z
-    .array(z.string().trim().min(1).max(INCLUDE_MAX_LENGTH))
+    .array(z.string().trim().min(1).max(INCLUDE_MAX_LENGTH).superRefine(rejectContactDetails))
     .max(INCLUDE_MAX_ITEMS, `Add up to ${INCLUDE_MAX_ITEMS} items`),
   active: z.boolean(),
 })
@@ -190,7 +248,7 @@ export function makeAddonSchema(serviceDeliveryDays: number) {
   return z
     .object({
       addon_type: z.string().min(1, 'Choose a type').pipe(z.enum(ADDON_TYPE_VALUES)),
-      name: z.string().trim().min(2, 'Use at least 2 characters').max(80, 'Use 80 characters or fewer'),
+      name: z.string().trim().min(2, 'Use at least 2 characters').max(80, 'Use 80 characters or fewer').superRefine(rejectContactDetails),
       description: text(500),
       price: money(0, 10_000_000, 'Set a price (use 0 for free)'),
       extra_revisions: wholeNumber(0, 10, { required: 'Enter a number of revisions', range: 'Choose between 0 and 10 revisions' }),

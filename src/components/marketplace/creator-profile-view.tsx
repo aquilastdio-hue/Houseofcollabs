@@ -19,7 +19,6 @@ import {
   PROFILE_SECTIONS,
   firstName,
   profileCategories,
-  safeExternalUrl,
   scrollToSection,
   visiblePortfolio,
   visibleServices,
@@ -121,7 +120,6 @@ function ProfileSeo({ creator, mode }: { creator: CreatorProfile; mode: ProfileM
     (creator.headline || creator.bio || `Hire ${creator.display_name} on House of Collabs — fixed prices, clear delivery times and secure payments.`).replace(/\s+/g, ' ').trim(),
     160,
   )
-  const sameAs = creator.creator_social_accounts.map((s) => safeExternalUrl(s.profile_url)).filter((u): u is string => !!u)
   return (
     <Seo
       title={title}
@@ -144,7 +142,8 @@ function ProfileSeo({ creator, mode }: { creator: CreatorProfile; mode: ProfileM
             addressRegion: creator.state ?? undefined,
             addressCountry: creator.country,
           },
-          sameAs: sameAs.length > 0 ? sameAs : undefined,
+          // No `sameAs`: it published the creator's social URLs into the page
+          // source for search engines, which is the handle leaking by another route.
         },
       }}
     />

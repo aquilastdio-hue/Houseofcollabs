@@ -1,4 +1,4 @@
-import { format, formatDistanceToNowStrict, isToday, isYesterday, differenceInCalendarDays } from 'date-fns'
+import { format, formatDistanceToNowStrict } from 'date-fns'
 
 const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
 const inrPrecise = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -47,16 +47,6 @@ export function formatRelative(value: string | Date | null | undefined) {
   const diff = Date.now() - d.getTime()
   if (diff < 45_000 && diff > -45_000) return 'just now'
   return formatDistanceToNowStrict(d, { addSuffix: true })
-}
-
-/** Chat-style timestamp: 4:05 PM · Yesterday · 12 Mar */
-export function formatChatTime(value: string | Date | null | undefined) {
-  const d = toDate(value)
-  if (!d) return ''
-  if (isToday(d)) return format(d, 'h:mm a')
-  if (isYesterday(d)) return 'Yesterday'
-  if (differenceInCalendarDays(new Date(), d) < 7) return format(d, 'EEE')
-  return format(d, 'd MMM')
 }
 
 export function formatDays(days: number | null | undefined) {

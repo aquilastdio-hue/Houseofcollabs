@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/states'
 import { ServiceCard } from '@/components/creator/service-card'
+import { useHoverPlay } from '@/hooks/use-hover-play'
 import { protectedVideoProps } from '@/lib/video'
 import { PortfolioGrid } from '@/components/creator/portfolio-grid'
 import { useCreatorAccess, WithReason } from './creator-actions'
@@ -190,6 +191,7 @@ export function ServicesSection({ creator }: { creator: CreatorProfile }) {
 type Detail = { icon: LucideIcon; label: string; value: string }
 
 export function AboutSection({ creator }: { creator: CreatorProfile }) {
+  const introVideo = useHoverPlay({ resetOnLeave: false })
   const name = firstName(creator.display_name)
   const languages = profileLanguages(creator)
   const response = labelFor(RESPONSE_TIMES, creator.response_time)
@@ -214,6 +216,11 @@ export function AboutSection({ creator }: { creator: CreatorProfile }) {
 
       {isVideoUrl(creator.intro_video_url) && (
         <video
+          // Plays on hover, or on a press-and-hold by touch. It keeps its
+          // place rather than rewinding, so this behaves like a player the
+          // pointer happens to be steering, not a preview that resets.
+          {...introVideo.videoProps}
+          {...introVideo.hoverProps}
           src={creator.intro_video_url ?? undefined}
           controls
           {...protectedVideoProps}

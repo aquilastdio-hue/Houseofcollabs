@@ -5,7 +5,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase/client'
 import { qk } from '@/lib/query-keys'
 import { getMyProfile } from '@/services/profile.service'
 import { getMyBrand } from '@/services/brands.service'
-import { getMyCreator, type CreatorProfile } from '@/services/creators.service'
+import { getMyCreator, type CreatorOwnProfile } from '@/services/creators.service'
 import { signOut as signOutService } from '@/services/auth.service'
 import type { Brand, Profile, UserRole } from '@/types'
 
@@ -19,7 +19,7 @@ type AuthContextValue = {
   role: UserRole | null
   isAdmin: boolean
   brand: Brand | null
-  creator: CreatorProfile | null
+  creator: CreatorOwnProfile | null
   /** True while role-specific records (brand / creator) are loading. */
   accountLoading: boolean
   recoveryMode: boolean

@@ -82,7 +82,38 @@ export async function searchCreators(p: CreatorSearchParams): Promise<{ items: C
 // ---------------------------------------------------------------------------
 // Storefront (public profile) — RLS hides inactive services / hidden portfolio
 // ---------------------------------------------------------------------------
+/**
+ * The storefront shows reach, not an address.
+ *
+ * `creator_social_accounts` is absent entirely. The page dropped the per-
+ * platform chip -- the aggregate follower count on the creator row is the
+ * number a brand is judging -- and with nothing left to render, fetching the
+ * rows would only put handles and profile URLs in a payload anyone can read
+ * from the network tab. Admin and the creator's own studio have their own
+ * queries and keep them.
+ *
+ * Note this is a PostgREST select string parsed by supabase-js at the type
+ * level -- it takes no comments, hence this one living out here.
+ */
 const PROFILE_SELECT = `
+  *,
+  creator_type_info:creator_types ( slug, name ),
+  creator_categories ( is_primary, category:categories ( id, name, slug, icon, color ) ),
+  creator_languages ( id, language ),
+  creator_services ( *, service_addons ( * ) ),
+  portfolio_items ( * )
+`
+
+/**
+ * The owner's own view, which does include the handle: a creator has to be
+ * able to read and edit the account they added. Only ever fetched for the
+ * signed-in creator themselves.
+ *
+ * Written out in full rather than derived from PROFILE_SELECT, because
+ * supabase-js parses this string at the type level and a value it cannot read
+ * statically collapses the whole profile type to an error.
+ */
+const OWNER_PROFILE_SELECT = `
   *,
   creator_type_info:creator_types ( slug, name ),
   creator_categories ( is_primary, category:categories ( id, name, slug, icon, color ) ),
@@ -150,8 +181,18 @@ export async function recordProfileView(creatorId: string) {
 // ---------------------------------------------------------------------------
 // Owner (creator) editing
 // ---------------------------------------------------------------------------
-export async function getMyCreator(userId: string): Promise<CreatorProfile | null> {
-  return unwrap(await profileQuery().eq('profile_id', userId).maybeSingle())
+const ownerProfileQuery = () =>
+  supabase
+    .from('creators')
+    .select(OWNER_PROFILE_SELECT)
+    .order('sort_order', { referencedTable: 'creator_services' })
+    .order('sort_order', { referencedTable: 'portfolio_items' })
+    .order('created_at', { referencedTable: 'portfolio_items' })
+
+export type CreatorOwnProfile = QueryData<ReturnType<typeof ownerProfileQuery>>[number]
+
+export async function getMyCreator(userId: string): Promise<CreatorOwnProfile | null> {
+  return unwrap(await ownerProfileQuery().eq('profile_id', userId).maybeSingle())
 }
 
 export type CreatorEditable = Pick<

@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge'
 import { SmartImage } from '@/components/shared/smart-image'
 import { ServiceCard } from '@/components/creator/service-card'
 import { PortfolioGrid } from '@/components/creator/portfolio-grid'
-import { PlatformIcon, platformLabel } from './platform'
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -117,20 +116,6 @@ export function StorefrontPreview({ creator, className }: { creator: CreatorProf
           </div>
         )}
 
-        {creator.creator_social_accounts.length > 0 && (
-          <ul className="mt-5 flex flex-wrap gap-2" aria-label="Social accounts">
-            {creator.creator_social_accounts.map((a) => (
-              <li key={a.id} className="inline-flex items-center gap-2 rounded-pill border border-line py-1 pr-3 pl-1 text-sm">
-                <PlatformIcon platform={a.platform} className="size-7" />
-                <span className="font-medium">@{a.username}</span>
-                <span className="text-muted">
-                  {formatCompact(a.followers_count)}
-                  <span className="sr-only"> followers on {platformLabel(a.platform)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
       <section className="border-t border-line px-5 py-6 sm:px-8" aria-label="Services">

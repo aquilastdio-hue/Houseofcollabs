@@ -1,5 +1,5 @@
 import { Link, ScrollRestoration } from 'react-router'
-import { FileText, Heart, Home, MessageSquare, Package, Search, X } from 'lucide-react'
+import { FileText, Heart, Home, Package, Search, X } from 'lucide-react'
 import { TopNavShell, type NavItem } from '@/components/layout/app-shell'
 import { useCompare } from '@/contexts/compare-context'
 import { Avatar } from '@/components/ui/avatar'
@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 const items: NavItem[] = [
   { label: 'Creators', href: '/brand/creators', icon: Search },
   { label: 'Orders', href: '/brand/orders', icon: Package },
-  { label: 'Messages', href: '/brand/messages', icon: MessageSquare, counter: 'messages' },
   { label: 'Briefs', href: '/brand/briefs', icon: FileText },
   { label: 'Wishlists', href: '/brand/wishlists', icon: Heart },
 ]
@@ -17,7 +16,6 @@ const mobileTabs: NavItem[] = [
   { label: 'Home', href: '/brand', icon: Home, end: true },
   { label: 'Creators', href: '/brand/creators', icon: Search },
   { label: 'Orders', href: '/brand/orders', icon: Package },
-  { label: 'Messages', href: '/brand/messages', icon: MessageSquare, counter: 'messages' },
   { label: 'Briefs', href: '/brand/briefs', icon: FileText },
 ]
 

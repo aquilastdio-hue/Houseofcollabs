@@ -21,7 +21,6 @@ import { CreatorCard, CreatorCardSkeleton } from '@/components/marketplace/creat
 import { BrandMissing } from '@/components/brand/brand-missing'
 import { DashboardPanel, OrderListSkeleton } from '@/components/brand/dashboard-panel'
 import { PendingActionsPanel } from '@/components/brand/pending-actions'
-import { RecentMessagesPanel } from '@/components/brand/recent-messages'
 import { SmartSearchHero } from '@/components/brand/smart-search-hero'
 import { useBrandDashboardStats } from '@/components/brand/use-brand-stats'
 import { WishlistsPanel } from '@/components/brand/wishlists-panel'
@@ -88,8 +87,7 @@ function BrandDashboard({ brand }: { brand: Brand }) {
             <ActiveCollaborations brandId={brand.id} />
             <RecentOrders brandId={brand.id} />
           </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:col-span-4 xl:grid-cols-1">
-            <RecentMessagesPanel />
+          <div className="xl:col-span-4">
             <WishlistsPanel />
           </div>
         </div>

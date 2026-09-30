@@ -19,7 +19,7 @@ export function ownerPath(userId: string, fileName: string) {
   return `${userId}/${uuid()}.${ext}`
 }
 
-/** `{scopeId}/[sub/]{uuid}-{safe-name}` — brief / order / conversation scoped buckets. */
+/** `{scopeId}/[sub/]{uuid}-{safe-name}` — brief / order scoped buckets. */
 export function scopedPath(scopeId: string, fileName: string, sub?: string) {
   return `${scopeId}/${sub ? `${sub}/` : ''}${uuid().slice(0, 8)}-${sanitizeFileName(fileName)}`
 }

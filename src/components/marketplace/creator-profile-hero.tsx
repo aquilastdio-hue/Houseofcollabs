@@ -3,15 +3,14 @@ import { Link } from 'react-router'
 import { BadgeCheck, Languages, MapPin, Timer, UserRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCompact, formatDays, formatLocation, formatNumber } from '@/lib/format'
-import { PLATFORMS, RESPONSE_TIMES, labelFor } from '@/lib/constants'
+import { RESPONSE_TIMES, labelFor } from '@/lib/constants'
 import type { CreatorProfile } from '@/services/creators.service'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { SmartImage } from '@/components/shared/smart-image'
 import { RatingLabel } from '@/components/shared/star-rating'
 import { CategoryIcon } from './category-icon'
-import { PlatformIcon } from './platform-icon'
-import { coverImageOf, handleOf, profileCategories, profileLanguages, safeExternalUrl, type ProfileMode } from './profile-utils'
+import { coverImageOf, profileCategories, profileLanguages, type ProfileMode } from './profile-utils'
 
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -25,7 +24,6 @@ function Stat({ label, children }: { label: string; children: React.ReactNode })
 export function CreatorProfileHero({ creator, mode, actions }: { creator: CreatorProfile; mode: ProfileMode; actions?: React.ReactNode }) {
   const categories = profileCategories(creator)
   const languages = profileLanguages(creator)
-  const socials = [...creator.creator_social_accounts].sort((a, b) => b.followers_count - a.followers_count)
   const response = labelFor(RESPONSE_TIMES, creator.response_time)
   const categoryHref = (slug: string) => (mode === 'brand' ? `/brand/creators?category=${encodeURIComponent(slug)}` : `/categories/${slug}`)
 
@@ -108,42 +106,6 @@ export function CreatorProfileHero({ creator, mode, actions }: { creator: Creato
         <Stat label="Orders completed">{formatNumber(creator.completed_orders)}</Stat>
         <Stat label="Fastest delivery">{creator.fastest_delivery_days != null ? formatDays(creator.fastest_delivery_days) : '—'}</Stat>
       </dl>
-
-      {socials.length > 0 && (
-        <ul aria-label="Social accounts" className="mt-4 flex flex-wrap gap-2">
-          {socials.map((s) => {
-            const url = safeExternalUrl(s.profile_url)
-            const platform = labelFor(PLATFORMS, s.platform)
-            const inner = (
-              <>
-                <PlatformIcon platform={s.platform} />
-                <span className="font-medium text-ink">{handleOf(s.username)}</span>
-                <span className="text-muted">{formatCompact(s.followers_count)}</span>
-                {s.verified && <BadgeCheck role="img" aria-label="Verified account" className="size-3.5 fill-brand text-ink" />}
-              </>
-            )
-            const chip = 'inline-flex h-9 max-w-full items-center gap-2 rounded-pill border border-line bg-surface px-3.5 text-sm'
-            return (
-              <li key={s.id}>
-                {url ? (
-                  <a href={url} target="_blank" rel="noopener noreferrer nofollow" className={cn(chip, 'focus-ring transition-colors hover:border-line-strong')}>
-                    {inner}
-                    <span className="sr-only">
-                      {' '}
-                      on {platform}, {formatCompact(s.followers_count)} followers (opens in a new tab)
-                    </span>
-                  </a>
-                ) : (
-                  <span className={chip}>
-                    {inner}
-                    <span className="sr-only"> on {platform}</span>
-                  </span>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      )}
 
       {actions}
     </header>

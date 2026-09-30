@@ -44,9 +44,6 @@ export type OrderStatusHistory = Tables<'order_status_history'>
 export type OrderDeliverable = Tables<'order_deliverables'>
 export type OrderRevision = Tables<'order_revisions'>
 export type ShippingDetails = Tables<'shipping_details'>
-export type Conversation = Tables<'conversations'>
-export type ConversationParticipant = Tables<'conversation_participants'>
-export type Message = Tables<'messages'>
 export type Wishlist = Tables<'wishlists'>
 export type WishlistItem = Tables<'wishlist_items'>
 export type CreatorEarning = Tables<'creator_earnings'>
@@ -69,7 +66,6 @@ export type PayoutMethod = Omit<Tables<'payout_methods'>, 'bank_account_number'>
 
 // ---- RPC result rows ---------------------------------------------------------
 export type CreatorCard = Fn<'search_creators'>['Returns'][number]
-export type ConversationSummary = Fn<'get_my_conversations'>['Returns'][number]
 export type PublicReview = Fn<'get_creator_reviews'>['Returns'][number]
 export type AdminCreatorRow = Fn<'admin_list_creators'>['Returns'][number]
 export type AdminBrandRow = Fn<'admin_list_brands'>['Returns'][number]
@@ -123,8 +119,6 @@ export type CreatorDashboardStats = {
   profile_views_30d: number
   profile_views_prev_30d: number
   wishlist_adds: number
-  conversations: number
-  unread_messages: number
   orders_total: number
   orders_pending_acceptance: number
   orders_active: number
@@ -155,7 +149,6 @@ export type BrandDashboardStats = {
     draft_briefs: number
     reviews_due: number
   }
-  unread_messages: number
   wishlisted_creators: number
 }
 

@@ -1,20 +1,17 @@
 import * as React from 'react'
-import { Link, useNavigate } from 'react-router'
-import { useMutation } from '@tanstack/react-query'
-import { Clock3, GitCompareArrows, MessageSquare, Timer } from 'lucide-react'
+import { Clock3, GitCompareArrows, Timer } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDays, formatINR } from '@/lib/format'
 import { RESPONSE_TIMES, labelFor } from '@/lib/constants'
 import { useAuth } from '@/contexts/auth-context'
 import { useCompare } from '@/contexts/compare-context'
-import { startConversation } from '@/services/messages.service'
 import type { CreatorProfile } from '@/services/creators.service'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { Tooltip } from '@/components/ui/tooltip'
 import { SaveButton } from './save-button'
 import { ReportButton } from './report-dialog'
 import { SendBriefButton } from './send-brief-dialog'
-import { firstName, isListed, scrollToSection, signInHref, type ProfileMode } from './profile-utils'
+import { firstName, isListed, scrollToSection, type ProfileMode } from './profile-utils'
 
 /**
  * What the current viewer may do on a creator profile. Security lives in the
@@ -32,7 +29,7 @@ export function useCreatorAccess(creator: CreatorProfile) {
     if (profileLoading) blocked = 'Loading your account…'
     else if (isOwner) blocked = 'This is your own storefront.'
     else if (!role) blocked = 'Finish setting up your account to hire creators.'
-    else if (!isBrand) blocked = 'Only brand accounts can hire or message creators.'
+    else if (!isBrand) blocked = 'Only brand accounts can hire creators.'
     else if (!listed) blocked = `${name}’s storefront isn’t live right now.`
   }
   const hireBlocked = blocked ?? (!creator.available || !listed ? `${name} isn’t taking new orders right now.` : null)
@@ -67,39 +64,6 @@ export function WithReason({ reason, className, children }: { reason: string; cl
 }
 
 type ActionButtonProps = { creator: CreatorProfile; size?: ButtonProps['size']; block?: boolean; className?: string }
-
-export function MessageButton({ creator, size, block, className }: ActionButtonProps) {
-  const access = useCreatorAccess(creator)
-  const navigate = useNavigate()
-  const start = useMutation({
-    mutationFn: () => startConversation({ creatorId: creator.id }),
-    onSuccess: (conversationId) => navigate(`/brand/messages/${conversationId}`),
-  })
-
-  if (!access.signedIn) {
-    return (
-      <Button asChild variant="secondary" size={size} block={block} className={className}>
-        <Link to={signInHref(`/brand/creators/${creator.id}`)}>
-          <MessageSquare /> Message
-        </Link>
-      </Button>
-    )
-  }
-  if (access.blocked) {
-    return (
-      <WithReason reason={access.blocked} className={cn(block && 'w-full')}>
-        <Button variant="secondary" size={size} block={block} className={className} disabled>
-          <MessageSquare /> Message
-        </Button>
-      </WithReason>
-    )
-  }
-  return (
-    <Button variant="secondary" size={size} block={block} className={className} loading={start.isPending} onClick={() => start.mutate()}>
-      {!start.isPending && <MessageSquare />} Message
-    </Button>
-  )
-}
 
 /** Jumps to the services list, where each package has its own hire button. */
 export function HireButton({ creator, size, block, className }: ActionButtonProps) {
@@ -164,7 +128,6 @@ export function CreatorActionCard({ creator }: { creator: CreatorProfile }) {
 
       <div className="mt-5 flex flex-col gap-2">
         <HireButton creator={creator} size="lg" block />
-        <MessageButton creator={creator} block />
         {(access.canSave || access.brandTools) && (
           <div className={cn('grid gap-2', access.brandTools && 'grid-cols-2')}>
             {access.canSave && <SaveButton creatorId={creator.id} variant="button" className="w-full" />}
@@ -218,7 +181,6 @@ export function CreatorMobileBar({ creator, mode }: { creator: CreatorProfile; m
           <p className="text-xs text-muted">Starting at</p>
           <StartingPrice creator={creator} className="truncate text-lg" />
         </div>
-        <MessageButton creator={creator} />
         <HireButton creator={creator} />
       </div>
     </div>

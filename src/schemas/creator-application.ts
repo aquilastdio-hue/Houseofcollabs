@@ -28,8 +28,7 @@ export const MAX_PHOTOS = 10
  * the exception — it has no rate, so it keeps an explicit answer.
  */
 export const COLLABORATIONS = [
-  { key: 'ugc_video', label: 'UGC video + 30-day usage' },
-  { key: 'extra_usage', label: 'Extra 30-day usage' },
+  { key: 'ugc_video', label: 'UGC video' },
   { key: 'collab_reel', label: 'Collaborative reel' },
   { key: 'static_carousel', label: 'Static / carousel post' },
   { key: 'story', label: 'Instagram story' },
@@ -37,6 +36,20 @@ export const COLLABORATIONS = [
 ] as const
 
 export type CollaborationKey = (typeof COLLABORATIONS)[number]['key']
+
+/**
+ * Page 4 -- how far a creator will go for a shoot.
+ *
+ * One answer, not several: the three widen outwards, so "out of country"
+ * already says they would travel within it. Everyone can shoot in their own
+ * city, which is why this can be asked of every applicant rather than needing
+ * a "doesn't travel" escape hatch.
+ */
+export const TRAVEL_SCOPES = [
+  { value: 'within_city', label: 'Within city' },
+  { value: 'within_country', label: 'Within country' },
+  { value: 'out_of_country', label: 'Out of country' },
+] as const
 
 export const BARTER_STANCES = [
   { value: 'yes', label: 'Yes' },
@@ -71,10 +84,35 @@ const link = z
   .trim()
   .refine((v) => v === '' || HTTPS_RE.test(v), 'Use a full link starting with https://')
 
+/**
+ * A person's name: letters, spaces, hyphens and apostrophes.
+ *
+ * This is the field the storefront is titled with, and people were filling it
+ * with handles and, in one case, a full instagram.com URL with a tracking
+ * parameter — which then appeared on the public creators page where a name
+ * belongs. Rejecting digits and punctuation makes a handle or a link
+ * impossible to submit here.
+ *
+ * Hyphens and apostrophes stay: plenty of real names need them, and blocking
+ * those to catch handles would turn a nuisance into a barrier.
+ *
+ * `\p{L}` accepts letters from any script, and `\p{M}` is there because it has
+ * to be: a Devanagari vowel sign is a combining mark, not a letter, so letters
+ * alone rejected "आयशा शर्मा" — a real name on a marketplace whose creators are
+ * mostly in India. Marks can't lead, which is why the first character is `\p{L}`.
+ */
+const PERSON_NAME_RE = /^[\p{L}][\p{L}\p{M}\s'-]*$/u
+const NAME_MESSAGE = 'Use letters only — no numbers, symbols or links'
+
 export const creatorApplicationSchema = z
   .object({
     // ---- page 1 · basic details -------------------------------------------
-    full_name: z.string().trim().min(2, 'Enter your name').max(120, 'Use 120 characters or fewer'),
+    full_name: z
+      .string()
+      .trim()
+      .min(2, 'Enter your name')
+      .max(120, 'Use 120 characters or fewer')
+      .regex(PERSON_NAME_RE, NAME_MESSAGE),
     creator_name: z.string().trim().min(2, 'Enter the name brands know you by').max(80, 'Use 80 characters or fewer'),
     whatsapp: z
       .string()
@@ -103,7 +141,6 @@ export const creatorApplicationSchema = z
     // ---- page 4 · your commercials ----------------------------------------
     rates: z.object({
       ugc_video: amount,
-      extra_usage: amount,
       collab_reel: amount,
       static_carousel: amount,
       story: amount,
@@ -111,6 +148,7 @@ export const creatorApplicationSchema = z
     }),
     barter_available: z.boolean(),
     barter_stance: z.string(),
+    travel_scope: z.string(),
 
     // ---- page 5 · go live --------------------------------------------------
     open_to: z.array(z.string()),
@@ -139,6 +177,7 @@ export const creatorApplicationSchema = z
       need(['rates', 'ugc_video'], 'Add a rate for at least one collaboration, or offer barter')
     }
     if (v.barter_available && !v.barter_stance) need(['barter_stance'], 'Choose one')
+    if (!v.travel_scope) need(['travel_scope'], 'Choose one')
 
     // page 5 — the confirmation is the whole point of the page
     if (!v.confirmed) need(['confirmed'], 'Please confirm before creating your profile')
@@ -151,7 +190,7 @@ export const STEP_FIELDS = [
   ['full_name', 'creator_name', 'whatsapp', 'email', 'city', 'photo_path'],
   ['instagram', 'youtube', 'categories'],
   ['videos', 'photos'],
-  ['rates', 'barter_available', 'barter_stance'],
+  ['rates', 'barter_available', 'barter_stance', 'travel_scope'],
   ['open_to', 'confirmed'],
 ] as const
 
@@ -159,7 +198,11 @@ export const STEP_META = [
   { title: 'Create your profile', blurb: 'The basics brands need to know who you are and how to reach you.' },
   { title: 'Where can brands find you?', blurb: 'Your handles, your reach and the kind of content you make.' },
   { title: 'Show us your work', blurb: 'Upload your best content that you would like brands to see.' },
-  { title: 'What can you offer brands?', blurb: 'Set a starting commercial for what you offer, and leave the rest blank.' },
+  {
+    title: 'What can you offer brands?',
+    blurb:
+      'Set a starting commercial for what you offer, and leave the rest blank. Please keep your rates as competitive and reasonable as you can — it makes it far easier for brands to reach out.',
+  },
   { title: 'Almost there!', blurb: 'One last look before your profile goes in for review.' },
 ] as const
 
@@ -179,7 +222,6 @@ export const CREATOR_APPLICATION_DEFAULTS: CreatorApplicationValues = {
   photos: [],
   rates: {
     ugc_video: '',
-    extra_usage: '',
     collab_reel: '',
     static_carousel: '',
     story: '',
@@ -187,6 +229,7 @@ export const CREATOR_APPLICATION_DEFAULTS: CreatorApplicationValues = {
   },
   barter_available: false,
   barter_stance: '',
+  travel_scope: '',
   open_to: [],
   confirmed: false,
 }

@@ -10,7 +10,6 @@ import {
   Heart,
   IndianRupee,
   Megaphone,
-  MessageSquare,
   Package,
   PartyPopper,
   Pencil,
@@ -19,11 +18,10 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
-import { formatChatTime, formatDate, formatINR, formatNumber, formatPercent } from '@/lib/format'
+import { formatDate, formatINR, formatNumber, formatPercent } from '@/lib/format'
 import { ACTIVE_STATUSES, needsActionStatuses } from '@/lib/order-state'
 import { useAuth } from '@/contexts/auth-context'
 import { useOrders } from '@/hooks/use-orders'
-import { useConversations } from '@/hooks/use-messages'
 import { getCreatorDashboardStats } from '@/services/analytics.service'
 import { getEarningsSummary } from '@/services/earnings.service'
 import { listBriefs, type BriefListParams } from '@/services/briefs.service'
@@ -98,13 +96,6 @@ function StatsGrid() {
           hint={s ? (delta != null ? 'vs previous 30 days' : 'Last 30 days') : undefined}
         />
         <StatsCard label="Wishlist adds" icon={<Heart />} loading={loading} value={formatNumber(s?.wishlist_adds)} hint={s ? 'Brands that saved you' : undefined} />
-        <StatsCard
-          label="Unread messages"
-          icon={<MessageSquare />}
-          loading={loading}
-          value={formatNumber(s?.unread_messages)}
-          hint={s ? `${formatNumber(s.conversations)} conversation${s.conversations === 1 ? '' : 's'}` : undefined}
-        />
         <StatsCard
           label="Active orders"
           icon={<Package />}
@@ -294,49 +285,6 @@ function BriefsPanel({ creatorId }: { creatorId: string }) {
   )
 }
 
-function MessagesPanel() {
-  const conversations = useConversations(false, '')
-  const items = (conversations.data ?? []).slice(0, 4)
-  return (
-    <Panel title="Recent messages" action={<ViewAll to="/creator/messages" label="Inbox" />}>
-      {conversations.isPending ? (
-        <ListSkeleton rows={3} itemClassName="h-12 rounded-control" />
-      ) : conversations.isError ? (
-        <ErrorState compact error={conversations.error} title="Couldn’t load messages" onRetry={() => void conversations.refetch()} />
-      ) : items.length === 0 ? (
-        <p className="flex items-center gap-2.5 text-sm text-muted">
-          <MessageSquare className="size-4 shrink-0" aria-hidden /> No conversations yet. Brands can message you from your storefront.
-        </p>
-      ) : (
-        <ul className="-mx-2 space-y-1">
-          {items.map((c) => (
-            <li key={c.id}>
-              <Link to={`/creator/messages/${c.id}`} className="focus-ring flex items-center gap-3 rounded-control p-2 transition-colors hover:bg-subtle">
-                <Avatar src={c.counterpart_avatar_url} name={c.counterpart_name} size="md" />
-                <div className="min-w-0 flex-1">
-                  <p className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-medium">{c.counterpart_name}</span>
-                    <span className="shrink-0 text-xs text-faint">{formatChatTime(c.last_message_at)}</span>
-                  </p>
-                  <p className={cn('truncate text-sm', c.unread_count > 0 ? 'font-medium text-ink' : 'text-muted')}>
-                    {c.last_message_preview || 'No messages yet'}
-                  </p>
-                </div>
-                {c.unread_count > 0 && (
-                  <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-pill bg-ink px-1.5 text-[0.6875rem] font-semibold text-brand">
-                    {c.unread_count > 99 ? '99+' : c.unread_count}
-                    <span className="sr-only"> unread</span>
-                  </span>
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Panel>
-  )
-}
-
 export default function Dashboard() {
   const { creator } = useAuth()
   const firstName = creator?.display_name.trim().split(/\s+/)[0]
@@ -406,7 +354,6 @@ function DashboardColumns({ creatorId }: { creatorId: string }) {
       <div className="min-w-0 space-y-6">
         <EarningsSnapshot />
         <BriefsPanel creatorId={creatorId} />
-        <MessagesPanel />
       </div>
     </div>
   )

@@ -118,12 +118,17 @@ export function CreatorCard({
           {creator.languages.length > 0 && <span className="truncate text-xs text-muted">{creator.languages.slice(0, 3).join(' · ')}</span>}
         </div>
         {creator.headline && <p className="line-clamp-2 text-sm text-ink-soft">{creator.headline}</p>}
-        <div className="flex items-center gap-4 text-sm text-muted">
-          <span className="inline-flex items-center gap-1" title="Followers">
-            <Users className="size-3.5" /> <span className="font-medium text-ink">{formatCompact(creator.followers_count)}</span>
+        {/* Two cards fit across a 375px phone, which leaves each about 166px.
+            Three stats do not fit on one line there: the row either clipped
+            the clock or dropped "2 d" onto a line of its own. `gap-x`/`gap-y`
+            with wrapping lets it fall to two tidy lines instead, and the gap
+            widens once there is room for all three side by side. */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted sm:gap-x-4">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap" title="Followers">
+            <Users className="size-3.5 shrink-0" /> <span className="font-medium text-ink">{formatCompact(creator.followers_count)}</span>
           </span>
-          <span className="inline-flex items-center gap-1" title="Rating">
-            <Star className="size-3.5 fill-ink text-ink" strokeWidth={0} />
+          <span className="inline-flex items-center gap-1 whitespace-nowrap" title="Rating">
+            <Star className="size-3.5 shrink-0 fill-ink text-ink" strokeWidth={0} />
             {creator.review_count > 0 ? (
               <>
                 <span className="font-medium text-ink">{Number(creator.rating).toFixed(1)}</span>({creator.review_count})
@@ -133,8 +138,8 @@ export function CreatorCard({
             )}
           </span>
           {creator.fastest_delivery_days != null && (
-            <span className="inline-flex items-center gap-1" title="Fastest delivery">
-              <Clock3 className="size-3.5" /> {formatDays(creator.fastest_delivery_days)}
+            <span className="inline-flex items-center gap-1 whitespace-nowrap" title="Fastest delivery">
+              <Clock3 className="size-3.5 shrink-0" /> {formatDays(creator.fastest_delivery_days)}
             </span>
           )}
         </div>
@@ -189,5 +194,13 @@ export function CreatorCardSkeleton() {
 }
 
 export function CreatorGrid({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn('grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 sm:gap-5', className)}>{children}</div>
+  // Two columns from the smallest phone up. A single column meant one card
+  // filled the screen and browsing 19 creators was 19 screens of scrolling —
+  // the grid is for comparing people, which needs more than one on screen.
+  // The gap tightens on narrow widths so two cards still have room to breathe.
+  return (
+    <div className={cn('grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5', className)}>
+      {children}
+    </div>
+  )
 }

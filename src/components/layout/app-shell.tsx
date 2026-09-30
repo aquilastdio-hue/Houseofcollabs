@@ -16,7 +16,7 @@ export type NavItem = {
   href: string
   icon: LucideIcon
   end?: boolean
-  counter?: 'messages' | 'notifications'
+  counter?: 'notifications'
 }
 
 export type NavSection = { title?: string; items: NavItem[] }

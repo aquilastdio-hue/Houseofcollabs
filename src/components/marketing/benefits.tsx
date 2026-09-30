@@ -71,8 +71,8 @@ const BRAND_BENEFITS: Benefit[] = [
   {
     icon: Inbox,
     tone: 'rose',
-    title: 'Everything in one inbox',
-    body: 'Briefs, files, feedback and order updates live in one thread per creator — instead of five apps and a spreadsheet.',
+    title: 'Everything on one order',
+    body: 'Briefs, files, feedback and status live on the order itself — instead of five apps and a spreadsheet.',
   },
 ]
 

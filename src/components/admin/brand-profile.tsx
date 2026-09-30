@@ -120,7 +120,7 @@ export function BrandAccountCard({ brand: b }: { brand: AdminBrandDetail }) {
         title={pending === 'suspend' ? `Suspend ${b.brand_name}?` : `Reactivate ${b.brand_name}?`}
         description={
           pending === 'suspend'
-            ? 'The brand can’t sign in to place orders, message creators or pay. Existing orders stay as they are.'
+            ? 'The brand can’t sign in to place orders, send briefs or pay. Existing orders stay as they are.'
             : 'The brand can sign in and use their workspace again.'
         }
         confirmLabel={pending === 'suspend' ? 'Suspend account' : 'Reactivate account'}

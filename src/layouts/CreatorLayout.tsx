@@ -4,7 +4,6 @@ import {
   FileText,
   Images,
   LayoutDashboard,
-  MessageSquare,
   Package,
   Settings,
   Tags,
@@ -20,7 +19,6 @@ const sections: NavSection[] = [
     items: [
       { label: 'Dashboard', href: '/creator', icon: LayoutDashboard, end: true },
       { label: 'Orders', href: '/creator/orders', icon: Package },
-      { label: 'Messages', href: '/creator/messages', icon: MessageSquare, counter: 'messages' },
       { label: 'Briefs', href: '/creator/briefs', icon: FileText },
     ],
   },

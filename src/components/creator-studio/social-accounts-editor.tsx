@@ -7,7 +7,7 @@ import { AtSign, BadgeCheck, ExternalLink, Pencil, Plus, Trash2, Users } from 'l
 import { toAppError } from '@/lib/errors'
 import { formatCompact, formatNumber } from '@/lib/format'
 import { PLATFORMS } from '@/lib/constants'
-import { addSocialAccount, deleteSocialAccount, updateSocialAccount, type CreatorProfile } from '@/services/creators.service'
+import { addSocialAccount, deleteSocialAccount, updateSocialAccount, type CreatorOwnProfile } from '@/services/creators.service'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -21,7 +21,7 @@ import { StudioSection } from './parts'
 import { PlatformIcon, platformLabel, profileUrlFor } from './platform'
 import { useStudioSync } from './use-studio'
 
-type SocialRow = CreatorProfile['creator_social_accounts'][number]
+type SocialRow = CreatorOwnProfile['creator_social_accounts'][number]
 
 function SocialAccountForm({ creatorId, account, onDone }: { creatorId: string; account: SocialRow | null; onDone: () => void }) {
   const sync = useStudioSync()
@@ -131,7 +131,7 @@ function SocialAccountForm({ creatorId, account, onDone }: { creatorId: string; 
  * The creator's social accounts. Total followers on the profile are computed
  * by the database from these rows; verification is admin-controlled.
  */
-export function SocialAccountsEditor({ creator, className }: { creator: CreatorProfile; className?: string }) {
+export function SocialAccountsEditor({ creator, className }: { creator: CreatorOwnProfile; className?: string }) {
   const sync = useStudioSync()
   const [editing, setEditing] = React.useState<{ account: SocialRow | null } | null>(null)
   const [deleting, setDeleting] = React.useState<SocialRow | null>(null)

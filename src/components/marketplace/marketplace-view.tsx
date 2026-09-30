@@ -266,7 +266,7 @@ function PublicInvite({ params }: { params: CreatorSearchParams }) {
         </span>
         <div>
           <p className="font-medium text-ink">Hiring creators for your brand?</p>
-          <p className="text-sm text-ink-soft">Create a free brand account to message creators, save shortlists and place orders with secure payments.</p>
+          <p className="text-sm text-ink-soft">Create a free brand account to send briefs, save shortlists and place orders with secure payments.</p>
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">

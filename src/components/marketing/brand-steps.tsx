@@ -16,8 +16,8 @@ const STEPS: DetailedStep[] = [
     icon: GitCompareArrows,
     tone: 'lilac',
     title: 'Compare',
-    body: 'Put storefronts side by side and weigh starting prices, turnaround, revisions, ratings and past work. Message a creator if you want to check fit first.',
-    points: ['Compare up to four creators at once', 'Chat before you commit'],
+    body: 'Put storefronts side by side and weigh starting prices, turnaround, revisions, ratings and past work. Send a brief if you want to check fit first.',
+    points: ['Compare up to four creators at once', 'Send a brief before you commit'],
   },
   {
     icon: ClipboardList,
@@ -31,7 +31,7 @@ const STEPS: DetailedStep[] = [
     tone: 'peach',
     title: 'Track',
     body: 'Once the creator accepts, the order shows a live status and due date. If the service needs your product, ship it with a tracking number from the order page.',
-    points: ['Status, due date and full history', 'Updates in your inbox and notifications'],
+    points: ['Status, due date and full history', 'Every update as a notification'],
   },
   {
     icon: PackageCheck,

@@ -14,7 +14,6 @@ import {
   Handshake,
   IndianRupee,
   Link2,
-  MessageSquare,
   Paperclip,
   Pencil,
   Send,
@@ -26,7 +25,6 @@ import { CONTENT_TYPES, PLATFORMS, labelFor } from '@/lib/constants'
 import { qk } from '@/lib/query-keys'
 import { useAuth } from '@/contexts/auth-context'
 import { deleteBrief, deleteBriefAttachment, getBrief, type BriefDetail as BriefRecord } from '@/services/briefs.service'
-import { startConversation } from '@/services/messages.service'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -126,19 +124,10 @@ function BriefView({ brief, perspective }: { brief: BriefRecord; perspective: Pe
   const canDelete = isOwner && status === 'draft'
   const canSend = isOwner && (status === 'draft' || status === 'rejected' || status === 'sent')
   const canHire = isOwner && status === 'accepted' && !!brief.creator_id
-  const canMessage = perspective === 'brand' ? isOwner && !!brief.creator_id : true
   const canRespond = isAssigned && status === 'sent'
   const listHref = `/${perspective}/briefs`
   const creatorName = brief.creator?.display_name ?? 'creator'
   const overdue = isBriefOverdue(brief.deadline, status)
-
-  const message = useMutation({
-    mutationFn: () => startConversation(perspective === 'brand' ? { creatorId: brief.creator_id ?? undefined } : { brandId: brief.brand_id }),
-    onSuccess: (conversationId) => {
-      void qc.invalidateQueries({ queryKey: qk.conversations.all })
-      navigate(`/${perspective}/messages/${conversationId}`)
-    },
-  })
 
   const remove = useMutation({
     mutationFn: async () => {
@@ -156,7 +145,7 @@ function BriefView({ brief, perspective }: { brief: BriefRecord; perspective: Pe
     },
   })
 
-  const hasActions = perspective === 'creator' || canHire || canSend || canMessage || canEdit || canDelete
+  const hasActions = canHire || canSend || canEdit || canDelete
   const sendLabel = status === 'rejected' ? 'Send to another creator' : status === 'sent' ? 'Send to someone else' : 'Send to creator'
 
   const actions =
@@ -174,11 +163,6 @@ function BriefView({ brief, perspective }: { brief: BriefRecord; perspective: Pe
             <Send /> {sendLabel}
           </Button>
         )}
-        {canMessage && (
-          <Button variant="secondary" loading={message.isPending} onClick={() => message.mutate()}>
-            {!message.isPending && <MessageSquare />} Message creator
-          </Button>
-        )}
         {canEdit && (
           <Button asChild variant="secondary">
             <Link to={`/brand/briefs/${brief.id}/edit`}>
@@ -192,11 +176,7 @@ function BriefView({ brief, perspective }: { brief: BriefRecord; perspective: Pe
           </Button>
         )}
       </>
-    ) : (
-      <Button variant="secondary" loading={message.isPending} onClick={() => message.mutate()}>
-        {!message.isPending && <MessageSquare />} Message brand
-      </Button>
-    )
+    ) : null
 
   const facts = [
     {

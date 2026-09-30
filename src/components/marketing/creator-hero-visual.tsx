@@ -18,7 +18,7 @@ const NOTES: Note[] = [
   {
     icon: MessageSquareText,
     title: 'Brief received',
-    body: 'Product notes, talking points and references are in your inbox.',
+    body: 'Product notes, talking points and references are all attached.',
     time: 'Mon',
     className: 'lg:translate-x-10 rotate-1',
     iconClass: 'bg-lilac-soft text-lilac',

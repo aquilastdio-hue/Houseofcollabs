@@ -235,7 +235,7 @@ function BriefForm({ brand, brief, userId }: { brand: Brand; brief?: BriefDetail
     brief?.status === 'sent'
       ? `Sent to ${who ?? 'a creator'}. They’ll see your changes as soon as you save.`
       : brief?.status === 'accepted'
-        ? `${who ?? 'The creator'} accepted this brief. They’ll see your changes as soon as you save — mention anything important in chat.`
+        ? `${who ?? 'The creator'} accepted this brief. They’ll see your changes as soon as you save, so put anything important in the brief itself.`
         : brief?.status === 'rejected'
           ? `${who ?? 'The creator'} declined this brief. Update it, then send it to another creator.`
           : null

@@ -22,12 +22,17 @@ const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : v == nul
 const list = (v: unknown): string[] => (Array.isArray(v) ? v.map(str).filter(Boolean) : [])
 
 const LABELS: Record<string, string> = {
-  ugc_video: 'UGC video + 30-day usage',
+  ugc_video: 'UGC video',
+  // Retired from the form. Kept here because this panel lists the figures an
+  // applicant actually submitted, and older applications still carry the key.
   extra_usage: 'Extra 30-day usage',
   collab_reel: 'Collaborative reel',
   static_carousel: 'Static / carousel post',
   story: 'Instagram story',
   youtube_integration: 'YouTube integration',
+  within_city: 'Within city',
+  within_country: 'Within country',
+  out_of_country: 'Out of country',
   pan_india: 'Pan India',
   specific: 'Specific cities',
   yes: 'Yes',
@@ -170,6 +175,7 @@ function CreatorSubmission({ row }: { row: ApplicationRow }) {
         )}
         {p.barter_available === true && <Line label="Barter">{label(str(p.barter_stance) || 'yes')}</Line>}
         {p.barter_available === false && offered.length > 0 && <Line label="Barter">No</Line>}
+        {str(p.travel_scope) && <Line label="Open to travel">{label(str(p.travel_scope))}</Line>}
       </Section>
 
       <Section title="Go live">

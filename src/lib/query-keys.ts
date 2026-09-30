@@ -37,12 +37,6 @@ export const qk = {
     quote: (serviceId: string, addonIds: string[]) => ['orders', 'quote', serviceId, addonIds] as const,
     dispute: (orderId: string) => ['orders', 'dispute', orderId] as const,
   },
-  conversations: {
-    all: ['conversations'] as const,
-    list: (archived: boolean, search: string) => ['conversations', 'list', archived, search] as const,
-    detail: (id: string) => ['conversations', 'detail', id] as const,
-  },
-  messages: (conversationId: string) => ['messages', conversationId] as const,
   notifications: {
     all: ['notifications'] as const,
     list: (params: unknown) => ['notifications', 'list', params] as const,

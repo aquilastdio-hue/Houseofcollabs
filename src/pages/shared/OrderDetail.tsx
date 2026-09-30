@@ -1,16 +1,13 @@
 import * as React from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { BadgeCheck, CalendarClock, ExternalLink, MessageSquare, Package, Volume2 } from 'lucide-react'
+import { BadgeCheck, CalendarClock, ExternalLink, Package, Volume2 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useOrder } from '@/hooks/use-orders'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatDateTime, formatDays, formatINR } from '@/lib/format'
 import { isOverdue } from '@/lib/order-state'
-import { toAppError } from '@/lib/errors'
 import { submitReview } from '@/services/orders.service'
-import { startConversation } from '@/services/messages.service'
 import { respondToReview } from '@/services/creators.service'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -79,11 +76,9 @@ function RespondToReview({ review, orderId }: { review: Review; orderId: string 
 
 export default function OrderDetail({ perspective }: { perspective: 'brand' | 'creator' }) {
   const { id } = useParams()
-  const navigate = useNavigate()
   const qc = useQueryClient()
   const { user } = useAuth()
   const query = useOrder(id)
-  const [chatLoading, setChatLoading] = React.useState(false)
 
   const review = useMutation({
     mutationFn: (v: { rating: number; comment: string }) => submitReview(id!, v.rating, v.comment),
@@ -137,18 +132,6 @@ export default function OrderDetail({ perspective }: { perspective: 'brand' | 'c
   const overdue = isOverdue(order.due_at, order.status)
   const briefAttachments = order.brief?.brief_attachments ?? []
 
-  const openChat = async () => {
-    setChatLoading(true)
-    try {
-      const convId = await startConversation(perspective === 'brand' ? { creatorId: order.creator_id } : { brandId: order.brand_id })
-      navigate(`/${perspective}/messages/${convId}`)
-    } catch (e) {
-      toast.error(toAppError(e).message)
-    } finally {
-      setChatLoading(false)
-    }
-  }
-
   return (
     <>
       <Seo title={`Order ${order.order_number}`} noindex />
@@ -176,9 +159,6 @@ export default function OrderDetail({ perspective }: { perspective: 'brand' | 'c
             )}
           </p>
         </div>
-        <Button variant="secondary" onClick={openChat} loading={chatLoading}>
-          <MessageSquare /> Message {perspective === 'brand' ? 'creator' : 'brand'}
-        </Button>
       </header>
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_22rem]">

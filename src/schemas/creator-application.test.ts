@@ -21,6 +21,7 @@ const complete = {
   videos: ['v1.mp4'],
   photos: ['p1.jpg'],
   rates: { ...CREATOR_APPLICATION_DEFAULTS.rates, ugc_video: '8000' },
+  travel_scope: 'within_country',
   confirmed: true,
 }
 
@@ -82,6 +83,15 @@ describe('creator sign-up schema', () => {
     expect(issues({ ...complete, barter_available: true, barter_stance: 'yes' })).toEqual([])
   })
 
+  it('asks every applicant how far they will travel', () => {
+    // Unlike barter this has no "no" answer, because shooting in your own city
+    // is something every creator can say yes to.
+    expect(issues({ ...complete, travel_scope: '' })).toContain('travel_scope')
+    for (const scope of ['within_city', 'within_country', 'out_of_country']) {
+      expect(issues({ ...complete, travel_scope: scope }), scope).toEqual([])
+    }
+  })
+
   it('will not create a profile without the confirmation', () => {
     expect(issues({ ...complete, confirmed: false })).toContain('confirmed')
   })
@@ -113,5 +123,49 @@ describe('creator sign-up schema', () => {
     for (const path of paths) {
       expect(owned.has(path.split('.')[0])).toBe(true)
     }
+  })
+})
+
+/**
+ * The name here titles the public storefront. People were filling it with
+ * handles — and one with a full instagram.com URL, tracking parameter and all
+ * — which then appeared on the creators page where a name belongs.
+ */
+describe('full_name rejects handles and links', () => {
+  const nameOf = (full_name: string) => creatorApplicationSchema.safeParse({ ...complete, full_name })
+
+  it('accepts ordinary names', () => {
+    for (const n of ['Aisha Sharma', 'Rohit Arora', 'Sonal Arora']) {
+      expect(nameOf(n).success, n).toBe(true)
+    }
+  })
+
+  it('accepts names that genuinely need punctuation', () => {
+    for (const n of ["Anne-Marie D'Souza", 'Jean-Luc Picard', "O'Brien"]) {
+      expect(nameOf(n).success, n).toBe(true)
+    }
+  })
+
+  it('accepts names outside the Latin alphabet', () => {
+    for (const n of ['आयशा शर्मा', 'Zoë Müller']) {
+      expect(nameOf(n).success, n).toBe(true)
+    }
+  })
+
+  it('rejects the handles and URLs that were getting through', () => {
+    for (const n of [
+      'https://instagram.com/rohit.arora.5030?igshid=YmMyMTA2M2Y=',
+      'Jhanvi.nischal_',
+      '@shilpsarora',
+      'Stylewith_mann',
+      'creator123',
+    ]) {
+      expect(nameOf(n).success, n).toBe(false)
+    }
+  })
+
+  it('still requires a name at all', () => {
+    expect(nameOf('').success).toBe(false)
+    expect(nameOf('A').success).toBe(false)
   })
 })

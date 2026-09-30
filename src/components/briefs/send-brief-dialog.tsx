@@ -48,7 +48,6 @@ function SendBriefBody({ brief, onDone }: { brief: SendableBrief; onDone: () => 
     },
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: qk.briefs.all })
-      void qc.invalidateQueries({ queryKey: qk.conversations.all })
       void qc.invalidateQueries({ queryKey: qk.dashboard.brand })
     },
   })
@@ -58,7 +57,7 @@ function SendBriefBody({ brief, onDone }: { brief: SendableBrief; onDone: () => 
       <DialogHeader>
         <DialogTitle>Send brief to a creator</DialogTitle>
         <DialogDescription>
-          “{brief.title}” — they’ll get a notification and can accept or decline. A chat thread opens so you can talk details.
+          “{brief.title}” — they’ll get a notification and can accept or decline.
         </DialogDescription>
       </DialogHeader>
       <DialogBody className="space-y-3">

@@ -81,7 +81,7 @@ export const refundPolicy: LegalBuilder = (t) => ({
             or something goes wrong:
           </p>
           <ul>
-            <li>talk to the creator in the order messages first — many issues are solved with a quick conversation or a revision;</li>
+            <li>ask for a revision from the order page first — many issues are solved by one;</li>
             <li>if you both agree the order shouldn’t continue, contact our support team and we’ll help cancel it fairly; or</li>
             <li>if you can’t agree, open a dispute from the order page.</li>
           </ul>
@@ -100,7 +100,7 @@ export const refundPolicy: LegalBuilder = (t) => ({
               .join(', ')}
             .
           </p>
-          <p>Our team reviews the brief, messages, files and order history, may ask both sides for more information, and then decides one of these outcomes:</p>
+          <p>Our team reviews the brief, the delivered files and the order history, may ask both sides for more information, and then decides one of these outcomes:</p>
           <ul>
             <li>
               <strong>Release to the creator</strong> — the work met the brief, and the order is completed.

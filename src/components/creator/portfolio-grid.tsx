@@ -1,6 +1,7 @@
 import * as React from 'react'
-import { ExternalLink, Film, Link2, Play } from 'lucide-react'
+import { ExternalLink, ImageOff, Link2, Play } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useHoverPlay } from '@/hooks/use-hover-play'
 import { protectedVideoProps } from '@/lib/video'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
@@ -11,37 +12,56 @@ type Item = Pick<PortfolioItem, 'id' | 'type' | 'title' | 'description' | 'media
 
 /** Single portfolio tile (image / video / external link). */
 export function MediaTile({ item, onOpen, className, children }: { item: Item; onOpen?: () => void; className?: string; children?: React.ReactNode }) {
-  const poster = item.type === 'image' ? item.media_url : item.thumbnail_url
-  const Icon = item.type === 'video' ? Film : Link2
-  // A video with no stored thumbnail still has a first frame, so let the
-  // browser draw it rather than showing a film icon on a blank tile — which is
-  // what every video copied across from an application looked like, since
-  // nothing generates a poster image for them.
-  //
-  // `#t=0.1` matters: asking for the very start often paints nothing, while
-  // nudging past zero makes the browser decode and hold a real frame.
-  const framePreview = item.type === 'video' && !item.thumbnail_url ? `${item.media_url}#t=0.1` : null
+  const isVideo = item.type === 'video'
+  const hover = useHoverPlay()
+  const Icon = item.type === 'link' ? Link2 : ImageOff
   return (
     <div className={cn('group relative overflow-hidden rounded-card border border-line bg-subtle', className)}>
-      <button type="button" onClick={onOpen} className="focus-ring block aspect-[4/5] w-full text-left" aria-label={`Open ${item.title ?? item.type}`}>
-        <SmartImage
-          src={poster}
-          alt={item.title ?? ''}
-          className="absolute inset-0 size-full"
-          imgClassName="transition-transform duration-700 ease-spring group-hover:scale-[1.04]"
-          fallback={
-            framePreview ? (
-              // `preload="metadata"` fetches the header and first frame only,
-              // not the whole file, so a grid of these stays cheap to load.
-              <video src={framePreview} preload="metadata" muted playsInline aria-hidden className="size-full object-cover" />
-            ) : (
+      <button
+        type="button"
+        onClick={onOpen}
+        // The video underneath takes no pointer events, so the hover handlers
+        // belong here — this button is the whole media surface.
+        {...hover.hoverProps}
+        className="focus-ring block aspect-[4/5] w-full text-left"
+        aria-label={`Open ${item.title ?? item.type}`}
+      >
+        {isVideo ? (
+          // One element does both jobs: the still the tile sits at, and the
+          // clip that plays under the pointer.
+          //
+          // `poster` is used when the item has a stored thumbnail. Almost none
+          // do — nothing generates one for a video copied across from an
+          // application — so `#t=0.1` covers the rest by asking the browser for
+          // a frame just past the start. Asking for zero often paints nothing.
+          //
+          // `preload="metadata"` fetches the header and that frame, not the
+          // whole file, so a grid of these stays cheap until one is hovered.
+          <video
+            {...hover.videoProps}
+            src={`${item.media_url}#t=0.1`}
+            poster={item.thumbnail_url ?? undefined}
+            preload="metadata"
+            muted
+            loop
+            playsInline
+            aria-hidden
+            className="pointer-events-none absolute inset-0 size-full object-cover"
+          />
+        ) : (
+          <SmartImage
+            src={item.type === 'image' ? item.media_url : item.thumbnail_url}
+            alt={item.title ?? ''}
+            className="absolute inset-0 size-full"
+            imgClassName="transition-transform duration-700 ease-spring group-hover:scale-[1.04]"
+            fallback={
               <div className="flex size-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-sand-soft to-lilac-soft p-4 text-center text-ink-soft">
                 <Icon className="size-6" />
-                <span className="line-clamp-2 text-sm font-medium">{item.title ?? (item.type === 'link' ? 'External link' : 'Video')}</span>
+                <span className="line-clamp-2 text-sm font-medium">{item.title ?? (item.type === 'link' ? 'External link' : 'Preview unavailable')}</span>
               </div>
-            )
-          }
-        />
+            }
+          />
+        )}
         {item.type !== 'image' && (
           <span className="absolute top-3 left-3">
             <Badge tone="glass" size="sm">

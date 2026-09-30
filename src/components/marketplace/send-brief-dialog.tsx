@@ -52,7 +52,6 @@ export function SendBriefDialog({ creator, open, onOpenChange }: { creator: Crea
     mutationFn: (briefId: string) => sendBrief(briefId, creator.id),
     onSuccess: (brief) => {
       void qc.invalidateQueries({ queryKey: qk.briefs.all })
-      void qc.invalidateQueries({ queryKey: qk.conversations.all })
       toast.success(`Brief sent to ${creator.display_name}`, {
         description: 'You’ll be notified when they accept or decline.',
         action: { label: 'View brief', onClick: () => navigate(`/brand/briefs/${brief.id}`) },

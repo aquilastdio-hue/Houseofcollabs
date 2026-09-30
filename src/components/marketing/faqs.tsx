@@ -82,8 +82,8 @@ export function homeFaqs(t: PlatformTerms): FaqItem[] {
       ),
     },
     {
-      q: 'Can brands talk to a creator before ordering?',
-      a: `Yes. With a free brand account you can message a creator or send them a brief to check fit before you order. Conversations stay in your ${site.name} inbox alongside every order.`,
+      q: 'Can brands check fit with a creator before ordering?',
+      a: `Yes. With a free brand account you can send a creator a brief describing the work, and they can accept or decline it. ${site.name} has no private messaging — every collaboration runs through briefs and orders, so the scope and the price are always on the record.`,
     },
   ]
 }
@@ -92,7 +92,7 @@ export function brandFaqs(t: PlatformTerms): FaqItem[] {
   return [
     {
       q: 'Do I need an account to browse creators?',
-      a: 'No. Anyone can search, filter and view storefronts. You’ll need a free brand account to message creators, save shortlists and place orders.',
+      a: 'No. Anyone can search, filter and view storefronts. You’ll need a free brand account to send briefs, save shortlists and place orders.',
     },
     {
       q: `What can I order on ${site.name}?`,

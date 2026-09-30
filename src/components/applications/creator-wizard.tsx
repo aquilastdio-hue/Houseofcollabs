@@ -9,7 +9,7 @@ import { toAppError } from '@/lib/errors'
 import { POPULAR_CITIES } from '@/lib/constants'
 import { submitApplication } from '@/services/applications.service'
 import {
-  BARTER_STANCES, COLLABORATIONS, CONFIRMATION, CREATOR_APPLICATION_DEFAULTS, CREATOR_CATEGORIES,
+  BARTER_STANCES, COLLABORATIONS, TRAVEL_SCOPES, CONFIRMATION, CREATOR_APPLICATION_DEFAULTS, CREATOR_CATEGORIES,
   MAX_CATEGORIES, MAX_PHOTOS, MAX_VIDEOS, OPEN_TO, STEP_FIELDS, STEP_META,
   SUBMITTED_COPY, TOTAL_STEPS, creatorApplicationSchema, type CreatorApplicationValues,
 } from '@/schemas/creator-application'
@@ -215,6 +215,16 @@ function Page4({ form }: { form: Form }) {
           )}
         />
       )}
+
+      <Controller
+        control={control}
+        name="travel_scope"
+        render={({ field, fieldState }) => (
+          <Field label="Open to travel" required error={fieldState.error?.message} className="border-t border-line pt-6">
+            <RadioRow value={field.value} onChange={field.onChange} options={TRAVEL_SCOPES} name="travel_scope" label="Open to travel" />
+          </Field>
+        )}
+      />
     </div>
   )
 }

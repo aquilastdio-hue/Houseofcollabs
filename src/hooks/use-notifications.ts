@@ -71,11 +71,6 @@ export function useRealtimeStreams(userId?: string) {
         void qc.invalidateQueries({ queryKey: qk.notifications.all })
         void qc.invalidateQueries({ queryKey: qk.unreadCounts })
       })
-      // RLS limits these events to conversations the user participates in.
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-        void qc.invalidateQueries({ queryKey: qk.conversations.all })
-        void qc.invalidateQueries({ queryKey: qk.unreadCounts })
-      })
       .subscribe()
     return () => {
       void supabase.removeChannel(channel)
