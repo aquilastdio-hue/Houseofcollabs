@@ -390,7 +390,7 @@ export default function Applications() {
       <PageHeader
         eyebrow="Accounts"
         title="Applications"
-        description="People who applied through Create your profile. Approving or rejecting takes them off this list — switch Status to see decided ones again."
+        description="People who applied through Create your profile. Approving takes someone off this list — rejected and reviewing stay, so you can see what was already decided."
       />
 
       <div className="space-y-6">
@@ -409,7 +409,7 @@ export default function Applications() {
           <FilterField label="Status" htmlFor="app-status">
             {/* The empty value is the queue, not "everything" — decided
                 applications are one pick away, never gone. */}
-            <Select id="app-status" size="sm" value={status} onValueChange={(v) => url.update({ status: v })} options={STATUS_OPTIONS} anyLabel="Awaiting decision" />
+            <Select id="app-status" size="sm" value={status} onValueChange={(v) => url.update({ status: v })} options={STATUS_OPTIONS} anyLabel="Not yet approved" />
           </FilterField>
           <FilterField label="Applying as" htmlFor="app-role">
             <Select id="app-role" size="sm" value={role} onValueChange={(v) => url.update({ role: v })} options={ROLE_OPTIONS} anyLabel="Everyone" />
@@ -429,8 +429,8 @@ export default function Applications() {
           empty={
             <EmptyState
               icon={<Inbox />}
-              title={filtered ? 'No applications match' : 'Nothing waiting'}
-              description={filtered ? 'Try a different filter.' : 'You’re all caught up. Anyone who applies shows up here, and decided ones stay under Status.'}
+              title={filtered ? 'No applications match' : 'Nothing to review'}
+              description={filtered ? 'Try a different filter.' : 'You’re all caught up. New applications show up here, and approved ones move out of the way — find them under Status.'}
               action={
                 filtered ? (
                   <Button variant="secondary" size="sm" onClick={() => url.update({ status: null, role: null, q: null })}>

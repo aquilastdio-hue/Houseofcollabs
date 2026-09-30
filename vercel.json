@@ -1,10 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build:site",
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/sitemap-creators.xml", "destination": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/sitemap" },
+    { "source": "/sitemap-creators.xml", "destination": "https://sxndiarrdfqiepnnczmy.supabase.co/functions/v1/sitemap" },
     { "source": "/((?!assets/|demo/|favicon.ico|apple-touch-icon.png|robots.txt|sitemap.xml|og-image.svg).*)", "destination": "/index.html" }
   ],
   "headers": [

@@ -484,36 +484,35 @@ supabase secrets set ...   # see above
 Then, in the dashboard: configure Google OAuth, set the Site URL, and add the
 Razorpay webhook.
 
-### Frontend — Netlify
+### Frontend — Vercel
 
-Always build with `npm run build:netlify`, never a bare `vite build`. The
-wrapper (`scripts/build-netlify.mjs`) regenerates the sitemap and — importantly
-— strips any `localhost` value of `VITE_SITE_URL`. Vite reads `.env.local` in
-every mode, so a plain production build otherwise bakes `http://localhost:5173`
-into the canonical and OpenGraph URLs.
+Always build with `npm run build:site`, never a bare `vite build`. The wrapper
+(`scripts/build-site.mjs`) regenerates the sitemap — it goes stale as creators
+are published — and strips any `localhost` value of `VITE_SITE_URL`. Vite reads
+`.env.local` in every mode, so a plain production build otherwise bakes
+`http://localhost:5173` into the canonical and OpenGraph URLs.
 
-**Connected to Git** — nothing to do; `netlify.toml` already sets the build
-command and passes Netlify's own `$URL` (or `$DEPLOY_PRIME_URL` on previews).
-Set two environment variables in Netlify → Site configuration:
+**Connected to Git** — nothing to do; `vercel.json` sets the build command, the
+SPA rewrites, the cache headers and the `/sitemap-creators.xml` proxy to the
+`sitemap` Edge Function. The wrapper picks up Vercel's own
+`VERCEL_PROJECT_PRODUCTION_URL` (or `VERCEL_URL` on previews), which arrive as
+bare hostnames and are given a scheme. Set two environment variables in
+Vercel → Settings → Environment Variables:
 
 ```
 VITE_SUPABASE_URL        https://YOUR_PROJECT_REF.supabase.co
 VITE_SUPABASE_ANON_KEY   sb_publishable_…   (or the legacy anon JWT)
 ```
 
-**Drag-and-drop** — Netlify only reads `netlify.toml` from a repo root, so a
-dropped `dist/` would lose every redirect and header. `public/_redirects` and
-`public/_headers` mirror them and Vite copies both into `dist/`, which keeps SPA
-routing and caching working. Build locally with the site URL so the sitemap is
-absolute:
+**Building locally** — pass the site URL so the sitemap is absolute:
 
 ```bash
-SITE_URL=https://your-site.netlify.app npm run build:netlify
+SITE_URL=https://your-site.com npm run build:site
 ```
 
-Then drag `dist/` (not the project folder) onto Netlify. Without `SITE_URL` the
-app still works — canonical links fall back to `window.location.origin` — but
-`sitemap.xml` and `robots.txt` keep the placeholder domain.
+Without `SITE_URL` the app still works — canonical links fall back to
+`window.location.origin` — but `sitemap.xml` and `robots.txt` keep the default
+domain.
 
 ### After the first deploy — point Supabase at the domain
 
@@ -527,7 +526,7 @@ broken until this is done**:
 2. Lock down Edge Function CORS, which currently falls back to `*`:
 
 ```bash
-supabase secrets set SITE_URL=https://your-site.netlify.app ALLOWED_ORIGINS=https://your-site.netlify.app
+supabase secrets set SITE_URL=https://your-site.com ALLOWED_ORIGINS=https://your-site.com,https://www.your-site.com
 ```
 
 ---

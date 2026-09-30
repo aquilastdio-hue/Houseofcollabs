@@ -14,7 +14,7 @@ services. A platform **admin** operates verification, payments, payouts, dispute
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│  Browser — React 19 + TypeScript + Vite SPA (Vercel / Netlify static host)   │
+│  Browser — React 19 + TypeScript + Vite SPA (Vercel static host)             │
 │                                                                              │
 │  pages ─► hooks (TanStack Query) ─► services ─► supabase-js client           │
 │                     ▲                               │  anon key + user JWT   │
@@ -95,7 +95,7 @@ The repository was empty — no existing code to preserve.
 ├── .env.example                    ← frontend env + Edge Function secret names
 ├── index.html
 ├── vite.config.ts · tsconfig*.json · vitest config
-├── vercel.json · netlify.toml      ← SPA rewrites, headers, sitemap rewrite
+├── vercel.json                     ← SPA rewrites, headers, sitemap rewrite
 ├── public/
 │   ├── robots.txt · sitemap.xml · favicon.svg · og-image.svg
 │   └── demo/                       ← generated, original demo artwork (avatars, portfolio, logos)

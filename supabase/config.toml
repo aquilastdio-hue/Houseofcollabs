@@ -160,7 +160,7 @@ enabled = true
 # further down. Pushing as-is would disable the live Brevo configuration.
 # Mirror SMTP here before ever running that command.
 #
-# These values had gone stale: they still named the old Netlify host while the
+# These values had gone stale: they still named an old host while the
 # live project had moved to the real domain, so a push would silently have
 # broken every invite and password-reset link. Kept in step deliberately.
 site_url = "https://houseofcollabs.com"
@@ -176,7 +176,6 @@ additional_redirect_urls = [
   # treats those as separate origins, so both have to be listed.
   "https://houseofcollabs.com/**",
   "https://www.houseofcollabs.com/**",
-  "https://housecoll.netlify.app/**",
   "http://localhost:5173/**",
   "http://127.0.0.1:5173/**",
 ]

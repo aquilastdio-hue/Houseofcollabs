@@ -1,6 +1,6 @@
 // Writes public/sitemap.xml (static marketing + category pages) and
 // public/robots.txt. Creator storefronts are served dynamically by the
-// `sitemap` Edge Function at /sitemap-creators.xml (see vercel.json / netlify.toml).
+// `sitemap` Edge Function at /sitemap-creators.xml (see vercel.json).
 //
 //   SITE_URL=https://your-domain.com node scripts/generate-sitemap.mjs
 import fs from 'node:fs'

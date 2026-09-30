@@ -19,7 +19,7 @@
     "gen:assets": "node scripts/generate-demo-assets.mjs",
     "gen:sitemap": "node scripts/generate-sitemap.mjs",
     "db:test": "node scripts/run-db-tests.mjs",
-    "build:netlify": "node scripts/build-netlify.mjs"
+    "build:site": "node scripts/build-site.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

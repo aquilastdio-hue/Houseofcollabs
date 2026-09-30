@@ -10,26 +10,34 @@ export type ApplicationRole = 'brand' | 'creator'
 export type ApplicationStatus = 'new' | 'reviewing' | 'approved' | 'rejected'
 
 /** Statuses that still need a decision from someone. */
-export const OPEN_STATUSES = ['new', 'reviewing'] as const
+/**
+ * What the list shows by default.
+ *
+ * Only approving takes an application off the list — that person now has an
+ * account, so the row's job is done and leaving it there would make the queue
+ * grow forever. Rejected stays: an admin needs to see who was turned down
+ * without hunting through a filter, and it is the answer to "did we already
+ * look at this person?" when they apply again.
+ */
+export const LISTED_STATUSES = ['new', 'reviewing', 'rejected'] as const
 
-/** What the Status filter can ask for. `''` is the queue, `'all'` is everything. */
+/** What the Status filter can ask for. `''` is the default list, `'all'` is everything. */
 export type StatusFilter = ApplicationStatus | 'all' | ''
 
 /**
  * Which statuses a filter should fetch; `null` means don't filter at all.
  *
- * The list is a queue, so approving or rejecting takes an application out of
- * it. That is a view decision, not a delete: the row has to survive, because
- * an approved application is what `private.claim_approved_application` looks
- * up to hand someone their role the first time they sign in with Google, and
- * what `set_initial_role` checks. Deleting it would lock out the very person
- * who was just approved. It is also the audit record of who decided what, so
- * "All statuses" still reaches it.
+ * Dropping the approved ones is a view decision, not a delete: the row has to
+ * survive, because an approved application is what
+ * `private.claim_approved_application` looks up to hand someone their role the
+ * first time they sign in with Google, and what `set_initial_role` checks.
+ * Deleting it would lock out the very person who was just approved. It is also
+ * the audit record of who decided what, so "All statuses" still reaches it.
  */
 export function statusesFor(filter: StatusFilter): readonly ApplicationStatus[] | null {
   if (filter === 'all') return null
   if (filter) return [filter]
-  return OPEN_STATUSES
+  return LISTED_STATUSES
 }
 
 /** Only the columns an applicant may set — the rest are server-owned. */
