@@ -132,11 +132,21 @@ function Page2({ form }: { form: Form }) {
 function Page3({ control }: { control: Control<CreatorApplicationValues> }) {
   return (
     <div className="space-y-6">
+      {/* The videos hint asks for brand work rather than just "a video": it is
+          what a brand scrolling the storefront is actually trying to judge, and
+          saying so up front beats reviewing a reel that shows nothing about how
+          someone handles a collaboration. Phrased as a preference, not a rule —
+          the field itself only requires a video. */}
       <Controller
         control={control}
         name="videos"
         render={({ field, fieldState }) => (
-          <Field label="Videos" required error={fieldState.error?.message} hint={`Up to ${MAX_VIDEOS}.`}>
+          <Field
+            label="Videos"
+            required
+            error={fieldState.error?.message}
+            hint={`If you can, include a brand collaboration or a video promoting a brand — that's what brands look for first. Up to ${MAX_VIDEOS}.`}
+          >
             <MultiFileDrop kind="video" value={field.value} onChange={field.onChange} max={MAX_VIDEOS} label="Add videos" />
           </Field>
         )}
