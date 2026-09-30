@@ -220,7 +220,11 @@ export function AboutSection({ creator }: { creator: CreatorProfile }) {
           preload="metadata"
           playsInline
           aria-label={`Intro video from ${creator.display_name}`}
-          className="mt-6 aspect-video w-full max-w-2xl rounded-card bg-night"
+          // No fixed aspect. Creators shoot on phones, so most of these are
+          // portrait, and forcing 16:9 letterboxed them inside a wide black
+          // box. Capping the height and letting the width follow means the
+          // element takes the video's own shape, whichever way it was shot.
+          className="mt-6 max-h-[30rem] w-auto max-w-full rounded-card bg-night"
         />
       )}
 
