@@ -71,8 +71,8 @@ export function Logo({ className, inverted, showWordmark = true }: { className?:
           <img
             src="/house-of-collabs-logo-white.webp"
             alt={site.name}
-            width={1536}
-            height={1024}
+            width={600}
+            height={400}
             className="size-full object-cover [object-position:50%_67%]"
           />
         </span>

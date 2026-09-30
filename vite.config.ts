@@ -27,7 +27,13 @@ export default defineConfig({
           query: ['@tanstack/react-query'],
           forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
           radix: ['radix-ui', 'cmdk'],
-          charts: ['recharts'],
+          // recharts is deliberately NOT listed. Naming it here hoisted it out
+          // of the lazily-loaded dashboard routes into a shared chunk, which
+          // Vite then added to index.html's modulepreload — so every visitor
+          // downloaded 109KB of charting library on the homepage and the
+          // creators page, for something only the admin and creator dashboards
+          // render. Left unlisted, it rides along inside those routes' own
+          // chunks and is fetched only when someone opens one.
         },
       },
     },
