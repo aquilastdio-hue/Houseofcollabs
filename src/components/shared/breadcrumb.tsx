@@ -1,10 +1,26 @@
 import { Link } from 'react-router'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { siteUrl } from '@/config/site'
 
 export function Breadcrumb({ items, className }: { items: { label: string; href?: string }[]; className?: string }) {
+  // The visible trail already says where the page sits; this states the same
+  // thing in the form Google reads, which is what turns a result's URL line
+  // into a breadcrumb. Only linked crumbs get an `item` — the current page is
+  // the last entry and should not link to itself.
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.label,
+      ...(item.href && i < items.length - 1 ? { item: siteUrl(item.href) } : {}),
+    })),
+  }
   return (
     <nav aria-label="Breadcrumb" className={cn('mb-4 text-sm', className)}>
+      <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       <ol className="flex flex-wrap items-center gap-1 text-muted">
         {items.map((item, i) => {
           const last = i === items.length - 1

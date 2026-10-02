@@ -163,7 +163,15 @@ enabled = true
 # These values had gone stale: they still named an old host while the
 # live project had moved to the real domain, so a push would silently have
 # broken every invite and password-reset link. Kept in step deliberately.
-site_url = "https://houseofcollabs.com"
+#
+# www, not the apex. The apex 308s to www, so an emailed link built on it
+# still worked — the token survives the redirect in both the query string and
+# the fragment — but every password reset and invite took a needless hop, and
+# the canonical host is www everywhere else (sitemap, robots, canonical tags).
+# Changing this file alone changes nothing on the live project: the value that
+# actually builds the emails lives in the dashboard under
+# Authentication -> URL Configuration -> Site URL.
+site_url = "https://www.houseofcollabs.com"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
@@ -172,10 +180,11 @@ site_url = "https://houseofcollabs.com"
 # is silently replaced with site_url — that is what sent production logins to
 # localhost. Wildcards cover /auth/callback, /reset-password and query strings.
 additional_redirect_urls = [
-  # The apex is what the emailed links use; it 308s to www, and the browser
-  # treats those as separate origins, so both have to be listed.
-  "https://houseofcollabs.com/**",
+  # www is what the emailed links now use. The apex stays listed because it
+  # 308s to www and the browser treats the two as separate origins, so links
+  # already sent on the apex must keep resolving.
   "https://www.houseofcollabs.com/**",
+  "https://houseofcollabs.com/**",
   "http://localhost:5173/**",
   "http://127.0.0.1:5173/**",
 ]

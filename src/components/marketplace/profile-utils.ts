@@ -46,9 +46,11 @@ export function safeExternalUrl(url?: string | null) {
   return url && /^https?:\/\//i.test(url.trim()) ? url.trim() : null
 }
 
-export function handleOf(username: string) {
-  return `@${username.replace(/^@+/, '')}`
-}
+// `handleOf` lived here to format a creator's @handle for the storefront. The
+// storefront no longer shows one, the public query no longer fetches the
+// column, and RLS no longer serves it to anyone but the creator and staff — so
+// the helper had no caller left. Admin formats its own, next to the link it
+// still needs for verification.
 
 /**
  * Where an unsigned visitor goes when they try to hire. Accounts aren't

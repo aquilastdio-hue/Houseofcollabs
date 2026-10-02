@@ -61,5 +61,8 @@ const run = (cmd, args) => execFileSync(cmd, args, { cwd: root, env, stdio: 'inh
 run('node', ['scripts/generate-sitemap.mjs'])
 run('npx', ['tsc', '-b'])
 run('npx', ['vite', 'build'])
+// After the bundle exists: bake a static <head> per public route, so crawlers
+// that do not run JavaScript still get a real title, description and card.
+run('node', ['scripts/prerender-meta.mjs'])
 
 console.log('\nBuild complete → dist/')

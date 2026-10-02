@@ -128,6 +128,10 @@ const profileQuery = () =>
     .from('creators')
     .select(PROFILE_SELECT)
     .order('sort_order', { referencedTable: 'creator_services' })
+    // Tiebreak. Ordering on sort_order alone meant that when every row shared
+    // a value the grid fell back to physical row order, so simply updating a
+    // service moved it on the storefront.
+    .order('created_at', { referencedTable: 'creator_services' })
     .order('sort_order', { referencedTable: 'portfolio_items' })
     .order('created_at', { referencedTable: 'portfolio_items' })
 
@@ -186,6 +190,10 @@ const ownerProfileQuery = () =>
     .from('creators')
     .select(OWNER_PROFILE_SELECT)
     .order('sort_order', { referencedTable: 'creator_services' })
+    // Tiebreak. Ordering on sort_order alone meant that when every row shared
+    // a value the grid fell back to physical row order, so simply updating a
+    // service moved it on the storefront.
+    .order('created_at', { referencedTable: 'creator_services' })
     .order('sort_order', { referencedTable: 'portfolio_items' })
     .order('created_at', { referencedTable: 'portfolio_items' })
 

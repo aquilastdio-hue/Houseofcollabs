@@ -199,6 +199,12 @@ export const termsOfService: LegalBuilder = (t) => ({
             storefront content to promote {site.name}; creators can ask us to stop at any time.
           </p>
           <p>
+            The same licence extends to <strong>Kaza Beauty</strong>, our affiliated platform. Content you upload to {site.name} may also be hosted and
+            displayed there, and used to promote creators and services on it. Nothing else changes: the permission still covers only running and
+            promoting our platforms, it is not a sale or transfer of your content, we do not sublicense it to anyone else, and you can ask us to stop
+            featuring your content at any time by writing to <SupportEmail />.
+          </p>
+          <p>
             You confirm that you own or have permission to use everything you upload, including music, fonts, footage, trademarks and people’s
             likenesses.
           </p>

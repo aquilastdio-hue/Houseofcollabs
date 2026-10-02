@@ -32,7 +32,7 @@ export type LegalDoc = {
 
 export type LegalBuilder = (terms: PlatformTerms) => LegalDoc
 
-export const LAST_UPDATED = '19 September 2026'
+export const LAST_UPDATED = '2 October 2026'
 export const COMPANY = `${site.name} Technologies`
 
 export function SupportEmail() {

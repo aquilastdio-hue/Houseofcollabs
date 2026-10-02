@@ -29,10 +29,14 @@ export function siteUrl(path = '/') {
 /**
  * Header navigation. Drives both the desktop bar and the mobile drawer.
  *
- * Empty by design: the landing page funnels straight to Collabs / Creators, so
- * the header carries the logo and the two auth actions only.
+ * "Creators" points at /discover, not /creators: the latter sits behind
+ * RequireAuth and renders a coming-soon page, so a signed-out visitor clicking
+ * a header link labelled Creators would land on a login wall.
  */
-export const publicNav: readonly { label: string; href: string }[] = []
+export const publicNav: readonly { label: string; href: string }[] = [
+  { label: 'Creators', href: '/discover' },
+  { label: 'About', href: '/about' },
+]
 
 export const footerNav = {
   Product: [

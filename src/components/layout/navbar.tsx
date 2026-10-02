@@ -8,12 +8,12 @@ import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
 import { Logo } from '@/components/shared/logo'
 
 /**
- * Extra sections each nav item owns. Category pages are part of browsing, so
- * "Discover" stays lit there. Everything else matches its own path exactly —
- * a creator storefront (/creators/:slug) is not the "For Creators" page.
+ * Extra sections each nav item owns. Category pages and individual storefronts
+ * are both part of browsing creators, so "Creators" stays lit across
+ * /categories/:slug and /creators/:slug as well as /discover itself.
  */
 const NAV_SECTIONS: Record<string, string[]> = {
-  '/discover': ['/categories'],
+  '/discover': ['/categories', '/creators'],
 }
 
 function isNavActive(href: string, pathname: string) {

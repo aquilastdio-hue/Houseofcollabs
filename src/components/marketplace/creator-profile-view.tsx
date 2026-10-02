@@ -124,7 +124,7 @@ function ProfileSeo({ creator, mode }: { creator: CreatorProfile; mode: ProfileM
     <Seo
       title={title}
       description={description}
-      image={creator.profile_image_url}
+      image={creator.profile_image_url ?? undefined}
       type="profile"
       canonical={`/creators/${creator.slug}`}
       jsonLd={{

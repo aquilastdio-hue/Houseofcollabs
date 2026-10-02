@@ -100,7 +100,7 @@ export default function LegalPage({ doc }: { doc?: unknown }) {
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">{legalDoc.summary}</p>
           <p className="mt-6 inline-flex items-center gap-2 rounded-pill border border-line bg-surface px-3.5 py-1.5 text-sm text-ink-soft">
             <CalendarDays className="size-4 text-muted" aria-hidden />
-            Last updated <time dateTime="2026-09-19">{LAST_UPDATED}</time>
+            Last updated <time dateTime="2026-10-02">{LAST_UPDATED}</time>
           </p>
         </div>
       </header>

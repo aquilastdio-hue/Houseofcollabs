@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { ArrowRight, BadgeIndianRupee, Clock3, ShieldCheck } from 'lucide-react'
 import { site } from '@/config/site'
 import { Seo } from '@/components/shared/seo'
+import { organizationSchema, websiteSchema } from '@/lib/structured-data'
 import { Button } from '@/components/ui/button'
 import { BrandMarquee } from '@/components/marketing/brand-marquee'
 import { BrandBenefitsSection, CreatorBenefitsSection } from '@/components/marketing/benefits'
@@ -31,7 +32,10 @@ export default function Home() {
 
   return (
     <>
-      <Seo />
+      {/* No `title`, so the tab reads just "House of Collabs". The keywords
+          live in the meta description instead, which is where a search result
+          takes its snippet from. */}
+      <Seo jsonLd={[organizationSchema(), websiteSchema()]} />
 
       {/* 0 · Opening screen: wordmark, then the two ways in. Everything below
           is the existing marketing page, untouched. */}

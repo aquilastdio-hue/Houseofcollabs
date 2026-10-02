@@ -15,6 +15,7 @@ import { Select } from '@/components/ui/select'
 import { EmptyState, ErrorState } from '@/components/shared/states'
 import { PageHeader } from '@/components/shared/page-header'
 import { Pagination } from '@/components/shared/pagination'
+import { creatorListSchema } from '@/lib/structured-data'
 import { CreatorCard, CreatorCardSkeleton, CreatorGrid } from './creator-card'
 import { ActiveFilters } from './active-filters'
 import { FilterDrawer } from './filter-drawer'
@@ -140,6 +141,15 @@ export function MarketplaceView({
   } else {
     results = (
       <>
+        {/* The public grid describes itself to search engines. Each entry
+            points at a storefront the visitor can actually click, so the list
+            matches what is on screen. The brand workspace is noindex, so it
+            has nothing to gain from it. */}
+        {mode === 'public' && (
+          <script type="application/ld+json">
+            {JSON.stringify(creatorListSchema(search.data.items, 'Creators on House of Collabs'))}
+          </script>
+        )}
         <div aria-busy={search.isPlaceholderData} className={cn('transition-opacity duration-200', search.isPlaceholderData && 'pointer-events-none opacity-60')}>
           <CreatorGrid className={GRID_CLASS}>
             {search.data.items.map((creator, i) => (

@@ -35,9 +35,14 @@ export function EntryHero() {
       <Glow tone="lilac" className="-top-52 -right-56 -z-10 size-[28rem] opacity-60" />
 
       <div className="container-page flex flex-1 flex-col items-center justify-center py-6 text-center sm:py-8">
-        <h1 id="entry-title" className="sr-only">
+        {/* A label, not a heading. This was an <h1>, which gave the homepage
+            two of them — this one and the hero statement below it, which is
+            the visible line the page should actually be ranked on.
+            `aria-labelledby` is happy pointing at any element, so the section
+            keeps its accessible name and the page keeps a single h1. */}
+        <p id="entry-title" className="sr-only">
           {site.name} — creators, brands, culture
-        </h1>
+        </p>
 
         {/* The supplied artwork is black on an opaque white canvas with wide
             built-in margins. The aspect box crops the dead space; `multiply`

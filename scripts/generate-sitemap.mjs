@@ -1,6 +1,15 @@
-// Writes public/sitemap.xml (static marketing + category pages) and
-// public/robots.txt. Creator storefronts are served dynamically by the
-// `sitemap` Edge Function at /sitemap-creators.xml (see vercel.json).
+// Writes public/sitemap.xml (the fixed marketing and legal pages) and
+// public/robots.txt.
+//
+// Two sitemaps, one owner each. Anything driven by the database -- category
+// pages and creator storefronts -- belongs to the `sitemap` Edge Function at
+// /sitemap-creators.xml, which knows the real `lastmod` and which rows are
+// still live. Categories used to be listed here as well, so all fifteen
+// appeared in both files with a made-up lastmod in one of them.
+//
+// The base URL comes from SITE_URL. For the deployed site that is pinned in
+// vercel.json; the Edge Function reads its own SITE_URL secret in Supabase, and
+// the two are deliberately separate systems.
 //
 //   SITE_URL=https://your-domain.com node scripts/generate-sitemap.mjs
 import fs from 'node:fs'
@@ -14,6 +23,8 @@ const today = new Date().toISOString().slice(0, 10)
 const pages = [
   ['/', '1.0', 'weekly'],
   ['/discover', '0.9', 'daily'],
+  ['/about', '0.6', 'monthly'],
+  ['/get-started', '0.6', 'monthly'],
   ['/contact', '0.5', 'yearly'],
   ['/privacy', '0.3', 'yearly'],
   ['/terms', '0.3', 'yearly'],
@@ -23,12 +34,7 @@ const pages = [
   ['/refund-policy', '0.4', 'yearly'],
   ['/payout-policy', '0.4', 'yearly'],
 ]
-const categories = ['beauty', 'fashion', 'fitness', 'lifestyle', 'food', 'travel', 'technology', 'gaming', 'parenting', 'education', 'skincare', 'couple', 'ugc', 'photography', 'finance']
-
-const urls = [
-  ...pages.map(([p, priority, freq]) => ({ loc: `${site}${p}`, priority, freq })),
-  ...categories.map((c) => ({ loc: `${site}/categories/${c}`, priority: '0.7', freq: 'daily' })),
-]
+const urls = pages.map(([p, priority, freq]) => ({ loc: `${site}${p}`, priority, freq }))
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

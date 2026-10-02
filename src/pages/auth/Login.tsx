@@ -40,7 +40,7 @@ export default function Login() {
 
   return (
     <>
-      <Seo title="Log in" description="Log in to your House of Collabs workspace." />
+      <Seo title="Log in" description="Log in to your House of Collabs workspace." noindex />
       <AuthHeading title="Welcome back" subtitle="Log in to manage your orders, messages and storefront." />
 
       <GoogleButton

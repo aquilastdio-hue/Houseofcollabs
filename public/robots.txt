@@ -1,4 +1,4 @@
-# https://houseofcollabs.com
+# https://www.houseofcollabs.com
 User-agent: *
 Allow: /
 Disallow: /brand/
@@ -10,5 +10,5 @@ Disallow: /onboarding
 Disallow: /auth/
 Disallow: /reset-password
 
-Sitemap: https://houseofcollabs.com/sitemap.xml
-Sitemap: https://houseofcollabs.com/sitemap-creators.xml
+Sitemap: https://www.houseofcollabs.com/sitemap.xml
+Sitemap: https://www.houseofcollabs.com/sitemap-creators.xml

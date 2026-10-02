@@ -43,6 +43,7 @@ const routes: RouteObject[] = [
               { path: 'creators', ...page(() => import('@/pages/public/ComingSoon'), { side: 'creator' }) },
             ],
           },
+          { path: 'about', ...page(() => import('@/pages/public/About')) },
           { path: 'discover', ...page(() => import('@/pages/public/Discover')) },
           { path: 'creators/:slug', ...page(() => import('@/pages/public/CreatorStorefront')) },
           { path: 'categories/:slug', ...page(() => import('@/pages/public/CategoryPage')) },
