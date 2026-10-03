@@ -66,7 +66,7 @@ export function useCompletion(enabled = true) {
 // ---------------------------------------------------------------------------
 const NUMBER_KEYS = ['minPrice', 'maxPrice', 'minFollowers', 'maxFollowers', 'maxDelivery', 'minAge', 'maxAge', 'minRating', 'page'] as const
 const STRING_KEYS = ['q', 'category', 'city', 'state', 'gender', 'creatorType', 'contentType', 'platform', 'sort'] as const
-const BOOL_KEYS = ['verified', 'available'] as const
+const BOOL_KEYS = ['verified', 'available', 'barter'] as const
 
 export function paramsFromSearch(sp: URLSearchParams): CreatorSearchParams {
   const out: CreatorSearchParams = {}

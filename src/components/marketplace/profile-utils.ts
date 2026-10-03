@@ -25,12 +25,10 @@ export function visibleServices(creator: CreatorProfile, isOwner: boolean) {
   return creator.creator_services.filter((s) => isOwner || s.active)
 }
 
-export function coverImageOf(creator: CreatorProfile) {
-  if (creator.cover_image_url) return creator.cover_image_url
-  const first = visiblePortfolio(creator).find((p) => (p.type === 'image' ? p.media_url : p.thumbnail_url))
-  if (!first) return null
-  return first.type === 'image' ? first.media_url : first.thumbnail_url
-}
+// `coverImageOf` lived here to pick a banner for the storefront. No creator has
+// ever set a cover image, so it only ever cropped a portfolio photo into a
+// letterbox; the profile now opens on the avatar and the name, and the helper
+// has no caller left.
 
 /** Published storefronts can be hired, messaged and saved. */
 export function isListed(creator: CreatorProfile) {

@@ -30,9 +30,12 @@ type ShowcaseState = 'loading' | 'error' | 'empty' | 'ready'
  * "Marketplace preview" composition for the home hero: live creator cards
  * fanned out on desktop and a swipeable rail on smaller screens. With no
  * published creators it falls back to an abstract composition of UI shapes.
+ *
+ * `params` narrows which creators appear, so a format landing page can show the
+ * people who actually sell that format rather than a general sample.
  */
-export function HeroShowcase({ className }: { className?: string }) {
-  const query = useCreatorSearch(HERO_PARAMS)
+export function HeroShowcase({ className, params = HERO_PARAMS }: { className?: string; params?: CreatorSearchParams }) {
+  const query = useCreatorSearch(params)
   const creators = query.data?.items ?? []
   const state: ShowcaseState = query.isPending ? 'loading' : query.isError ? 'error' : creators.length === 0 ? 'empty' : 'ready'
   const retry = () => void query.refetch()

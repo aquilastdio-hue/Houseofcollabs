@@ -99,9 +99,16 @@ const routes = [
       'Browse Indian creators by niche, city, budget and delivery time. Compare fixed prices and hire for UGC videos, reels, reviews and more.',
   },
   {
-    path: '/about',
-    title: 'About',
-    description: `How ${SITE_NAME} works, who it is for, and what it does for brands and creators in India.`,
+    path: '/barter',
+    title: 'Barter collaborations with creators in India',
+    description:
+      'Browse creators on House of Collabs who accept barter collaborations — content in exchange for product rather than a fee, with scope, deliverables and usage rights agreed upfront.',
+  },
+  {
+    path: '/ugc',
+    title: 'UGC creators in India',
+    description:
+      'Hire UGC creators in India on House of Collabs. Browse creators who make user-generated content for ads and product pages, with fixed prices, delivery times and usage rights stated upfront.',
   },
   {
     path: '/contact',

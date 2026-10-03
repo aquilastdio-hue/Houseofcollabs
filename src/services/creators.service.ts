@@ -39,6 +39,8 @@ export type CreatorSearchParams = {
   creatorType?: string
   contentType?: string
   platform?: string
+  /** Only creators who accept barter collaborations. */
+  barter?: boolean
   verified?: boolean
   available?: boolean
   minRating?: number
@@ -70,6 +72,7 @@ export async function searchCreators(p: CreatorSearchParams): Promise<{ items: C
       p_platform: p.platform || undefined,
       p_verified_only: p.verified || undefined,
       p_available_only: p.available || undefined,
+      p_barter: p.barter || undefined,
       p_min_rating: p.minRating,
       p_sort: p.sort || 'relevance',
       p_limit: pageSize,

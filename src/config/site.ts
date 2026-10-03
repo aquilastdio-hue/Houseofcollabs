@@ -35,7 +35,13 @@ export function siteUrl(path = '/') {
  */
 export const publicNav: readonly { label: string; href: string }[] = [
   { label: 'Creators', href: '/discover' },
-  { label: 'About', href: '/about' },
+  // Collaboration and UGC are the two things creators here actually sell most
+  // of -- 21 storefronts each. They filter the same marketplace rather than
+  // being separate pages, so the listing, the filters and the empty states all
+  // stay in one place.
+  { label: 'Collaboration', href: '/discover?contentType=reel' },
+  { label: 'UGC', href: '/ugc' },
+  { label: 'Barter', href: '/barter' },
 ]
 
 export const footerNav = {

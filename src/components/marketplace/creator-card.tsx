@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link } from 'react-router'
-import { BadgeCheck, Clock3, GitCompareArrows, MapPin, Play, Sparkles, Star, Users } from 'lucide-react'
+import { BadgeCheck, Clock3, GitCompareArrows, MapPin, Sparkles, Star, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCompact, formatDays, formatINR, formatLocation } from '@/lib/format'
 import { isVideoUrl } from '@/utils/media'
@@ -16,11 +16,26 @@ export function isOnline(lastSeen?: string | null) {
   return !!lastSeen && Date.now() - new Date(lastSeen).getTime() < 5 * 60_000
 }
 
+/**
+ * The still a card sits at, and the clip it plays when hovered.
+ *
+ * These are chosen separately on purpose. The still is simply the first
+ * portfolio item, but the video used to be *also* the first item — so a card
+ * played only when that first piece happened to be a video, and stayed frozen
+ * for everyone whose portfolio opens with a photo. Of the creators published
+ * today, most have no portfolio video at the front and every single one has an
+ * intro video, so almost nothing ever moved.
+ *
+ * Now the clip is the first video anywhere in the preview, and the creator's
+ * intro video if the portfolio has none.
+ */
 function coverOf(c: CreatorCardData) {
   const previews = (c.portfolio_preview as unknown as PortfolioPreview[]) ?? []
   const first = previews[0]
-  if (first) return { image: first.thumbnail_url ?? (first.type === 'image' ? first.media_url : null), video: first.type === 'video' ? first.media_url : null }
-  return { image: c.cover_image_url ?? c.profile_image_url, video: c.intro_video_url && isVideoUrl(c.intro_video_url) ? c.intro_video_url : null }
+  const portfolioVideo = previews.find((p) => p.type === 'video')?.media_url ?? null
+  const intro = c.intro_video_url && isVideoUrl(c.intro_video_url) ? c.intro_video_url : null
+  const image = first ? (first.thumbnail_url ?? (first.type === 'image' ? first.media_url : null)) : (c.cover_image_url ?? c.profile_image_url)
+  return { image, video: portfolioVideo ?? intro }
 }
 
 export function CreatorCard({
@@ -64,6 +79,9 @@ export function CreatorCard({
           <video src={cover.video} className="absolute inset-0 size-full object-cover" autoPlay muted loop playsInline aria-hidden />
         )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-night/80 via-night/30 to-transparent" />
+        {/* No "Video" badge. It marked cards that had a clip to play, which
+            was useful when only a few did; every creator has an intro video, so
+            it appeared on all of them and told the viewer nothing. */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
           {creator.featured && (
             <Badge tone="brand" size="sm">
@@ -73,11 +91,6 @@ export function CreatorCard({
           {!creator.available && (
             <Badge tone="glass" size="sm">
               Busy
-            </Badge>
-          )}
-          {cover.video && (
-            <Badge tone="glass" size="sm">
-              <Play className="fill-ink" /> Video
             </Badge>
           )}
         </div>

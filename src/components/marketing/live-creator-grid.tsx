@@ -8,11 +8,18 @@ import { CreatorCard, CreatorCardSkeleton, CreatorGrid } from '@/components/mark
 import { EmptyState, ErrorState } from '@/components/shared/states'
 
 /**
- * Hides trailing cards so every breakpoint shows complete rows: at most four
- * cards on single-column phones and six on the three-column `lg` layout.
+ * Hides trailing cards so every breakpoint ends on a complete row.
+ *
+ * The grid is two columns on phones, three at `lg` and four from `xl`, and the
+ * preview fetches twenty. The old limits predate the two-column phone layout:
+ * four cards was two rows, which is a very short look at a marketplace on the
+ * screen most people arrive on. Sixteen is eight rows there, and eighteen keeps
+ * `lg` on six complete rows of three — a wider screen should never show fewer
+ * creators than a narrow one. The remainder is one tap away either way, on
+ * "Explore all creators".
  */
 function trimClass(index: number) {
-  return cn(index >= 4 && 'max-[479px]:hidden', index >= 6 && 'lg:max-xl:hidden')
+  return cn(index >= 16 && 'max-[479px]:hidden', index >= 18 && 'lg:max-xl:hidden')
 }
 
 /**

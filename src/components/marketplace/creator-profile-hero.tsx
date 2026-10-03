@@ -7,10 +7,9 @@ import { RESPONSE_TIMES, labelFor } from '@/lib/constants'
 import type { CreatorProfile } from '@/services/creators.service'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { SmartImage } from '@/components/shared/smart-image'
 import { RatingLabel } from '@/components/shared/star-rating'
 import { CategoryIcon } from './category-icon'
-import { coverImageOf, profileCategories, profileLanguages, type ProfileMode } from './profile-utils'
+import { profileCategories, profileLanguages, type ProfileMode } from './profile-utils'
 
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -29,21 +28,13 @@ export function CreatorProfileHero({ creator, mode, actions }: { creator: Creato
 
   return (
     <header className="flex flex-col">
-      <div className="relative">
-        <SmartImage
-          src={coverImageOf(creator)}
-          alt=""
-          eager
-          className="h-40 w-full rounded-hero sm:h-56 lg:h-72"
-          fallback={<div className="size-full bg-gradient-to-br from-brand-soft via-sand-soft to-lilac-soft" />}
-        />
-        <div className="pointer-events-none absolute inset-0 rounded-hero bg-gradient-to-t from-night/25 via-transparent to-transparent" />
-      </div>
-
-      {/* The avatar overlaps the cover; the text column starts just below the cover edge. */}
-      <div className="relative -mt-12 flex flex-col gap-4 px-1 sm:-mt-14 sm:flex-row sm:items-start sm:gap-5 sm:px-5">
-        <Avatar src={creator.profile_image_url} name={creator.display_name} size="2xl" className="self-start rounded-full shadow-card ring-4 ring-canvas" />
-        <div className="min-w-0 sm:pt-16">
+      {/* No cover banner. Not one creator has ever set `cover_image_url`, so it
+          fell back to cropping a portfolio photo to a letterbox — which cut
+          people off mid-torso and told a visitor nothing the portfolio below
+          doesn't. The profile now opens on the person. */}
+      <div className="flex flex-col gap-4 px-1 pt-2 sm:flex-row sm:items-center sm:gap-5 sm:px-5">
+        <Avatar src={creator.profile_image_url} name={creator.display_name} size="2xl" className="self-start rounded-full shadow-card ring-4 ring-canvas sm:self-center" />
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
             <h1 className="font-display text-display-md font-semibold break-words">{creator.display_name}</h1>
             {creator.verified && <BadgeCheck role="img" aria-label="Verified creator" className="size-6 shrink-0 fill-brand text-ink" />}

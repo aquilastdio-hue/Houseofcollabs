@@ -16,15 +16,32 @@ const NAV_SECTIONS: Record<string, string[]> = {
   '/discover': ['/categories', '/creators'],
 }
 
-function isNavActive(href: string, pathname: string) {
-  if (pathname === href) return true
-  return (NAV_SECTIONS[href] ?? []).some((base) => pathname === base || pathname.startsWith(`${base}/`))
+/**
+ * The query keys the nav uses to tell its own items apart.
+ *
+ * Three items point at /discover and differ only by filter, so comparing the
+ * path alone would light "Creators" on all of them and "Collaboration" on none.
+ * An item is active when the path matches *and* every one of these keys agrees
+ * — including when both sides have none, which is what keeps plain /discover
+ * lit only on the unfiltered listing.
+ */
+const NAV_QUERY_KEYS = [...new Set(publicNav.flatMap((i) => [...new URLSearchParams(i.href.split('?')[1] ?? '').keys()]))]
+
+function isNavActive(href: string, pathname: string, search: string) {
+  const [path, query = ''] = href.split('?')
+  const wanted = new URLSearchParams(query)
+  const current = new URLSearchParams(search)
+  const queryMatches = NAV_QUERY_KEYS.every((k) => (wanted.get(k) ?? null) === (current.get(k) ?? null))
+  if (pathname === path) return queryMatches
+  // A section match ignores the query: a storefront or category page has none
+  // of these filters, and should still light the listing it belongs to.
+  return (NAV_SECTIONS[path] ?? []).some((base) => pathname === base || pathname.startsWith(`${base}/`))
 }
 
 export function Navbar({ variant = 'light' }: { variant?: 'light' | 'transparent' }) {
   const [scrolled, setScrolled] = React.useState(false)
   const [open, setOpen] = React.useState(false)
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
 
   React.useEffect(() => setOpen(false), [pathname])
   React.useEffect(() => {
@@ -66,9 +83,12 @@ export function Navbar({ variant = 'light' }: { variant?: 'light' | 'transparent
           <Logo />
         </Link>
 
-        <ul className="hidden items-center gap-1 md:flex">
+        {/* `lg`, not `md`. At 768px the logo, four nav links and the two auth
+            buttons came to 775px and pushed the page into a horizontal scroll.
+            A tablet gets the drawer instead; the full bar returns at 1024. */}
+        <ul className="hidden items-center gap-1 lg:flex">
           {publicNav.map((item) => {
-            const active = isNavActive(item.href, pathname)
+            const active = isNavActive(item.href, pathname, search)
             return (
               <li key={item.href}>
                 <Link
@@ -89,7 +109,7 @@ export function Navbar({ variant = 'light' }: { variant?: 'light' | 'transparent
         {/* The public site looks the same to everyone. A signed-in visitor who
             taps either of these is forwarded to their dashboard by the
             `GuestOnly` guard, so no route is lost by dropping the shortcut. */}
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <Button asChild variant="ghost" size="sm">
             <Link to="/login">Log in</Link>
           </Button>
@@ -100,7 +120,7 @@ export function Navbar({ variant = 'light' }: { variant?: 'light' | 'transparent
 
         <Drawer open={open} onOpenChange={setOpen}>
           <DrawerTrigger asChild>
-            <Button variant="ghost" size="icon-sm" className="md:hidden" aria-label="Open menu">
+            <Button variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Open menu">
               <Menu />
             </Button>
           </DrawerTrigger>
@@ -111,7 +131,7 @@ export function Navbar({ variant = 'light' }: { variant?: 'light' | 'transparent
           <DrawerContent side="right" title={<Logo />}>
             <ul className="flex flex-col gap-1">
               {publicNav.map((item) => {
-                const active = isNavActive(item.href, pathname)
+                const active = isNavActive(item.href, pathname, search)
                 return (
                   <li key={item.href}>
                     <Link

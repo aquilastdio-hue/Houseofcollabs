@@ -23,7 +23,8 @@ const today = new Date().toISOString().slice(0, 10)
 const pages = [
   ['/', '1.0', 'weekly'],
   ['/discover', '0.9', 'daily'],
-  ['/about', '0.6', 'monthly'],
+  ['/ugc', '0.8', 'weekly'],
+  ['/barter', '0.8', 'weekly'],
   ['/get-started', '0.6', 'monthly'],
   ['/contact', '0.5', 'yearly'],
   ['/privacy', '0.3', 'yearly'],
