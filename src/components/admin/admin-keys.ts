@@ -24,7 +24,6 @@ export const adminLists = {
   orders: [...qk.admin.all, 'orders'] as const,
   payments: [...qk.admin.all, 'payments'] as const,
   payouts: [...qk.admin.all, 'payouts'] as const,
-  disputes: [...qk.admin.all, 'disputes'] as const,
   reports: [...qk.admin.all, 'reports'] as const,
   contact: [...qk.admin.all, 'contact'] as const,
   content: [...qk.admin.all, 'content'] as const,

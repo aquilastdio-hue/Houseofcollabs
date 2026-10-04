@@ -20,7 +20,6 @@ export type EarningStatus = Enums<'earning_status'>
 export type PayoutStatus = Enums<'payout_status'>
 export type PayoutMethodType = Enums<'payout_method_type'>
 export type RevisionStatus = Enums<'revision_status'>
-export type DisputeStatus = Enums<'dispute_status'>
 export type ReportTarget = Enums<'report_target'>
 export type ReportStatus = Enums<'report_status'>
 export type MessageType = Enums<'message_type'>
@@ -52,8 +51,6 @@ export type PayoutTransaction = Tables<'payout_transactions'>
 export type Review = Tables<'reviews'>
 export type Notification = Tables<'notifications'>
 export type Report = Tables<'reports'>
-export type Dispute = Tables<'disputes'>
-export type DisputeMessage = Tables<'dispute_messages'>
 export type AuditLog = Tables<'audit_logs'>
 export type PlatformSetting = Tables<'platform_settings'>
 export type ContactMessage = Tables<'contact_messages'>
@@ -74,7 +71,7 @@ export type AdminTimeseriesRow = Fn<'admin_timeseries'>['Returns'][number]
 export type CategoryRef = { id: string; name: string; slug: string; is_primary?: boolean }
 export type PortfolioPreview = { id: string; type: PortfolioItemType; media_url: string; thumbnail_url: string | null; title: string | null }
 
-/** File reference stored in jsonb attachment arrays (messages, revisions, disputes). */
+/** File reference stored in jsonb attachment arrays (revisions, deliverables). */
 export type Attachment = { path: string; name: string; mime?: string; size?: number }
 
 // ---- JSON-returning RPCs -----------------------------------------------------
@@ -171,7 +168,6 @@ export type AdminDashboardStats = {
   refunds_count: number
   refunds_amount: number
   refunds_required: number
-  disputes_open: number
   reports_open: number
   orders_by_status: Partial<Record<OrderStatus, number>>
 }

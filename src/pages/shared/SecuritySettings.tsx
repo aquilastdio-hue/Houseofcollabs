@@ -184,7 +184,7 @@ function EmailPreferences() {
       <div className="flex items-start gap-3 rounded-card border border-line bg-subtle p-4">
         <Lock className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />
         <p className="text-sm text-muted">
-          <span className="font-medium text-ink">Some emails can’t be turned off.</span> Failed payments and withdrawals, refunds, disputes, cancellations and
+          <span className="font-medium text-ink">Some emails can’t be turned off.</span> Failed payments and withdrawals, refunds, cancellations and
           anything that changes your account’s status are sent whatever you choose here — you need them to keep control of your money and your account.
         </p>
       </div>

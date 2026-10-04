@@ -1,9 +1,8 @@
 // Admin order operations (all audited):
 //   refund          { amount?, reason }           → Razorpay refund + record_refund
 //   cancel          { reason }
-//   force_complete  { reason }                     (disputed → completed, delivered → approved → completed)
+//   force_complete  { reason }                     (delivered → approved → completed)
 //   set_status      { status, reason }             (validated by the DB state machine)
-//   resolve_dispute { dispute_id, outcome, note, amount? }
 import { handler, HttpError, json, must, readJson, requireString, requireUuid } from '../_shared/http.ts'
 import { adminClient, audit, requireAdmin } from '../_shared/supabase.ts'
 import { razorpay } from '../_shared/razorpay.ts'
@@ -12,7 +11,6 @@ import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 type Order = { id: string; order_number: string; status: string; total_amount: number }
 type Payment = { id: string; amount: number; refunded_amount: number; provider_payment_id: string | null; status: string }
 
-const OUTCOMES = ['release_to_creator', 'resume_order', 'rejected', 'refund_brand', 'partial_refund'] as const
 
 async function refundPayment(db: SupabaseClient, order: Order, adminId: string, reason: string, amount?: number) {
   const payment = must(
@@ -70,7 +68,7 @@ export const handle = handler(async (req) => {
       const amount = body.amount === undefined || body.amount === null || body.amount === '' ? undefined : Number(body.amount)
       if (amount !== undefined && !Number.isFinite(amount)) throw new HttpError(400, 'Invalid amount.', 'BAD_REQUEST')
       // Active orders are cancelled first so the state machine allows `refunded`.
-      if (!['cancelled', 'disputed', 'completed', 'refunded'].includes(order.status)) await transition('cancelled', reason)
+      if (!['cancelled', 'completed', 'refunded'].includes(order.status)) await transition('cancelled', reason)
       result = await refundPayment(db, order, admin.id, reason, amount)
       break
     }
@@ -80,29 +78,12 @@ export const handle = handler(async (req) => {
     }
     case 'force_complete': {
       const reason = requireString(body.reason, 'reason', 1000)
-      if (order.status === 'disputed') result = await transition('completed', reason)
-      else if (['delivered', 'revision_submitted'].includes(order.status)) result = await transition('approved', reason)
-      else throw new HttpError(422, 'Only delivered or disputed orders can be force-completed.', 'INVALID_ORDER_STATE')
+      if (['delivered', 'revision_submitted'].includes(order.status)) result = await transition('approved', reason)
+      else throw new HttpError(422, 'Only delivered or revision-submitted orders can be force-completed.', 'INVALID_ORDER_STATE')
       break
     }
     case 'set_status': {
       result = await transition(requireString(body.status, 'status', 40), requireString(body.reason, 'reason', 1000))
-      break
-    }
-    case 'resolve_dispute': {
-      const disputeId = requireUuid(body.dispute_id, 'dispute_id')
-      const outcome = body.outcome as (typeof OUTCOMES)[number]
-      if (!OUTCOMES.includes(outcome)) throw new HttpError(400, 'Unknown outcome.', 'BAD_REQUEST')
-      const note = requireString(body.note, 'note', 2000)
-      const amount = body.amount === undefined || body.amount === null || body.amount === '' ? undefined : Number(body.amount)
-      if (outcome === 'partial_refund' && !(amount && amount > 0)) throw new HttpError(422, 'Enter the partial refund amount.', 'AMOUNT_REQUIRED')
-      let refund = null
-      if (outcome === 'refund_brand') refund = await refundPayment(db, order, admin.id, note)
-      if (outcome === 'partial_refund') refund = await refundPayment(db, order, admin.id, note, amount)
-      const dispute = must(
-        await db.rpc('resolve_dispute', { p_dispute_id: disputeId, p_actor_id: admin.id, p_outcome: outcome, p_note: note, p_refund_amount: refund?.amount ?? null }),
-      )
-      result = { dispute, refund }
       break
     }
     default:

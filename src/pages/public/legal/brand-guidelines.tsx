@@ -81,7 +81,7 @@ export const brandGuidelines: LegalBuilder = (t) => ({
             <li>Review each delivery promptly. If you don’t approve or request changes within {autoApproveText(t)}, the order is approved automatically.</li>
             <li>Revision requests should be specific and stay within the original brief and the number of rounds included.</li>
             <li>Approve when the work matches what you ordered — approval completes the order and releases the creator’s payment.</li>
-            <li>If something has gone seriously wrong, open a dispute from the order instead of withholding approval indefinitely.</li>
+            <li>If something has gone seriously wrong, contact our support team instead of withholding approval indefinitely.</li>
           </ul>
           <p>After the order completes, leave an honest review. It helps other brands and rewards creators who deliver.</p>
         </>

@@ -111,13 +111,13 @@ export function brandFaqs(t: PlatformTerms): FaqItem[] {
       a: (
         <>
           Yes, for a full refund, up until the creator accepts it. After acceptance the creator has started planning your content, so cancellations
-          go through our support team or a dispute. See the <TextLink to="/refund-policy">refund policy</TextLink> for every scenario.
+          go through our support team. See the <TextLink to="/refund-policy">refund policy</TextLink> for every scenario.
         </>
       ),
     },
     {
       q: 'What if the content isn’t what I asked for?',
-      a: 'Start with a revision — most issues are solved there. If something is seriously wrong, like a missed deadline or content that ignores the brief, open a dispute from the order. Our team reviews both sides and can release the payment, refund part of it or refund it in full.',
+      a: 'Start with a revision — most issues are solved there. If something is seriously wrong, like a missed deadline or content that ignores the brief, contact our support team. We review both sides and can release the payment, refund part of it or refund it in full.',
     },
     {
       q: 'Can we run the content as paid ads?',

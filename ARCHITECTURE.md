@@ -2,7 +2,7 @@
 
 House of Collabs is a two-sided marketplace where **brands** discover, compare and hire **creators** for
 content (UGC videos, reels, reviews, photography…), and creators run a storefront with fixed-price
-services. A platform **admin** operates verification, payments, payouts, disputes and settings.
+services. A platform **admin** operates verification, payments, payouts and settings.
 
 > Brand identity is original: name **House of Collabs**, "limelight" accent (`#D4F34A`) on warm ink/paper
 > neutrals, Bricolage Grotesque + Geist + Instrument Serif typography, and procedurally generated
@@ -52,7 +52,7 @@ services. A platform **admin** operates verification, payments, payouts, dispute
    (service role + third-party secrets).
 2. **The database is the security boundary.** Route guards are UX only. Every user-facing table has
    RLS; sensitive columns are protected with column-level privileges; workflow state changes
-   (orders, payments, payouts, reviews, disputes, publishing, roles) are only possible through
+   (orders, payments, payouts, reviews, publishing, roles) are only possible through
    validated functions.
 3. **Money math is server-side.** Prices, add-ons, fees and creator earnings are computed in SQL
    from database rows (never from client input). The fee percentage is read from
@@ -197,7 +197,7 @@ Guards: **P** public · **G** guest-only · **A** any signed-in user · **B** br
 ### Admin (`/admin/*`, guard AD)
 `/admin` dashboard · `/admin/creators` · `/admin/creators/:id` · `/admin/brands` ·
 `/admin/brands/:id` · `/admin/orders` · `/admin/orders/:id` · `/admin/payments` ·
-`/admin/payouts` · `/admin/disputes` · `/admin/disputes/:id` · `/admin/categories` ·
+`/admin/payouts` · `/admin/categories` ·
 `/admin/reports` · `/admin/notifications` · `/admin/emails` · `/admin/content` · `/admin/settings` ·
 `/admin/audit-logs`
 
@@ -268,11 +268,10 @@ section spacing. Components reference tokens only — no arbitrary hex values or
 `creator_status` (draft, pending_review, published, rejected, suspended) · `gender_type` ·
 `social_platform` (instagram, youtube, x, threads, facebook, other) · `portfolio_item_type`
 (image, video, link) · `addon_type` · `brief_status` (draft, sent, accepted, rejected, completed) ·
-`order_status` (17 values below) · `payment_status` (created, authorized, captured, failed,
+`order_status` (17 values below, one of which — `disputed` — is retired; see migration 0058) · `payment_status` (created, authorized, captured, failed,
 refunded, partially_refunded) · `earning_status` (pending, available, paid, held, refunded) ·
-`payout_status` · `payout_txn_status` · `revision_status` · `dispute_status` (created,
-under_review, waiting_for_brand, waiting_for_creator, resolved, refunded, rejected) ·
-`report_target` · `report_status` · `conversation_type` · `message_type`.
+`payout_status` · `payout_txn_status` · `revision_status` ·
+`report_target` · `report_status`.
 
 ### 7.3 Tables (relationships)
 
@@ -290,7 +289,7 @@ auth.users 1─1 profiles 1─1 brands ──< wishlists ──< wishlist_items 
                         └─1 admin_users
 orders ──< order_items · order_status_history · order_deliverables · order_revisions
        ──1 shipping_details ──< payments ──< payment_refunds ──1 creator_earnings
-       ──< reviews ──< disputes ──< dispute_messages
+       ──< reviews
 conversations ──< conversation_participants >── profiles
               ──< messages
 notifications >── profiles     reports >── profiles     audit_logs >── profiles
@@ -323,7 +322,7 @@ accepted ─(digital service)─► in_progress ─(deliverables)─► delivere
 delivered ─► revision_requested ─► revision_submitted ─► (approved | revision_requested | delivered)
 delivered ─► approved ─► completed ─► creator earning row
 creator_pending ─► cancelled (decline / cancel / timeout) ─► refunded (admin refund)
-active states ─► disputed ─(admin)─► resumed | completed | cancelled | refunded
+active states ─(admin)─► completed | cancelled | refunded
 ```
 
 Enforcement is layered:
@@ -343,12 +342,12 @@ Enforcement is layered:
 | `calculate_platform_fee`, `calculate_order_total` | authenticated | Server-side pricing preview |
 | `create_order` | brand | Validates service/add-ons/brief, computes totals, creates order + items + shipping |
 | `accept_order`, `decline_order`, `submit_shipping_address`, `mark_order_shipped`, `mark_product_received`, `start_order_work`, `submit_deliverables`, `request_revision`, `approve_order`, `cancel_order` | participants | Validated workflow transitions |
-| `open_dispute`, `add_dispute_message`, `submit_review`, `respond_to_review`, `create_report` | participants | Trust & safety |
+| `submit_review`, `respond_to_review`, `create_report` | participants | Trust & safety |
 | `start_conversation`, `get_my_conversations`, `mark_conversation_read`, `set_conversation_archived` | authenticated | Messaging |
 | `mark_notification_read`, `mark_all_notifications_read`, `get_unread_counts` | authenticated | Notifications |
 | `publish_creator_profile`, `get_creator_completion`, `set_initial_role`, `complete_onboarding` | authenticated | Onboarding |
 | `get_creator_dashboard_stats`, `get_brand_dashboard_stats`, `get_earnings_summary`, `record_profile_view`, `record_search_event` | authenticated / anon | Analytics |
-| `confirm_order_payment`, `mark_payment_failed`, `record_refund`, `create_payout_request`, `complete_payout`, `admin_transition_order`, `resolve_dispute` | **service_role only** | Called by Edge Functions after verifying the caller / webhook |
+| `confirm_order_payment`, `mark_payment_failed`, `record_refund`, `create_payout_request`, `complete_payout`, `admin_transition_order` | **service_role only** | Called by Edge Functions after verifying the caller / webhook |
 | `admin_*` | admin (checked inside) | Dashboard stats, time series, creator/brand management, settings, reports, broadcast |
 | `update_creator_rating`, `calculate_creator_earnings`, `validate_order_status_transition`, `create_audit_log` | internal | Trigger helpers |
 
@@ -431,7 +430,6 @@ once per statement.
 | reviews | published | published + own | published + own | all |
 | notifications | – | own | own | own |
 | reports | – | insert + own | insert + own | all |
-| disputes / dispute_messages | – | participant | participant | all |
 | audit_logs, admin_users, webhook_events | – | – | – | read only |
 | platform_settings | public keys | public keys | public keys | read; write via RPC |
 
@@ -476,7 +474,7 @@ client created only inside the function.
 | `smart-search` | anon/any | Parses natural language into structured filters (rule-based parser shared with the client fallback; pluggable AI parser behind `AI_API_KEY`) |
 | `request-payout` | creator JWT | Calls `create_payout_request` (balance, minimum, method checks) and notifies admins |
 | `process-payout` | admin JWT | Marks payouts processing/paid/failed/rejected (manual bank/UPI transfer reference, or RazorpayX when configured) |
-| `admin-order-action` | admin JWT | Refund (Razorpay Refunds API), cancel, force-complete, resolve dispute, status override — all audited |
+| `admin-order-action` | admin JWT | Refund (Razorpay Refunds API), cancel, force-complete, status override — all audited |
 | `send-notification` | webhook secret / admin JWT | Email dispatch through a provider abstraction (console, Resend) for notification rows; admin broadcast |
 | `sitemap` | public | XML sitemap of published creator storefronts and categories |
 
@@ -547,7 +545,7 @@ Tables added to the `supabase_realtime` publication: `messages`, `notifications`
 ## 15. Notifications & email
 
 * Notification rows are created only by server code (`private.notify()`): order lifecycle,
-  payments, messages (coalesced per conversation), reviews, briefs, disputes, verification,
+  payments, reviews, briefs, verification,
   payouts, admin broadcasts.
 * The UI subscribes in realtime; `NotificationPanel` supports mark-read / mark-all-read.
 * Email: an `AFTER INSERT` trigger posts the row to `send-notification` via `pg_net` **when
@@ -626,7 +624,7 @@ Tables added to the `supabase_realtime` publication: `messages`, `notifications`
 | 12 | Notifications | realtime panel, email abstraction |
 | 13 | Payments | Razorpay Edge Functions + checkout |
 | 14 | Earnings & payouts | earnings ledger, payout methods, requests, admin processing |
-| 15 | Reviews & disputes | reviews, ratings, disputes, reports |
+| 15 | Reviews & reports | reviews, ratings, reports |
 | 16 | Admin | dashboard/analytics, management screens, settings, audit logs |
 | 17 | Security audit | RLS/privilege review, SQL tests |
 | 18 | Responsive | 375 → 1920 px pass |

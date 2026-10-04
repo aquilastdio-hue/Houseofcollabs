@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Link } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { qk } from '@/lib/query-keys'
@@ -6,7 +7,6 @@ import {
   CheckCircle2,
   CircleAlert,
   CreditCard,
-  Gavel,
   PackageCheck,
   Play,
   RefreshCcw,
@@ -25,7 +25,6 @@ import {
   declineOrder,
   markReceived,
   markShipped,
-  openDispute,
   requestRevision,
   startWork,
   submitDeliverables,
@@ -35,10 +34,10 @@ import {
 import { payForOrder } from '@/services/payments.service'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
-import { AddressDialog, DeliverDialog, DisputeDialog, RevisionDialog, ShipDialog } from './order-dialogs'
+import { AddressDialog, DeliverDialog, RevisionDialog, ShipDialog } from './order-dialogs'
 import type { ShippingAddressInput } from '@/types'
 
-type Dialog = 'accept' | 'decline' | 'cancel' | 'address' | 'ship' | 'deliver' | 'revision' | 'approve' | 'dispute' | null
+type Dialog = 'accept' | 'decline' | 'cancel' | 'address' | 'ship' | 'deliver' | 'revision' | 'approve' | null
 
 /**
  * The "what happens next" card. Shows only the actions the current party can
@@ -52,7 +51,7 @@ export function OrderActions({ order, perspective }: { order: OrderDetail; persp
   const id = order.id
   const status = order.status
   const shipping = Array.isArray(order.shipping_details) ? order.shipping_details[0] : order.shipping_details
-  const openDisputeExists = order.disputes.some((d) => ['created', 'under_review', 'waiting_for_brand', 'waiting_for_creator'].includes(d.status))
+  const needsHelpLink = ACTIVE_STATUSES.includes(status) && status !== 'creator_pending'
   const remainingRevisions = Math.max(0, order.revisions_allowed - order.revisions_used)
   const meta = ORDER_STATUS_META[status]
   const hint = perspective === 'brand' ? meta.brand : meta.creator
@@ -67,7 +66,6 @@ export function OrderActions({ order, perspective }: { order: OrderDetail; persp
   const deliver = useOrderAction(id, (v: { items: Parameters<typeof submitDeliverables>[1]; note: string }) => submitDeliverables(id, v.items, v.note), status === 'revision_requested' ? 'Revision submitted' : 'Delivered — the brand has been notified')
   const revision = useOrderAction(id, (v: { reason: string; instructions: string; attachments: Parameters<typeof requestRevision>[3] }) => requestRevision(id, v.reason, v.instructions, v.attachments), 'Revision requested')
   const approve = useOrderAction(id, () => approveOrder(id), 'Order approved and completed')
-  const dispute = useOrderAction(id, (v: { reason: string; description: string }) => openDispute(id, v.reason, v.description), 'Dispute opened — our team will review it')
 
   const run = <T,>(m: { mutate: (v: T, o?: { onSuccess?: () => void }) => void }, v: T) => m.mutate(v, { onSuccess: close })
 
@@ -151,11 +149,10 @@ export function OrderActions({ order, perspective }: { order: OrderDetail; persp
     if ((status === 'accepted' && !order.requires_shipping) || status === 'received' || status === 'in_progress' || status === 'revision_requested')
       buttons.push(
         <Button key="deliver" variant="accent" onClick={() => setDialog('deliver')}>
-          <UploadCloud /> {status === 'revision_requested' ? 'Submit revision' : 'Deliver content'}
+          <UploadCloud /> {status === 'revision_requested' ? 'Submit revision for review' : 'Submit work for review'}
         </Button>,
       )
   }
-  const canDispute = ACTIVE_STATUSES.includes(status) && status !== 'creator_pending' && status !== 'disputed' && !openDisputeExists
 
   return (
     <section className="rounded-card border border-line bg-surface p-5 shadow-card sm:p-6" aria-label="Next steps">
@@ -181,15 +178,19 @@ export function OrderActions({ order, perspective }: { order: OrderDetail; persp
         <p className="mt-3 rounded-control bg-info-soft p-3 text-sm text-info">Your refund is being processed. It usually reaches you in 5–7 business days.</p>
       )}
 
-      {(buttons.length > 0 || canDispute) && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {buttons}
-          {canDispute && (
-            <Button variant="danger-ghost" onClick={() => setDialog('dispute')}>
-              <Gavel /> Report a problem
-            </Button>
-          )}
-        </div>
+      {buttons.length > 0 && <div className="mt-4 flex flex-wrap gap-2">{buttons}</div>}
+
+      {/* There is no self-serve escalation on an order any more. Support can
+          still cancel or refund any order, so the recourse is real — it just
+          goes through a person rather than a form. */}
+      {needsHelpLink && (
+        <p className="mt-4 text-sm text-muted">
+          Something wrong with this order?{' '}
+          <Link to="/contact" className="focus-ring font-medium text-ink underline underline-offset-2">
+            Contact support
+          </Link>
+          .
+        </p>
       )}
 
       <AddressDialog
@@ -261,7 +262,6 @@ export function OrderActions({ order, perspective }: { order: OrderDetail; persp
         loading={approve.isPending}
         onConfirm={() => run(approve, undefined)}
       />
-      <DisputeDialog open={dialog === 'dispute'} onOpenChange={(o) => !o && close()} loading={dispute.isPending} onSubmit={(reason, description) => run(dispute, { reason, description })} />
     </section>
   )
 }

@@ -7,7 +7,7 @@ import { Accent, DotGrid, Eyebrow, Glow, IconChip, TextLink, stagger, type Tone 
 
 const RESPONSE_TIMES = [
   { label: 'General questions', value: '1–2 business days' },
-  { label: 'Order problems', value: 'Open a dispute from the order page for the fastest review' },
+  { label: 'Order problems', value: 'Email us from the order page — we review both sides within 2 business days' },
   { label: 'Grievances', value: 'Acknowledged within 24 hours, resolved within 15 days' },
 ]
 

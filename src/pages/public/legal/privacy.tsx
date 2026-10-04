@@ -50,8 +50,8 @@ export const privacyPolicy: LegalBuilder = () => ({
               languages, linked social accounts and follower counts, portfolio items, services, prices and add-ons.
             </li>
             <li>
-              <strong>Order and project data:</strong> briefs, attachments, messages, delivered files, revision requests, reviews and dispute
-              submissions.
+              <strong>Order and project data:</strong> briefs, attachments, messages, delivered files, revision requests, reviews and anything you
+              send us about a problem with an order.
             </li>
             <li>
               <strong>Shipping details:</strong> when a service needs a physical product, the creator’s delivery name, phone number and address for
@@ -93,7 +93,7 @@ export const privacyPolicy: LegalBuilder = () => ({
             <li>to publish creator storefronts and help brands search, compare and shortlist creators;</li>
             <li>to process orders, payments, refunds, earnings and payouts;</li>
             <li>to deliver messages, files and notifications between the people on an order;</li>
-            <li>to review storefronts, verify creators, investigate reports and resolve disputes;</li>
+            <li>to review storefronts, verify creators, investigate reports and resolve problems with orders;</li>
             <li>to detect and prevent fraud, abuse, security incidents and off-platform payment requests;</li>
             <li>to answer support requests and send service emails you can’t opt out of, such as payment receipts and security alerts;</li>
             <li>to understand how the product is used in aggregate so we can improve search and fix problems; and</li>

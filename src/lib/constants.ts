@@ -113,16 +113,6 @@ export const REPORT_REASONS = [
   'Other',
 ] as const
 
-export const DISPUTE_REASONS = [
-  'Content not as described',
-  'Missed deadline',
-  'Creator unresponsive',
-  'Brand unresponsive',
-  'Product not shipped',
-  'Quality issue',
-  'Other',
-] as const
-
 export const CATEGORY_TONES: Record<string, { bg: string; fg: string }> = {
   rose: { bg: 'bg-rose-soft', fg: 'text-rose' },
   peach: { bg: 'bg-peach-soft', fg: 'text-peach' },

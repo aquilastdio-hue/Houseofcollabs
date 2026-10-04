@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { ChevronRight, Flag, Gavel, Package, RotateCcw, UserCheck, Wallet } from 'lucide-react'
+import { ChevronRight, Flag, Package, RotateCcw, UserCheck, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatINR, formatNumber } from '@/lib/format'
 import { OrderStatusBadge } from '@/components/orders/order-status-badge'
@@ -84,14 +84,6 @@ export function QuickLinks({ stats, loading }: { stats?: AdminDashboardStats; lo
       hint: 'Cancelled paid orders to refund',
       count: Number(s?.refunds_required ?? 0),
       icon: RotateCcw,
-      urgent: true,
-    },
-    {
-      to: '/admin/disputes',
-      label: 'Open disputes',
-      hint: 'Brand ↔ creator disagreements',
-      count: Number(s?.disputes_open ?? 0),
-      icon: Gavel,
       urgent: true,
     },
     {

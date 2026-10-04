@@ -27,7 +27,7 @@ function iconFor(type: string) {
   if (type.startsWith('revision')) return RefreshCcw
   if (type.startsWith('review')) return Star
   if (type.startsWith('brief')) return FileText
-  if (type.startsWith('dispute') || type.startsWith('report') || type.includes('suspended')) return ShieldAlert
+  if (type.startsWith('report') || type.includes('suspended')) return ShieldAlert
   if (type.includes('verified') || type.includes('approved') || type === 'order_completed') return CheckCircle2
   if (type === 'announcement') return Sparkles
   if (type.startsWith('order') || type === 'content_delivered') return Package

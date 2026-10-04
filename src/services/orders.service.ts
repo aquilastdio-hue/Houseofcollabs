@@ -68,7 +68,6 @@ const ORDER_DETAIL_SELECT = `
   order_revisions ( * ),
   shipping_details ( * ),
   reviews ( * ),
-  disputes ( * ),
   payments ( id, status, amount, currency, method, provider_order_id, provider_payment_id, refunded_amount, captured_at, created_at, error_description )
 `
 
@@ -181,29 +180,14 @@ export async function approveOrder(id: string) {
   return unwrap(await supabase.rpc('approve_order', { p_order_id: id }))
 }
 
-export async function openDispute(id: string, reason: string, description: string) {
-  return unwrap(await supabase.rpc('open_dispute', { p_order_id: id, p_reason: reason, p_description: description }))
-}
-
 export async function submitReview(orderId: string, rating: number, comment?: string) {
   return unwrap(await supabase.rpc('submit_review', { p_order_id: orderId, p_rating: rating, p_comment: comment }))
 }
 
 // ---------------------------------------------------------------------------
-// Disputes
-// ---------------------------------------------------------------------------
-export async function listDisputeMessages(disputeId: string) {
-  return unwrap(await supabase.from('dispute_messages').select('*').eq('dispute_id', disputeId).order('created_at'))
-}
-
-export async function addDisputeMessage(disputeId: string, body: string, attachments: Attachment[] = []) {
-  return unwrap(await supabase.rpc('add_dispute_message', { p_dispute_id: disputeId, p_body: body, p_attachments: attachments }))
-}
-
-// ---------------------------------------------------------------------------
 // Files (private bucket: order-deliverables/{orderId}/…)
 // ---------------------------------------------------------------------------
-export async function uploadOrderFile(orderId: string, file: File, sub?: 'revisions' | 'disputes'): Promise<Attachment> {
+export async function uploadOrderFile(orderId: string, file: File, sub?: 'revisions'): Promise<Attachment> {
   const up = await uploadFile('order-deliverables', scopedPath(orderId, file.name, sub), file)
   return { path: up.path, name: file.name, mime: up.mime, size: file.size }
 }

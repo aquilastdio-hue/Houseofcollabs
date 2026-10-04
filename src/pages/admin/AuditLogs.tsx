@@ -25,7 +25,7 @@ const PAGE_SIZE = 50
 /** Entity types written by `private.audit()` across the migrations. */
 const ENTITY_TYPES = [
   'order', 'payment', 'payout_request', 'payout_method', 'creator', 'brand', 'profile',
-  'brief', 'review', 'dispute', 'report', 'conversation', 'notification', 'contact_message',
+  'brief', 'review', 'report', 'conversation', 'notification', 'contact_message',
 ] as const
 
 const ENTITY_OPTIONS = ENTITY_TYPES.map((value) => ({ value, label: titleCase(value.replace(/_/g, ' ')) }))
@@ -35,11 +35,10 @@ const ENTITY_LINK: Partial<Record<(typeof ENTITY_TYPES)[number], (id: string) =>
   order: (id) => `/admin/orders/${id}`,
   creator: (id) => `/admin/creators/${id}`,
   brand: (id) => `/admin/brands/${id}`,
-  dispute: (id) => `/admin/disputes/${id}`,
 }
 
 /** Money/state changes worth spotting at a glance in a long list. */
-const NOTABLE = /^(admin_|payout_|refund_|payment_|dispute_|.*_soft_deleted$)/
+const NOTABLE = /^(admin_|payout_|refund_|payment_|.*_soft_deleted$)/
 
 function ActionCell({ action }: { action: string }) {
   return (

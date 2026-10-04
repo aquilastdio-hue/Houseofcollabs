@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AlertTriangle, Ban, CheckCheck, Gavel, ListRestart, RotateCcw } from 'lucide-react'
+import { AlertTriangle, Ban, CheckCheck, ListRestart, RotateCcw } from 'lucide-react'
 import { qk } from '@/lib/query-keys'
 import { formatINR } from '@/lib/format'
 import { ORDER_STATUS_META, statusLabel } from '@/lib/order-state'
@@ -17,8 +17,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
 import { CheckboxRow } from '@/components/ui/checkbox'
 import { RadioGroup } from '@/components/ui/radio-group'
-import type { Dispute, OrderStatus } from '@/types'
-import { OPEN_DISPUTE_STATUSES } from './admin-status'
+import type { OrderStatus } from '@/types'
 import { toPaise } from './admin-utils'
 import { ChoiceRow } from './choice'
 import { DetailCard } from './detail'
@@ -32,7 +31,6 @@ const SUCCESS: Record<OrderAdminAction['action'], string> = {
   cancel: 'Order cancelled',
   force_complete: 'Order completed',
   set_status: 'Order status updated',
-  resolve_dispute: 'Dispute resolved',
 }
 
 /**
@@ -108,7 +106,7 @@ function RefundDialog({ order, open, onOpenChange }: { order: OrderDetail; open:
       <Field label="Reason" htmlFor="refund-reason" required error={e.reason?.message} hint="Stored with the refund and in the audit log.">
         <Textarea id="refund-reason" rows={3} maxLength={500} {...form.register('reason')} />
       </Field>
-      {order.status !== 'cancelled' && order.status !== 'completed' && order.status !== 'disputed' && (
+      {order.status !== 'cancelled' && order.status !== 'completed' && (
         <Notice tone="warning" icon={<AlertTriangle />}>
           This order is still “{statusLabel(order.status)}”. A full refund on an active order doesn’t stop the work — cancel the order as well if it shouldn’t continue.
         </Notice>
@@ -120,8 +118,6 @@ function RefundDialog({ order, open, onOpenChange }: { order: OrderDetail; open:
 // ---------------------------------------------------------------------------
 // Set status
 // ---------------------------------------------------------------------------
-const ACTIVE_WORK: OrderStatus[] = ['accepted', 'awaiting_shipment', 'shipped', 'received', 'in_progress', 'delivered', 'revision_requested', 'revision_submitted']
-
 /** Moves the order workflow lets an admin make (the database is still the judge). */
 const ADMIN_TARGETS: Partial<Record<OrderStatus, OrderStatus[]>> = {
   payment_pending: ['cancelled'],
@@ -136,7 +132,6 @@ const ADMIN_TARGETS: Partial<Record<OrderStatus, OrderStatus[]>> = {
   revision_requested: ['cancelled'],
   revision_submitted: ['approved', 'delivered', 'cancelled'],
   approved: ['completed'],
-  disputed: [...ACTIVE_WORK, 'completed', 'cancelled'],
 }
 
 const TARGET_HINTS: Partial<Record<OrderStatus, string>> = {
@@ -218,129 +213,12 @@ function SetStatusDialog({ order, open, onOpenChange }: { order: OrderDetail; op
 }
 
 // ---------------------------------------------------------------------------
-// Resolve dispute
-// ---------------------------------------------------------------------------
-export const DISPUTE_OUTCOMES = ['release_to_creator', 'resume_order', 'rejected', 'refund_brand', 'partial_refund'] as const
-type Outcome = (typeof DISPUTE_OUTCOMES)[number]
-
-function resolveSchema(refundable: number) {
-  return z
-    .object({
-      outcome: z.enum(DISPUTE_OUTCOMES),
-      amount: z.string().trim(),
-      note: z.string().trim().min(3, 'Explain the decision for both parties').max(2000, 'Keep it under 2,000 characters'),
-    })
-    .superRefine((v, ctx) => {
-      if ((v.outcome === 'refund_brand' || v.outcome === 'partial_refund') && refundable <= 0) {
-        ctx.addIssue({ code: 'custom', path: ['outcome'], message: 'There’s no captured payment left to refund.' })
-        return
-      }
-      if (v.outcome !== 'partial_refund') return
-      const n = Number(v.amount)
-      if (!v.amount || !amountString.test(v.amount) || !(n > 0)) ctx.addIssue({ code: 'custom', path: ['amount'], message: 'Enter an amount in rupees, e.g. 500 or 499.50' })
-      else if (n >= refundable) ctx.addIssue({ code: 'custom', path: ['amount'], message: `Must be less than ${formatINR(refundable, { precise: true })} — use a full refund instead` })
-    })
-}
-type ResolveValues = z.infer<ReturnType<typeof resolveSchema>>
-
-/** Resolution dialog shared by the order and dispute pages. */
-export function ResolveDisputeDialog({
-  orderId,
-  dispute,
-  refundable,
-  open,
-  onOpenChange,
-}: {
-  orderId: string
-  dispute: Pick<Dispute, 'id' | 'previous_order_status' | 'reason'>
-  refundable: number
-  open: boolean
-  onOpenChange: (o: boolean) => void
-}) {
-  const schema = React.useMemo(() => resolveSchema(refundable), [refundable])
-  const form = useForm<ResolveValues>({ resolver: zodResolver(schema), defaultValues: { outcome: 'release_to_creator', amount: '', note: '' } })
-  const act = useOrderAdminAction(orderId, () => onOpenChange(false))
-  const outcome = form.watch('outcome')
-  const e = form.formState.errors
-  const noMoney = refundable <= 0
-
-  React.useEffect(() => {
-    if (!open) form.reset({ outcome: 'release_to_creator', amount: '', note: '' })
-  }, [open, form])
-
-  const onSubmit = form.handleSubmit((v) =>
-    act.mutate({
-      action: 'resolve_dispute',
-      dispute_id: dispute.id,
-      outcome: v.outcome,
-      note: v.note,
-      amount: v.outcome === 'partial_refund' ? toPaise(Number(v.amount)) : undefined,
-    }),
-  )
-
-  const prev = statusLabel(dispute.previous_order_status)
-  const choices: { value: Outcome; title: string; description: string; disabled?: boolean }[] = [
-    { value: 'release_to_creator', title: 'Release to creator', description: 'Complete the order — the creator is paid their full earning.' },
-    { value: 'resume_order', title: 'Resume the order', description: `Send the order back to “${prev}” so the work continues.` },
-    { value: 'rejected', title: 'Reject the dispute', description: `The claim isn’t upheld; the order returns to “${prev}”.` },
-    {
-      value: 'refund_brand',
-      title: 'Refund the brand in full',
-      description: noMoney ? 'No captured payment to refund.' : `Refunds ${formatINR(refundable, { precise: true })} and cancels the order.`,
-      disabled: noMoney,
-    },
-    {
-      value: 'partial_refund',
-      title: 'Partial refund',
-      description: noMoney ? 'No captured payment to refund.' : 'Refund part of the payment; the order completes and the creator earns the rest.',
-      disabled: noMoney,
-    },
-  ]
-
-  return (
-    <FormDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Resolve dispute"
-      description={`“${dispute.reason}” — the decision is final, both parties are notified and it’s logged.`}
-      submitLabel="Resolve dispute"
-      destructive={outcome === 'refund_brand' || outcome === 'partial_refund'}
-      loading={act.isPending}
-      onSubmit={onSubmit}
-      size="lg"
-    >
-      <fieldset>
-        <legend className="mb-2 text-sm font-medium">Outcome</legend>
-        <RadioGroup value={outcome} onValueChange={(v) => form.setValue('outcome', v as Outcome, { shouldValidate: true })} aria-label="Outcome">
-          {choices.map((c) => (
-            <ChoiceRow key={c.value} id={`outcome-${c.value}`} value={c.value} checked={outcome === c.value} title={c.title} description={c.description} disabled={c.disabled} />
-          ))}
-        </RadioGroup>
-        {e.outcome?.message && (
-          <p role="alert" className="mt-1.5 text-xs font-medium text-danger">
-            {e.outcome.message}
-          </p>
-        )}
-      </fieldset>
-      {outcome === 'partial_refund' && (
-        <Field label="Refund amount (₹)" htmlFor="resolve-amount" required error={e.amount?.message} hint={`Less than ${formatINR(refundable, { precise: true })}`}>
-          <Input id="resolve-amount" type="text" inputMode="decimal" autoComplete="off" placeholder="0.00" {...form.register('amount')} />
-        </Field>
-      )}
-      <Field label="Resolution note" htmlFor="resolve-note" required error={e.note?.message} hint="Shared with the brand and the creator.">
-        <Textarea id="resolve-note" rows={4} maxLength={2000} {...form.register('note')} />
-      </Field>
-    </FormDialog>
-  )
-}
-
-// ---------------------------------------------------------------------------
 // Panel
 // ---------------------------------------------------------------------------
-type DialogKey = 'refund' | 'cancel' | 'force_complete' | 'set_status' | 'resolve'
+type DialogKey = 'refund' | 'cancel' | 'force_complete' | 'set_status'
 
 const CLOSED: OrderStatus[] = ['completed', 'cancelled', 'refunded', 'draft']
-const FORCE_COMPLETE_FROM: OrderStatus[] = ['disputed', 'delivered', 'revision_submitted', 'approved']
+const FORCE_COMPLETE_FROM: OrderStatus[] = ['delivered', 'revision_submitted', 'approved']
 
 /** Admin-only order actions. Every action needs a reason and is audited server-side. */
 export function OrderActionsPanel({ order }: { order: OrderDetail }) {
@@ -348,7 +226,6 @@ export function OrderActionsPanel({ order }: { order: OrderDetail }) {
   const close = () => setDialog(null)
   const quick = useOrderAdminAction(order.id, close)
 
-  const openDispute = order.disputes.find((d) => OPEN_DISPUTE_STATUSES.includes(d.status))
   const refundable = refundableAmount(order.payments)
   const canCancel = !CLOSED.includes(order.status)
   const canForceComplete = FORCE_COMPLETE_FROM.includes(order.status)
@@ -360,11 +237,6 @@ export function OrderActionsPanel({ order }: { order: OrderDetail }) {
           <Notice tone="danger" icon={<AlertTriangle />}>
             Refund due — this order was cancelled after payment. {refundable > 0 ? `${formatINR(refundable, { precise: true })} is still captured.` : 'No captured amount remains.'}
           </Notice>
-        )}
-        {openDispute && (
-          <Button block onClick={() => setDialog('resolve')}>
-            <Gavel /> Resolve dispute
-          </Button>
         )}
         <div className="grid gap-2">
           <Button variant="secondary" block disabled={refundable <= 0} onClick={() => setDialog('refund')} className="justify-start">
@@ -381,15 +253,11 @@ export function OrderActionsPanel({ order }: { order: OrderDetail }) {
             <Ban /> Cancel order
           </Button>
         </div>
-        {!canForceComplete && <p className="px-1 text-xs text-muted">Force complete is available for delivered, revision-submitted, approved or disputed orders.</p>}
+        {!canForceComplete && <p className="px-1 text-xs text-muted">Force complete is available for delivered, revision-submitted or approved orders.</p>}
       </div>
 
       <RefundDialog order={order} open={dialog === 'refund'} onOpenChange={(o) => !o && close()} />
       <SetStatusDialog order={order} open={dialog === 'set_status'} onOpenChange={(o) => !o && close()} />
-      {openDispute && (
-        <ResolveDisputeDialog orderId={order.id} dispute={openDispute} refundable={refundable} open={dialog === 'resolve'} onOpenChange={(o) => !o && close()} />
-      )}
-
       <ConfirmDialog
         open={dialog === 'cancel'}
         onOpenChange={(o) => !o && close()}
@@ -411,11 +279,7 @@ export function OrderActionsPanel({ order }: { order: OrderDetail }) {
         open={dialog === 'force_complete'}
         onOpenChange={(o) => !o && close()}
         title={`Complete order ${order.order_number}?`}
-        description={
-          order.status === 'disputed'
-            ? 'Closes the dispute in the creator’s favour and completes the order. The creator’s earning is released.'
-            : 'Approves the delivery on the brand’s behalf and completes the order. The creator’s earning is released.'
-        }
+        description="Approves the delivery on the brand’s behalf and completes the order. The creator’s earning is released."
         confirmLabel="Complete order"
         loading={quick.isPending}
         reasonLabel="Reason"

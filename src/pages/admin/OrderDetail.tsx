@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router'
 import { AlertTriangle, CalendarClock, PackageX } from 'lucide-react'
-import { formatDateTime, formatRelative } from '@/lib/format'
+import { formatDateTime } from '@/lib/format'
 import { isOverdue } from '@/lib/order-state'
 import { useOrder } from '@/hooks/use-orders'
 import { Seo } from '@/components/shared/seo'
@@ -15,7 +15,6 @@ import { OrderActionsPanel } from '@/components/admin/order-actions'
 import {
   BriefSnapshotCard,
   DeliverablesCard,
-  DisputesCard,
   HistoryCard,
   OrderItemsCard,
   OrderMoney,
@@ -26,7 +25,6 @@ import {
   ShippingCard,
   TimelineCard,
 } from '@/components/admin/order-sections'
-import { OPEN_DISPUTE_STATUSES } from '@/components/admin/admin-status'
 
 export default function OrderDetail() {
   const { id = '' } = useParams()
@@ -69,7 +67,6 @@ export default function OrderDetail() {
     )
   }
 
-  const openDispute = order.disputes.find((d) => OPEN_DISPUTE_STATUSES.includes(d.status))
   const overdue = isOverdue(order.due_at, order.status)
 
   return (
@@ -104,16 +101,8 @@ export default function OrderDetail() {
         </p>
       </header>
 
-      {(openDispute || order.cancellation_reason) && (
+      {order.cancellation_reason && (
         <div className="mb-6 space-y-3">
-          {openDispute && (
-            <Notice tone="warning" icon={<AlertTriangle />}>
-              <span className="font-medium">Open dispute:</span> {openDispute.reason} · raised {formatRelative(openDispute.created_at)}.{' '}
-              <Link to={`/admin/disputes/${openDispute.id}`} className="focus-ring rounded-sm font-medium underline underline-offset-2">
-                Review the dispute
-              </Link>
-            </Notice>
-          )}
           {order.cancellation_reason && (
             <Notice tone="info">
               <span className="font-medium">Cancellation reason:</span> {order.cancellation_reason}
@@ -131,7 +120,6 @@ export default function OrderDetail() {
           <RevisionsCard order={order} />
           <ShippingCard order={order} />
           <PaymentsCard order={order} />
-          <DisputesCard order={order} />
           <ReviewsCard order={order} />
           <HistoryCard order={order} />
         </div>

@@ -24,7 +24,6 @@ import { OrderActions } from '@/components/orders/order-actions'
 import { OrderActivity, OrderTimeline } from '@/components/orders/order-timeline'
 import { BriefPanel } from '@/components/orders/brief-panel'
 import { DeliverablesList, RevisionsList } from '@/components/orders/deliverables-list'
-import { DisputePanel } from '@/components/orders/dispute-panel'
 import { ReviewForm } from '@/components/orders/order-dialogs'
 import type { Review } from '@/types'
 
@@ -126,7 +125,6 @@ export default function OrderDetail({ perspective }: { perspective: 'brand' | 'c
   const myReview = order.reviews.find((r) => r.reviewer_id === user?.id)
   const brandReview = order.reviews.find((r) => r.reviewer_role === 'brand')
   const creatorReview = order.reviews.find((r) => r.reviewer_role === 'creator')
-  const dispute = [...order.disputes].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
   const payment = order.payments[0]
   const addons = order.order_items.filter((i) => i.item_type === 'addon')
   const overdue = isOverdue(order.due_at, order.status)
@@ -207,14 +205,13 @@ export default function OrderDetail({ perspective }: { perspective: 'brand' | 'c
           )}
 
           <section className="rounded-card border border-line bg-surface p-5 shadow-card sm:p-6">
-            <Tabs defaultValue={['delivered', 'revision_submitted', 'completed'].includes(order.status) ? 'deliverables' : dispute && order.status === 'disputed' ? 'dispute' : 'brief'}>
+            <Tabs defaultValue={['delivered', 'revision_submitted', 'completed'].includes(order.status) ? 'deliverables' : 'brief'}>
               <TabsList variant="underline">
                 <TabsTrigger value="brief">Brief</TabsTrigger>
                 <TabsTrigger value="deliverables">Deliverables ({order.order_deliverables.length})</TabsTrigger>
                 <TabsTrigger value="revisions">
                   Revisions ({order.revisions_used}/{order.revisions_allowed})
                 </TabsTrigger>
-                {dispute && <TabsTrigger value="dispute">Dispute</TabsTrigger>}
                 <TabsTrigger value="activity">Activity</TabsTrigger>
               </TabsList>
               <TabsContent value="brief" className="pt-5">
@@ -232,11 +229,6 @@ export default function OrderDetail({ perspective }: { perspective: 'brand' | 'c
                   <RevisionsList revisions={order.order_revisions} revisionsAllowed={order.revisions_allowed} />
                 )}
               </TabsContent>
-              {dispute && (
-                <TabsContent value="dispute" className="pt-5">
-                  <DisputePanel dispute={dispute} perspective={perspective} />
-                </TabsContent>
-              )}
               <TabsContent value="activity" className="pt-5">
                 <OrderActivity history={order.order_status_history} />
               </TabsContent>

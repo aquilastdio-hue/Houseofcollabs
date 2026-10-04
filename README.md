@@ -211,7 +211,7 @@ draft → payment_pending → order_placed → creator_pending → accepted
       → in_progress → delivered → approved → completed
 
 delivered → revision_requested → revision_submitted → delivered   (loop)
-any stage → cancelled / disputed → refunded
+any stage → cancelled → refunded
 ```
 
 Physical-product orders branch after `accepted` through `awaiting_shipment` →
@@ -345,7 +345,7 @@ queued. Users control the five optional categories in **Settings → Security**.
 
 | Category | Column | Default | Examples |
 | --- | --- | --- | --- |
-| `critical` | *(none — cannot be disabled)* | always on | `payment_failed`, `payout_failed`, `refund_processed`, `account_suspended`, `dispute_opened`, `order_cancelled`, `order_expired` |
+| `critical` | *(none — cannot be disabled)* | always on | `payment_failed`, `payout_failed`, `refund_processed`, `account_suspended`, `order_cancelled`, `order_expired` |
 | `orders` | `email_orders` | on | `order_new`, `content_delivered`, `revision_requested`, `order_approved`, `shipment_update`, `review_received` |
 | `payments` | `email_payments` | on | `payment_received`, `earnings_available`, `payout_requested`, `payout_processed` |
 | `campaigns` | `email_campaigns` | on | `brief_received` |
@@ -356,7 +356,7 @@ queued. Users control the five optional categories in **Settings → Security**.
 Critical mail ignores it — losing a failed-payout notice because of a
 preference toggle would cost someone money.
 
-`message` and `dispute_message` are in-app only: they are logged as `skipped`
+In-app-only notification types are logged as `skipped`
 and never emailed, because a chat thread would mean an email per reply.
 
 ### Required setup
@@ -456,7 +456,7 @@ authenticated`) and assert that:
 - prices, fees and payouts are computed by the database, not the caller;
 - illegal order transitions raise, and legal ones update the timeline;
 - a late `payment.failed` cannot override a capture;
-- refunds, disputes, cancellations and the cron jobs behave.
+- refunds, cancellations and the cron jobs behave.
 
 Each file runs in a transaction and rolls back, and they pass against both an
 empty and a seeded database.
@@ -464,8 +464,8 @@ empty and a seeded database.
 ### Manual end-to-end check
 
 Brand signup → onboarding → search → creator profile → checkout →
-Razorpay test card `4111 1111 1111 1111` → creator accepts → messages →
-delivers → brand approves → earning appears → payout requested → admin
+Razorpay test card `4111 1111 1111 1111` → creator accepts → submits work
+for review → brand approves → earning appears → payout requested → admin
 processes it.
 
 ---

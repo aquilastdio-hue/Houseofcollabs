@@ -35,7 +35,6 @@ export const qk = {
     list: (params: unknown) => ['orders', 'list', params] as const,
     detail: (id: string) => ['orders', 'detail', id] as const,
     quote: (serviceId: string, addonIds: string[]) => ['orders', 'quote', serviceId, addonIds] as const,
-    dispute: (orderId: string) => ['orders', 'dispute', orderId] as const,
   },
   notifications: {
     all: ['notifications'] as const,
@@ -72,8 +71,6 @@ export const qk = {
     orders: (params: unknown) => ['admin', 'orders', params] as const,
     payments: (params: unknown) => ['admin', 'payments', params] as const,
     payouts: (params: unknown) => ['admin', 'payouts', params] as const,
-    disputes: (params: unknown) => ['admin', 'disputes', params] as const,
-    dispute: (id: string) => ['admin', 'dispute', id] as const,
     reports: (params: unknown) => ['admin', 'reports', params] as const,
     auditLogs: (params: unknown) => ['admin', 'audit-logs', params] as const,
     settings: ['admin', 'settings'] as const,

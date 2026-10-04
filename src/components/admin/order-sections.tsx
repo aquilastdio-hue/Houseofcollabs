@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, BadgeCheck, Check, ChevronDown, Circle, ExternalLink, FileText, Film, Gavel, Link2, Minus, Paperclip, Star } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Check, ChevronDown, Circle, FileText, Film, Link2, Minus, Paperclip, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDate, formatDateTime, formatINR, formatLocation, formatPercent, formatRelative, titleCase } from '@/lib/format'
 import { ADDON_TYPES, CONTENT_TYPES, labelFor } from '@/lib/constants'
@@ -11,12 +11,11 @@ import type { OrderDetail } from '@/services/orders.service'
 import { useSignedUrls } from '@/hooks/use-signed-url'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { OrderStatusBadge } from '@/components/orders/order-status-badge'
 import { RatingLabel, StarRating } from '@/components/shared/star-rating'
 import { EmptyState, ErrorState } from '@/components/shared/states'
-import { DISPUTE_STATUS_META, PAYMENT_STATUS_META, REFUND_STATUS_META, REVIEW_STATUS_META, REVISION_STATUS_META, RoleBadge, StatusBadge } from './admin-status'
+import { PAYMENT_STATUS_META, REFUND_STATUS_META, REVIEW_STATUS_META, REVISION_STATUS_META, RoleBadge, StatusBadge } from './admin-status'
 import { adminKeys } from './admin-keys'
 import { asRecord, asNumber, asString, asStringList } from './admin-utils'
 import { DetailCard, DetailItem, DetailList, ExternalAnchor, IdText, SummaryRow } from './detail'
@@ -548,7 +547,7 @@ export function TimelineCard({ order }: { order: OrderDetail }) {
           </li>
         ))}
       </ol>
-      {(order.status === 'cancelled' || order.status === 'refunded' || order.status === 'disputed') && (
+      {(order.status === 'cancelled' || order.status === 'refunded') && (
         <div className="mt-4 flex items-center gap-2 rounded-control bg-subtle px-3 py-2 text-sm">
           Now: <OrderStatusBadge status={order.status} size="sm" />
         </div>
@@ -591,41 +590,8 @@ export function HistoryCard({ order }: { order: OrderDetail }) {
 }
 
 // ---------------------------------------------------------------------------
-// Disputes & reviews
+// Reviews
 // ---------------------------------------------------------------------------
-export function DisputesCard({ order }: { order: OrderDetail }) {
-  if (order.disputes.length === 0) return null
-  const disputes = [...order.disputes].sort((a, b) => b.created_at.localeCompare(a.created_at))
-  return (
-    <DetailCard title="Disputes">
-      <ul className="space-y-3">
-        {disputes.map((d) => (
-          <li key={d.id} className="rounded-control border border-line p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                <Gavel className="size-4 text-muted" aria-hidden />
-                {d.reason}
-                <StatusBadge meta={DISPUTE_STATUS_META} value={d.status} size="sm" />
-              </p>
-              <Button asChild variant="secondary" size="xs">
-                <Link to={`/admin/disputes/${d.id}`}>
-                  Open dispute <ExternalLink />
-                </Link>
-              </Button>
-            </div>
-            {d.description && <p className="mt-2 line-clamp-3 text-sm whitespace-pre-line text-muted">{d.description}</p>}
-            <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-faint">
-              Raised by <RoleBadge role={d.raised_by_role} /> {formatRelative(d.created_at)}
-              {d.resolved_at && ` · closed ${formatDate(d.resolved_at)}`}
-              {d.refund_amount != null && ` · refund ${formatINR(d.refund_amount)}`}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </DetailCard>
-  )
-}
-
 export function ReviewsCard({ order }: { order: OrderDetail }) {
   if (order.reviews.length === 0) return null
   return (

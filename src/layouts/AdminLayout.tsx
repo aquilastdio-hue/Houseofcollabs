@@ -6,7 +6,6 @@ import {
   FileClock,
   Flag,
   FolderTree,
-  Gavel,
   Image,
   Inbox,
   LayoutDashboard,
@@ -46,7 +45,6 @@ const sections: NavSection[] = [
   {
     title: 'Trust & safety',
     items: [
-      { label: 'Disputes', href: '/admin/disputes', icon: Gavel },
       { label: 'Reports', href: '/admin/reports', icon: Flag },
     ],
   },

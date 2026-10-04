@@ -24,7 +24,7 @@ export const LEGAL_INDEX: { key: LegalDocKey; title: string; blurb: string }[] =
   { key: 'terms', title: 'Terms of Service', blurb: 'The agreement for using the marketplace.' },
   { key: 'privacy', title: 'Privacy Policy', blurb: 'What we collect, why, and your rights.' },
   { key: 'cookie-policy', title: 'Cookie Policy', blurb: 'The essential storage we use — and what we don’t.' },
-  { key: 'refund-policy', title: 'Refund Policy', blurb: 'Cancellations, disputes and refunds.' },
+  { key: 'refund-policy', title: 'Refund Policy', blurb: 'Cancellations, order problems and refunds.' },
   { key: 'payout-policy', title: 'Payout Policy', blurb: 'Fees, earnings and payouts for creators.' },
   { key: 'creator-guidelines', title: 'Creator Guidelines', blurb: 'Honest storefronts and disclosed ads.' },
   { key: 'brand-guidelines', title: 'Brand Guidelines', blurb: 'Briefs, claims and prohibited products.' },

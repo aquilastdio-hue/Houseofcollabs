@@ -211,7 +211,7 @@ export function PayoutSection() {
               body="Add your account number and IFSC. After saving, we only ever display the last four digits."
             />
             <p className="rounded-card border border-dashed border-line-strong p-4 text-sm leading-relaxed text-muted">
-              Payout details are locked while a payout is being processed, and earnings from an order under dispute stay on hold until it’s resolved.
+              Payout details are locked while a payout is being processed, and earnings from an order our team is reviewing stay on hold until it’s resolved.
             </p>
           </div>
         </div>

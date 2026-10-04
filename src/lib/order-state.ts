@@ -17,20 +17,24 @@ export const ORDER_STATUS_META: Record<OrderStatus, Meta> = {
   awaiting_shipment: { label: 'Awaiting shipment', tone: 'warning', brand: 'Ship the product to the creator’s address and add tracking.', creator: 'Waiting for the brand to ship the product.' },
   shipped: { label: 'Shipped', tone: 'info', brand: 'Product is on its way to the creator.', creator: 'The product is on its way. Mark it received when it arrives.' },
   received: { label: 'Product received', tone: 'info', brand: 'The creator has your product.', creator: 'Start working on the content.' },
-  in_progress: { label: 'In progress', tone: 'lilac', brand: 'The creator is working on your content.', creator: 'Upload your deliverables when they’re ready.' },
+  in_progress: { label: 'In progress', tone: 'lilac', brand: 'The creator is working on your content.', creator: 'Submit your work for review when it’s ready.' },
   delivered: { label: 'Delivered', tone: 'brand', brand: 'Review the delivery — approve it or request a revision.', creator: 'Waiting for the brand’s review.' },
   revision_requested: { label: 'Revision requested', tone: 'warning', brand: 'The creator is working on your revision.', creator: 'The brand requested changes. Submit your revision.' },
   revision_submitted: { label: 'Revision submitted', tone: 'brand', brand: 'Review the revision — approve it or ask for another change.', creator: 'Waiting for the brand’s review.' },
   approved: { label: 'Approved', tone: 'success', brand: 'You approved the delivery.', creator: 'The brand approved your work.' },
   completed: { label: 'Completed', tone: 'success', brand: 'All done. Leave a review for the creator.', creator: 'Completed — your earning is in your balance.' },
   cancelled: { label: 'Cancelled', tone: 'danger', brand: 'This order was cancelled.', creator: 'This order was cancelled.' },
-  disputed: { label: 'In dispute', tone: 'danger', brand: 'Our team is reviewing this order.', creator: 'Our team is reviewing this order.' },
+  // Retired with the dispute system in migration 0058. The enum label has to
+  // stay (Postgres cannot drop one), and this Record is keyed by the enum, so
+  // the entry stays too — but no order can reach the status: every transition
+  // into it was deleted and a CHECK constraint forbids it.
+  disputed: { label: 'In review', tone: 'danger', brand: 'Our team is reviewing this order.', creator: 'Our team is reviewing this order.' },
   refunded: { label: 'Refunded', tone: 'neutral', brand: 'This order was refunded.', creator: 'This order was refunded to the brand.' },
 }
 
 export const ACTIVE_STATUSES: OrderStatus[] = [
   'creator_pending', 'accepted', 'awaiting_shipment', 'shipped', 'received', 'in_progress', 'delivered',
-  'revision_requested', 'revision_submitted', 'disputed',
+  'revision_requested', 'revision_submitted',
 ]
 export const CLOSED_STATUSES: OrderStatus[] = ['completed', 'cancelled', 'refunded']
 export const REVIEW_STATUSES: OrderStatus[] = ['delivered', 'revision_submitted']

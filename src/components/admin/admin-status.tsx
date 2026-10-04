@@ -1,6 +1,6 @@
 import { Badge, type BadgeTone } from '@/components/ui/badge'
 import { titleCase } from '@/lib/format'
-import type { AccountStatus, ActorRole, CreatorStatus, DisputeStatus, Enums, PaymentStatus, PayoutStatus, ReportStatus, ReportTarget, RevisionStatus } from '@/types'
+import type { AccountStatus, ActorRole, CreatorStatus, Enums, PaymentStatus, PayoutStatus, ReportStatus, ReportTarget, RevisionStatus } from '@/types'
 
 export type StatusMeta = { label: string; tone: BadgeTone }
 
@@ -42,18 +42,6 @@ export const PAYOUT_TXN_STATUS_META: Record<Enums<'payout_txn_status'>, StatusMe
   failed: { label: 'Failed', tone: 'danger' },
   reversed: { label: 'Reversed', tone: 'warning' },
 }
-
-export const DISPUTE_STATUS_META: Record<DisputeStatus, StatusMeta> = {
-  created: { label: 'New', tone: 'warning' },
-  under_review: { label: 'Under review', tone: 'info' },
-  waiting_for_brand: { label: 'Waiting for brand', tone: 'lilac' },
-  waiting_for_creator: { label: 'Waiting for creator', tone: 'lilac' },
-  resolved: { label: 'Resolved', tone: 'success' },
-  refunded: { label: 'Refunded', tone: 'neutral' },
-  rejected: { label: 'Rejected', tone: 'neutral' },
-}
-
-export const OPEN_DISPUTE_STATUSES: DisputeStatus[] = ['created', 'under_review', 'waiting_for_brand', 'waiting_for_creator']
 
 export const REPORT_STATUS_META: Record<ReportStatus, StatusMeta> = {
   open: { label: 'Open', tone: 'warning' },

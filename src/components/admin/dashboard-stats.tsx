@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link } from 'react-router'
-import { Activity, Building2, CheckCircle2, Flag, Gavel, IndianRupee, Landmark, RotateCcw, ShoppingBag, Users, Wallet } from 'lucide-react'
+import { Activity, Building2, CheckCircle2, Flag, IndianRupee, Landmark, RotateCcw, ShoppingBag, Users, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatINR, formatNumber } from '@/lib/format'
 import { StatsCard } from '@/components/shared/stats-card'
@@ -118,9 +118,6 @@ export function DashboardStats({ stats, loading }: { stats?: AdminDashboardStats
           </span>
         }
       />
-      <StatLink to="/admin/disputes">
-        <StatsCard label="Open disputes" icon={<Gavel />} loading={loading} value={n(s?.disputes_open)} hint="Awaiting an admin decision" />
-      </StatLink>
       <StatLink to="/admin/reports">
         <StatsCard label="Open reports" icon={<Flag />} loading={loading} value={n(s?.reports_open)} hint="Open or under review" />
       </StatLink>

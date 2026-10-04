@@ -64,7 +64,7 @@ export const termsOfService: LegalBuilder = (t) => ({
             {site.name} is an online marketplace and an intermediary under the Information Technology Act, 2000. Creators are independent sellers who
             set their own services, prices and terms; they are not our employees or agents. When a creator accepts an order, the contract for the
             content is between the brand and the creator. {site.name} provides the platform, collects and holds payment, releases it according to these
-            terms, and offers support and dispute resolution.
+            terms, and offers support when an order goes wrong.
           </p>
           <p>
             We review storefronts and act on reports, but we do not guarantee the results of any campaign, the performance of any content, or that a
@@ -150,17 +150,18 @@ export const termsOfService: LegalBuilder = (t) => ({
       ),
     },
     {
-      id: 'cancellations-and-disputes',
-      title: 'Cancellations, refunds and disputes',
+      id: 'cancellations-and-refunds',
+      title: 'Cancellations and refunds',
       body: (
         <>
           <p>
             Brands can cancel a paid order for a full refund until the creator accepts it. Orders that a creator declines, or doesn’t accept in time, are
-            cancelled and refunded in full. After acceptance, either party can open a dispute from the order page while the work is active; our team
-            reviews the brief, messages and files and decides the outcome, which may include releasing the payment, a partial refund or a full refund.
+            cancelled and refunded in full. After acceptance, either party can ask us to step in while the work is active by contacting support; our
+            team reviews the brief, messages and files and decides the outcome, which may include releasing the payment, a partial refund or a full
+            refund.
           </p>
           <p>
-            The complete rules are in our <Link to="/refund-policy">refund policy</Link>. Our decision on a dispute is final as far as the platform is
+            The complete rules are in our <Link to="/refund-policy">refund policy</Link>. Our decision on an order is final as far as the platform is
             concerned, but it doesn’t limit any rights you have under applicable law.
           </p>
         </>
@@ -195,7 +196,7 @@ export const termsOfService: LegalBuilder = (t) => ({
           <h3>What you give {site.name}</h3>
           <p>
             You grant {site.name} a non-exclusive, royalty-free licence to host, store, display and process content you upload, only as needed to run
-            the marketplace — for example, to show a storefront, deliver files between the parties or resolve a dispute. We may feature public
+            the marketplace — for example, to show a storefront, deliver files between the parties or resolve a problem with an order. We may feature public
             storefront content to promote {site.name}; creators can ask us to stop at any time.
           </p>
           <p>

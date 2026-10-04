@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link2, Plus, Trash2 } from 'lucide-react'
-import { DISPUTE_REASONS, INDIAN_STATES } from '@/lib/constants'
+import { INDIAN_STATES } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -217,15 +217,15 @@ export function DeliverDialog({
       open={open}
       onOpenChange={onOpenChange}
       size="lg"
-      title={isRevision ? 'Submit your revision' : 'Deliver your content'}
-      description="Upload final files (private to you and the brand) or share links to large files."
+      title={isRevision ? 'Submit your revision for review' : 'Submit your work for review'}
+      description="Upload final files (private to you and the brand) or share links to large files. The brand reviews them and either approves the order or asks for a revision."
       footer={
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancel
           </Button>
           <Button variant="accent" loading={loading} disabled={uploading} onClick={submit}>
-            {isRevision ? 'Submit revision' : 'Deliver'}
+            {isRevision ? 'Submit revision' : 'Submit for review'}
           </Button>
         </>
       }
@@ -350,67 +350,6 @@ export function RevisionDialog({
           onUploaded={(a) => setAttachments((prev) => [...prev, a])}
           onRemove={(item) => setAttachments((prev) => prev.filter((a) => a.path !== item.result?.path))}
         />
-      </div>
-    </Modal>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Dispute (either party)
-// ---------------------------------------------------------------------------
-export function DisputeDialog({
-  open,
-  onOpenChange,
-  loading,
-  onSubmit,
-}: {
-  open: boolean
-  onOpenChange: (o: boolean) => void
-  loading?: boolean
-  onSubmit: (reason: string, description: string) => void
-}) {
-  const [reason, setReason] = React.useState('')
-  const [description, setDescription] = React.useState('')
-  const [error, setError] = React.useState<string | null>(null)
-  React.useEffect(() => {
-    if (!open) {
-      setReason('')
-      setDescription('')
-      setError(null)
-    }
-  }, [open])
-  return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Open a dispute"
-      description="Our team reviews the brief, messages, deliveries and revisions, then decides fairly. The order is paused meanwhile."
-      footer={
-        <>
-          <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={loading}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            loading={loading}
-            onClick={() => {
-              if (!reason) return setError('Choose a reason.')
-              if (description.trim().length < 20) return setError('Describe the problem in at least 20 characters.')
-              onSubmit(reason, description.trim())
-            }}
-          >
-            Open dispute
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-4">
-        <Field label="Reason" htmlFor="dispute-reason" required>
-          <Select id="dispute-reason" value={reason} onValueChange={setReason} options={DISPUTE_REASONS.map((r) => ({ value: r, label: r }))} placeholder="Choose a reason" />
-        </Field>
-        <Field label="What happened?" htmlFor="dispute-description" required error={error ?? undefined}>
-          <Textarea id="dispute-description" rows={5} maxLength={4000} value={description} onChange={(e) => setDescription(e.target.value)} />
-        </Field>
       </div>
     </Modal>
   )

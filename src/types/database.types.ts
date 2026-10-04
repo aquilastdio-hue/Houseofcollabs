@@ -541,125 +541,6 @@ export type Database = {
           },
         ]
       }
-      conversation_participants: {
-        Row: {
-          archived: boolean
-          conversation_id: string
-          id: string
-          joined_at: string
-          last_read_at: string | null
-          muted: boolean
-          participant_role: Database["public"]["Enums"]["actor_role"]
-          profile_id: string
-        }
-        Insert: {
-          archived?: boolean
-          conversation_id: string
-          id?: string
-          joined_at?: string
-          last_read_at?: string | null
-          muted?: boolean
-          participant_role: Database["public"]["Enums"]["actor_role"]
-          profile_id: string
-        }
-        Update: {
-          archived?: boolean
-          conversation_id?: string
-          id?: string
-          joined_at?: string
-          last_read_at?: string | null
-          muted?: boolean
-          participant_role?: Database["public"]["Enums"]["actor_role"]
-          profile_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversation_participants_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversation_participants_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      conversations: {
-        Row: {
-          brand_id: string
-          created_at: string
-          creator_id: string
-          id: string
-          last_message_at: string | null
-          last_message_preview: string | null
-          last_message_sender_id: string | null
-          order_id: string | null
-          subject: string | null
-          type: Database["public"]["Enums"]["conversation_type"]
-          updated_at: string
-        }
-        Insert: {
-          brand_id: string
-          created_at?: string
-          creator_id: string
-          id?: string
-          last_message_at?: string | null
-          last_message_preview?: string | null
-          last_message_sender_id?: string | null
-          order_id?: string | null
-          subject?: string | null
-          type?: Database["public"]["Enums"]["conversation_type"]
-          updated_at?: string
-        }
-        Update: {
-          brand_id?: string
-          created_at?: string
-          creator_id?: string
-          id?: string
-          last_message_at?: string | null
-          last_message_preview?: string | null
-          last_message_sender_id?: string | null
-          order_id?: string | null
-          subject?: string | null
-          type?: Database["public"]["Enums"]["conversation_type"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversations_brand_id_fkey"
-            columns: ["brand_id"]
-            isOneToOne: false
-            referencedRelation: "brands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "creators"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_last_message_sender_id_fkey"
-            columns: ["last_message_sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       creator_categories: {
         Row: {
           category_id: string
@@ -1104,6 +985,7 @@ export type Database = {
           age: number | null
           approved_at: string | null
           available: boolean
+          barter_available: boolean
           bio: string | null
           city: string | null
           completed_orders: number
@@ -1144,6 +1026,7 @@ export type Database = {
           age?: number | null
           approved_at?: string | null
           available?: boolean
+          barter_available?: boolean
           bio?: string | null
           city?: string | null
           completed_orders?: number
@@ -1184,6 +1067,7 @@ export type Database = {
           age?: number | null
           approved_at?: string | null
           available?: boolean
+          barter_available?: boolean
           bio?: string | null
           city?: string | null
           completed_orders?: number
@@ -1232,127 +1116,6 @@ export type Database = {
             foreignKeyName: "creators_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dispute_messages: {
-        Row: {
-          attachments: Json
-          body: string
-          created_at: string
-          dispute_id: string
-          id: string
-          sender_id: string | null
-          sender_role: Database["public"]["Enums"]["actor_role"]
-        }
-        Insert: {
-          attachments?: Json
-          body: string
-          created_at?: string
-          dispute_id: string
-          id?: string
-          sender_id?: string | null
-          sender_role: Database["public"]["Enums"]["actor_role"]
-        }
-        Update: {
-          attachments?: Json
-          body?: string
-          created_at?: string
-          dispute_id?: string
-          id?: string
-          sender_id?: string | null
-          sender_role?: Database["public"]["Enums"]["actor_role"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dispute_messages_dispute_id_fkey"
-            columns: ["dispute_id"]
-            isOneToOne: false
-            referencedRelation: "disputes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dispute_messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      disputes: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          order_id: string
-          previous_order_status: Database["public"]["Enums"]["order_status"]
-          raised_by: string | null
-          raised_by_role: Database["public"]["Enums"]["actor_role"]
-          reason: string
-          refund_amount: number | null
-          resolution: string | null
-          resolution_type: string | null
-          resolved_at: string | null
-          resolved_by: string | null
-          status: Database["public"]["Enums"]["dispute_status"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          order_id: string
-          previous_order_status: Database["public"]["Enums"]["order_status"]
-          raised_by?: string | null
-          raised_by_role: Database["public"]["Enums"]["actor_role"]
-          reason: string
-          refund_amount?: number | null
-          resolution?: string | null
-          resolution_type?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          status?: Database["public"]["Enums"]["dispute_status"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          order_id?: string
-          previous_order_status?: Database["public"]["Enums"]["order_status"]
-          raised_by?: string | null
-          raised_by_role?: Database["public"]["Enums"]["actor_role"]
-          reason?: string
-          refund_amount?: number | null
-          resolution?: string | null
-          resolution_type?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          status?: Database["public"]["Enums"]["dispute_status"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "disputes_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "disputes_raised_by_fkey"
-            columns: ["raised_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "disputes_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1424,60 +1187,6 @@ export type Database = {
           {
             foreignKeyName: "email_deliveries_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      messages: {
-        Row: {
-          attachments: Json
-          body: string | null
-          conversation_id: string
-          created_at: string
-          deleted_at: string | null
-          edited_at: string | null
-          id: string
-          message_type: Database["public"]["Enums"]["message_type"]
-          metadata: Json
-          sender_id: string | null
-        }
-        Insert: {
-          attachments?: Json
-          body?: string | null
-          conversation_id: string
-          created_at?: string
-          deleted_at?: string | null
-          edited_at?: string | null
-          id?: string
-          message_type?: Database["public"]["Enums"]["message_type"]
-          metadata?: Json
-          sender_id?: string | null
-        }
-        Update: {
-          attachments?: Json
-          body?: string | null
-          conversation_id?: string
-          created_at?: string
-          deleted_at?: string | null
-          edited_at?: string | null
-          id?: string
-          message_type?: Database["public"]["Enums"]["message_type"]
-          metadata?: Json
-          sender_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -2891,24 +2600,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      add_dispute_message: {
-        Args: { p_attachments?: Json; p_body: string; p_dispute_id: string }
-        Returns: {
-          attachments: Json
-          body: string
-          created_at: string
-          dispute_id: string
-          id: string
-          sender_id: string | null
-          sender_role: Database["public"]["Enums"]["actor_role"]
-        }
-        SetofOptions: {
-          from: "*"
-          to: "dispute_messages"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       admin_application_stats: { Args: never; Returns: Json }
       admin_broadcast_notification: {
         Args: {
@@ -3143,6 +2834,7 @@ export type Database = {
           age: number | null
           approved_at: string | null
           available: boolean
+          barter_available: boolean
           bio: string | null
           city: string | null
           completed_orders: number
@@ -3311,6 +3003,7 @@ export type Database = {
           age: number | null
           approved_at: string | null
           available: boolean
+          barter_available: boolean
           bio: string | null
           city: string | null
           completed_orders: number
@@ -3368,6 +3061,7 @@ export type Database = {
           age: number | null
           approved_at: string | null
           available: boolean
+          barter_available: boolean
           bio: string | null
           city: string | null
           completed_orders: number
@@ -3450,6 +3144,7 @@ export type Database = {
           age: number | null
           approved_at: string | null
           available: boolean
+          barter_available: boolean
           bio: string | null
           city: string | null
           completed_orders: number
@@ -3595,6 +3290,7 @@ export type Database = {
           age: number | null
           approved_at: string | null
           available: boolean
+          barter_available: boolean
           bio: string | null
           city: string | null
           completed_orders: number
@@ -3634,36 +3330,6 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "creators"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      admin_update_dispute: {
-        Args: {
-          p_dispute_id: string
-          p_note?: string
-          p_status: Database["public"]["Enums"]["dispute_status"]
-        }
-        Returns: {
-          created_at: string
-          description: string | null
-          id: string
-          order_id: string
-          previous_order_status: Database["public"]["Enums"]["order_status"]
-          raised_by: string | null
-          raised_by_role: Database["public"]["Enums"]["actor_role"]
-          reason: string
-          refund_amount: number | null
-          resolution: string | null
-          resolution_type: string | null
-          resolved_at: string | null
-          resolved_by: string | null
-          status: Database["public"]["Enums"]["dispute_status"]
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "disputes"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -4134,38 +3800,11 @@ export type Database = {
         }[]
       }
       get_earnings_summary: { Args: never; Returns: Json }
-      get_my_conversations: {
-        Args: { p_archived?: boolean; p_search?: string }
-        Returns: {
-          archived: boolean
-          brand_id: string
-          counterpart_avatar_url: string
-          counterpart_last_seen_at: string
-          counterpart_name: string
-          counterpart_profile_id: string
-          counterpart_slug: string
-          counterpart_verified: boolean
-          created_at: string
-          creator_id: string
-          id: string
-          last_message_at: string
-          last_message_preview: string
-          last_message_sender_id: string
-          muted: boolean
-          my_role: Database["public"]["Enums"]["actor_role"]
-          order_id: string
-          unread_count: number
-        }[]
-      }
       get_public_stats: { Args: never; Returns: Json }
       get_unread_counts: { Args: never; Returns: Json }
       mark_all_notifications_read: { Args: never; Returns: number }
       mark_application_invited: {
         Args: { p_application_id: string }
-        Returns: undefined
-      }
-      mark_conversation_read: {
-        Args: { p_conversation_id: string }
         Returns: undefined
       }
       mark_notification_read: {
@@ -4304,32 +3943,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      open_dispute: {
-        Args: { p_description: string; p_order_id: string; p_reason: string }
-        Returns: {
-          created_at: string
-          description: string | null
-          id: string
-          order_id: string
-          previous_order_status: Database["public"]["Enums"]["order_status"]
-          raised_by: string | null
-          raised_by_role: Database["public"]["Enums"]["actor_role"]
-          reason: string
-          refund_amount: number | null
-          resolution: string | null
-          resolution_type: string | null
-          resolved_at: string | null
-          resolved_by: string | null
-          status: Database["public"]["Enums"]["dispute_status"]
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "disputes"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       provision_application_account: {
         Args: { p_application_id: string; p_media?: Json; p_profile_id: string }
         Returns: {
@@ -4376,6 +3989,7 @@ export type Database = {
           age: number | null
           approved_at: string | null
           available: boolean
+          barter_available: boolean
           bio: string | null
           city: string | null
           completed_orders: number
@@ -4576,38 +4190,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      resolve_dispute: {
-        Args: {
-          p_actor_id: string
-          p_dispute_id: string
-          p_note: string
-          p_outcome: string
-          p_refund_amount?: number
-        }
-        Returns: {
-          created_at: string
-          description: string | null
-          id: string
-          order_id: string
-          previous_order_status: Database["public"]["Enums"]["order_status"]
-          raised_by: string | null
-          raised_by_role: Database["public"]["Enums"]["actor_role"]
-          reason: string
-          refund_amount: number | null
-          resolution: string | null
-          resolution_type: string | null
-          resolved_at: string | null
-          resolved_by: string | null
-          status: Database["public"]["Enums"]["dispute_status"]
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "disputes"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       respond_to_brief: {
         Args: { p_accept: boolean; p_brief_id: string; p_note?: string }
         Returns: {
@@ -4683,6 +4265,7 @@ export type Database = {
       search_creators: {
         Args: {
           p_available_only?: boolean
+          p_barter?: boolean
           p_category?: string
           p_city?: string
           p_content_type?: string
@@ -4777,10 +4360,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      set_conversation_archived: {
-        Args: { p_archived: boolean; p_conversation_id: string }
-        Returns: undefined
-      }
       set_creator_categories: {
         Args: { p_category_ids: string[]; p_primary_id?: string }
         Returns: undefined
@@ -4817,10 +4396,6 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
-      }
-      start_conversation: {
-        Args: { p_brand_id?: string; p_creator_id?: string }
-        Returns: string
       }
       start_order_work: {
         Args: { p_order_id: string }
@@ -4988,14 +4563,6 @@ export type Database = {
         | "published"
         | "rejected"
         | "suspended"
-      dispute_status:
-        | "created"
-        | "under_review"
-        | "waiting_for_brand"
-        | "waiting_for_creator"
-        | "resolved"
-        | "refunded"
-        | "rejected"
       earning_status: "pending" | "available" | "paid" | "held" | "refunded"
       gender_type: "female" | "male" | "non_binary" | "prefer_not_to_say"
       message_type: "text" | "image" | "file" | "system"
@@ -5199,15 +4766,6 @@ export const Constants = {
         "published",
         "rejected",
         "suspended",
-      ],
-      dispute_status: [
-        "created",
-        "under_review",
-        "waiting_for_brand",
-        "waiting_for_creator",
-        "resolved",
-        "refunded",
-        "rejected",
       ],
       earning_status: ["pending", "available", "paid", "held", "refunded"],
       gender_type: ["female", "male", "non_binary", "prefer_not_to_say"],

@@ -38,7 +38,7 @@ const STEPS: DetailedStep[] = [
     tone: 'mint',
     title: 'Receive',
     body: 'Download the delivered files, request changes within the included revisions, and approve when you’re happy. Approval completes the order and pays the creator.',
-    points: ['Revisions within the agreed rounds', 'Disputes reviewed by our team if something goes wrong'],
+    points: ['Revisions within the agreed rounds', 'Our support team steps in if something goes wrong'],
   },
 ]
 

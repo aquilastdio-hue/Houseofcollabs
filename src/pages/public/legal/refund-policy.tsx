@@ -1,18 +1,17 @@
 import { Link } from 'react-router'
 import { site } from '@/config/site'
-import { DISPUTE_REASONS } from '@/lib/constants'
 import { autoApproveText, paymentWindowText, responseWindowText } from '@/components/marketing/platform-terms'
 import { Callout, SupportEmail, type LegalBuilder } from './shared'
 
 export const refundPolicy: LegalBuilder = (t) => ({
   title: 'Refund Policy',
   kind: 'Policy',
-  summary: `When brands get their money back on ${site.name}: cancellations, declined orders, disputes and how refunds are paid.`,
+  summary: `When brands get their money back on ${site.name}: cancellations, declined orders, order problems and how refunds are paid.`,
   intro: (
     <>
       <p>
         Every order on {site.name} is paid upfront and held until the brand approves the work. This policy explains when that payment is refunded,
-        how disputes are decided and how long refunds take to reach you.
+        how order problems are decided and how long refunds take to reach you.
       </p>
       {(t.cancellationRules || t.refundRules) && (
         <Callout title="Current rules at a glance">
@@ -83,22 +82,20 @@ export const refundPolicy: LegalBuilder = (t) => ({
           <ul>
             <li>ask for a revision from the order page first — many issues are solved by one;</li>
             <li>if you both agree the order shouldn’t continue, contact our support team and we’ll help cancel it fairly; or</li>
-            <li>if you can’t agree, open a dispute from the order page.</li>
+            <li>if you can’t agree, contact our support team and we’ll review the order and decide.</li>
           </ul>
         </>
       ),
     },
     {
-      id: 'disputes',
-      title: 'Disputes and possible outcomes',
+      id: 'order-problems',
+      title: 'Order problems and possible outcomes',
       body: (
         <>
           <p>
-            Brands and creators can open a dispute while an order is active — from acceptance until it is approved. Common reasons include:{' '}
-            {DISPUTE_REASONS.filter((r) => r !== 'Other')
-              .map((r) => r.toLowerCase())
-              .join(', ')}
-            .
+            Brands and creators can ask us to step in while an order is active — from acceptance until it is approved. Write to <SupportEmail /> with
+            your order number. Common reasons include content not as described, a missed deadline, an unresponsive creator or brand, a product that was
+            never shipped, and quality issues.
           </p>
           <p>Our team reviews the brief, the delivered files and the order history, may ask both sides for more information, and then decides one of these outcomes:</p>
           <ul>
@@ -116,7 +113,7 @@ export const refundPolicy: LegalBuilder = (t) => ({
               <strong>Full refund</strong> — the whole amount is refunded to the brand.
             </li>
           </ul>
-          <p>While a dispute is open, the creator’s earning for that order stays on hold.</p>
+          <p>While we are reviewing an order, the creator’s earning for it stays on hold.</p>
         </>
       ),
     },
@@ -159,7 +156,7 @@ export const refundPolicy: LegalBuilder = (t) => ({
       title: 'Questions and complaints',
       body: (
         <p>
-          For help with a refund, write to <SupportEmail /> with your order number. If you’re unhappy with how a refund or dispute was handled, you can
+          For help with a refund, write to <SupportEmail /> with your order number. If you’re unhappy with how a refund or an order review was handled, you can
           raise a grievance with our Grievance Officer as described in our <Link to="/terms">terms of service</Link>. This policy does not affect your
           rights under the Consumer Protection Act, 2019.
         </p>

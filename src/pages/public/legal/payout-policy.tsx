@@ -61,8 +61,8 @@ export const payoutPolicy: LegalBuilder = (t) => {
           <ul>
             <li>An order completes when the brand approves your delivery, or when it is auto-approved at the end of the review window.</li>
             <li>Your earning is recorded at that moment and becomes available {holdText(t)}.</li>
-            <li>Earnings for an order that is under dispute stay on hold until the dispute is resolved.</li>
-            <li>If a dispute ends in a partial refund, you earn on the part of the order that was paid to you; a full refund cancels the earning.</li>
+            <li>Earnings for an order our team is reviewing stay on hold until that review is finished.</li>
+            <li>If a review ends in a partial refund, you earn on the part of the order that was paid to you; a full refund cancels the earning.</li>
           </ul>
         ),
       },

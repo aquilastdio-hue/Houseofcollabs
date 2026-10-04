@@ -9,7 +9,6 @@ import type {
   AccountStatus,
   AdminDashboardStats,
   CreatorStatus,
-  DisputeStatus,
   Json,
   OrderStatus,
   PaymentStatus,
@@ -212,7 +211,6 @@ export type OrderAdminAction =
   | { action: 'cancel'; reason: string }
   | { action: 'force_complete'; reason: string }
   | { action: 'set_status'; status: OrderStatus; reason: string }
-  | { action: 'resolve_dispute'; dispute_id: string; outcome: 'release_to_creator' | 'resume_order' | 'rejected' | 'refund_brand' | 'partial_refund'; note: string; amount?: number }
 
 export function orderAction(orderId: string, payload: OrderAdminAction) {
   return invokeFunction<{ ok: true; order: unknown }>('admin-order-action', { order_id: orderId, ...payload })
@@ -277,40 +275,8 @@ export async function revealPayoutMethod(payoutRequestId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Disputes, reports, moderation
+// Reports and moderation
 // ---------------------------------------------------------------------------
-const ADMIN_DISPUTE_SELECT = `
-  *,
-  order:orders ( id, order_number, status, service_title, total_amount,
-                 brand:brands ( id, brand_name, brand_logo_url ), creator:creators ( id, display_name, profile_image_url ) )
-`
-export async function listDisputes(p: { status?: DisputeStatus | '' | 'open'; page?: number; pageSize?: number }) {
-  const pageSize = p.pageSize ?? 25
-  const page = Math.max(1, p.page ?? 1)
-  let q = supabase.from('disputes').select(ADMIN_DISPUTE_SELECT, { count: 'exact' }).order('created_at', { ascending: false }).range(...range(page, pageSize))
-  if (p.status === 'open') q = q.in('status', ['created', 'under_review', 'waiting_for_brand', 'waiting_for_creator'])
-  else if (p.status) q = q.eq('status', p.status)
-  const { data, error, count } = await q
-  if (error) throw toAppError(error)
-  return { items: data ?? [], total: count ?? 0, page, pageSize }
-}
-export type AdminDisputeItem = Awaited<ReturnType<typeof listDisputes>>['items'][number]
-
-export async function getDispute(id: string) {
-  return unwrap(
-    await supabase
-      .from('disputes')
-      .select(`${ADMIN_DISPUTE_SELECT}, dispute_messages ( * )`)
-      .eq('id', id)
-      .order('created_at', { referencedTable: 'dispute_messages', ascending: true })
-      .maybeSingle(),
-  )
-}
-
-export async function updateDispute(id: string, status: DisputeStatus, note?: string) {
-  return unwrap(await supabase.rpc('admin_update_dispute', { p_dispute_id: id, p_status: status, p_note: note }))
-}
-
 export async function listReports(p: { status?: ReportStatus | ''; targetType?: ReportTarget | ''; page?: number; pageSize?: number }) {
   const pageSize = p.pageSize ?? 25
   const page = Math.max(1, p.page ?? 1)
@@ -483,7 +449,6 @@ export type PeopleStats = {
   onboarding_done: number
   contact_open: number
   reports_open: number
-  disputes_open: number
   payouts_pending: number
 }
 

@@ -221,7 +221,7 @@ function EmailPreviewDialog({ row, onClose }: { row: AdminEmailItem | null; onCl
           <EmptyState
             icon={<MessageSquare />}
             title="This one is in-app only"
-            description="Messages and dispute replies are never emailed — an email per chat reply would be spam. The recipient sees it in their notification bell."
+            description="In-app replies are never emailed — an email per reply would be spam. The recipient sees it in their notification bell."
           />
         ) : (
           <div className="space-y-4">

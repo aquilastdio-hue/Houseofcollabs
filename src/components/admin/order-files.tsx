@@ -21,7 +21,7 @@ export function useOrderFileUrls(paths: (string | null | undefined)[]) {
   })
 }
 
-/** Attachment arrays stored as jsonb (revisions, dispute messages). */
+/** Attachment arrays stored as jsonb (revisions, deliverables). */
 export function readAttachments(value: Json | null | undefined): Attachment[] {
   if (!Array.isArray(value)) return []
   return value.flatMap((v) => {

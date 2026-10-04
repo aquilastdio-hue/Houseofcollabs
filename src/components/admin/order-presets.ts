@@ -24,7 +24,6 @@ export const ORDER_PRESETS: OrderPreset[] = [
   { value: 'all', label: 'All' },
   { value: 'active', label: 'Active', statuses: ACTIVE_ORDER_STATUSES },
   { value: 'review', label: 'Awaiting approval', statuses: ['delivered', 'revision_submitted'] },
-  { value: 'disputed', label: 'Disputed', statuses: ['disputed'] },
   { value: 'completed', label: 'Completed', statuses: ['approved', 'completed'] },
   { value: 'cancelled', label: 'Cancelled', statuses: ['cancelled'] },
   { value: 'refunded', label: 'Refunded', statuses: ['refunded'] },
