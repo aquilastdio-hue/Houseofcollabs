@@ -25,7 +25,8 @@ import { SmartSearchHero } from '@/components/brand/smart-search-hero'
 import { useBrandDashboardStats } from '@/components/brand/use-brand-stats'
 import { WishlistsPanel } from '@/components/brand/wishlists-panel'
 
-const RECOMMENDED: CreatorSearchParams = { sort: 'relevance', pageSize: 4 }
+// Up to 30 — the search RPC clamps `p_limit` to 60, so this is well inside it.
+const RECOMMENDED: CreatorSearchParams = { sort: 'relevance', pageSize: 30 }
 
 function greeting(date: Date) {
   const hour = date.getHours()
@@ -229,7 +230,7 @@ function RecommendedCreators() {
     <DashboardPanel bare title="Recommended creators" href="/brand/creators" linkLabel="Browse all">
       {query.isPending ? (
         <div className={grid} aria-hidden>
-          {range(4).map((i) => (
+          {range(8).map((i) => (
             <CreatorCardSkeleton key={i} />
           ))}
         </div>

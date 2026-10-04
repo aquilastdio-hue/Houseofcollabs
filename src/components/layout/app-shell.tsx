@@ -171,38 +171,45 @@ export function TopNavShell({
   return (
     <div className="min-h-dvh bg-canvas pb-20 md:pb-0">
       <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-md">
-        <div className="container-page flex h-(--header-height) items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-6">
+        {/* Three flex children, with the two sides growing from a zero basis:
+            while there is room they settle at equal widths, which puts the nav
+            on the page's centre line instead of letting it drift with the logo
+            or the account name. When room runs out they shrink back to their
+            own content — the nav slides off-centre rather than the header
+            overflowing, which is what equal-width grid tracks would have done.
+            Below `md` the nav is hidden and the two sides fall to the edges. */}
+        <div className="container-page flex h-(--header-height) items-center gap-4">
+          <div className="flex flex-1 items-center">
             <Link to={homeHref} className="focus-ring shrink-0 rounded-md" aria-label="Dashboard">
               <Logo />
             </Link>
-            <nav aria-label="Primary" className="hidden md:block">
-              <ul className="flex items-center gap-0.5">
-                {items.map((item) => (
-                  <li key={item.href}>
-                    <NavLink
-                      to={item.href}
-                      end={item.end}
-                      className={({ isActive }) =>
-                        cn(
-                          'focus-ring relative flex items-center gap-1.5 rounded-pill px-3.5 py-2 text-sm font-medium transition-colors',
-                          isActive ? 'bg-ink text-white' : 'text-ink-soft hover:bg-subtle hover:text-ink',
-                        )
-                      }
-                    >
-                      {item.label}
-                      {item.counter && !!counts.data?.[item.counter] && (
-                        <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-pill bg-brand px-1 text-[0.625rem] font-bold text-white">
-                          {counts.data[item.counter]}
-                        </span>
-                      )}
-                    </NavLink>
-                  </li>
-                ))}
-              </ul>
-            </nav>
           </div>
-          <div className="flex items-center gap-1.5">
+          <nav aria-label="Primary" className="hidden shrink-0 md:block">
+            <ul className="flex items-center gap-0.5">
+              {items.map((item) => (
+                <li key={item.href}>
+                  <NavLink
+                    to={item.href}
+                    end={item.end}
+                    className={({ isActive }) =>
+                      cn(
+                        'focus-ring relative flex items-center gap-1.5 rounded-pill px-3.5 py-2 text-sm font-medium transition-colors',
+                        isActive ? 'bg-ink text-white' : 'text-ink-soft hover:bg-subtle hover:text-ink',
+                      )
+                    }
+                  >
+                    {item.label}
+                    {item.counter && !!counts.data?.[item.counter] && (
+                      <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-pill bg-brand px-1 text-[0.625rem] font-bold text-white">
+                        {counts.data[item.counter]}
+                      </span>
+                    )}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div className="flex flex-1 items-center justify-end gap-1.5">
             <NotificationBell allHref={notificationsHref} />
             <AccountMenu settingsHref={settingsHref} profileHref={profileHref} />
           </div>
