@@ -138,6 +138,7 @@ function CreatorSubmission({ row }: { row: ApplicationRow }) {
       <Section title="Basic details">
         {str(p.creator_name) && <Line label="Creator name">{str(p.creator_name)}</Line>}
         {str(p.whatsapp) && <Line label="WhatsApp">{str(p.whatsapp)}</Line>}
+        {str(p.referral_code) && <Line label="Referral code">{str(p.referral_code)}</Line>}
       </Section>
 
       <Section title="Social profile">

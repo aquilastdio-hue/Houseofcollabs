@@ -424,7 +424,7 @@ export default function Applications() {
         <FilterBar
           activeCount={(status ? 1 : 0) + (role ? 1 : 0)}
           onReset={() => url.update({ status: null, role: null })}
-          search={<SearchInput value={search} onCommit={(q) => url.update({ q })} placeholder="Search name, email, brand or handle" label="Search applications" />}
+          search={<SearchInput value={search} onCommit={(q) => url.update({ q })} placeholder="Search name, email, brand, handle or referral code" label="Search applications" />}
         >
           <FilterField label="Status" htmlFor="app-status">
             {/* The empty value is the queue, not "everything" — decided

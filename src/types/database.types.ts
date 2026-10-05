@@ -1010,6 +1010,7 @@ export type Database = {
           profile_views: number
           published_at: string | null
           rating: number
+          referral_code: string | null
           rejection_reason: string | null
           response_time: string | null
           review_count: number
@@ -1051,6 +1052,7 @@ export type Database = {
           profile_views?: number
           published_at?: string | null
           rating?: number
+          referral_code?: string | null
           rejection_reason?: string | null
           response_time?: string | null
           review_count?: number
@@ -1092,6 +1094,7 @@ export type Database = {
           profile_views?: number
           published_at?: string | null
           rating?: number
+          referral_code?: string | null
           rejection_reason?: string | null
           response_time?: string | null
           review_count?: number
@@ -2859,6 +2862,7 @@ export type Database = {
           profile_views: number
           published_at: string | null
           rating: number
+          referral_code: string | null
           rejection_reason: string | null
           response_time: string | null
           review_count: number
@@ -3028,6 +3032,7 @@ export type Database = {
           profile_views: number
           published_at: string | null
           rating: number
+          referral_code: string | null
           rejection_reason: string | null
           response_time: string | null
           review_count: number
@@ -3086,6 +3091,7 @@ export type Database = {
           profile_views: number
           published_at: string | null
           rating: number
+          referral_code: string | null
           rejection_reason: string | null
           response_time: string | null
           review_count: number
@@ -3169,6 +3175,7 @@ export type Database = {
           profile_views: number
           published_at: string | null
           rating: number
+          referral_code: string | null
           rejection_reason: string | null
           response_time: string | null
           review_count: number
@@ -3315,6 +3322,7 @@ export type Database = {
           profile_views: number
           published_at: string | null
           rating: number
+          referral_code: string | null
           rejection_reason: string | null
           response_time: string | null
           review_count: number
@@ -3477,6 +3485,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      check_application_duplicates: {
+        Args: { p_email?: string; p_instagram?: string; p_phone?: string }
+        Returns: Json
       }
       claim_pending_emails: {
         Args: { p_limit?: number }
@@ -4014,6 +4026,7 @@ export type Database = {
           profile_views: number
           published_at: string | null
           rating: number
+          referral_code: string | null
           rejection_reason: string | null
           response_time: string | null
           review_count: number

@@ -74,6 +74,56 @@ export async function submitApplication(input: ApplicationInput) {
   if (error) throw toAppError(error)
 }
 
+// ---------------------------------------------------------------------------
+// Duplicate mobile number / Instagram account
+// ---------------------------------------------------------------------------
+
+/**
+ * The wording is defined once and shared by the form and the database trigger
+ * (migration 0061 raises these exact strings), so an applicant sees the same
+ * sentence whichever one catches the duplicate.
+ */
+export const DUPLICATE_MESSAGES = {
+  phone: 'This mobile number is already registered. Please use a different mobile number.',
+  instagram: 'This Instagram ID is already registered. Please use a different Instagram ID.',
+  both: 'This mobile number and Instagram ID are already registered. Please use different details.',
+} as const
+
+/** Hint codes `private.applications_before_insert` raises, via `AppError.code`. */
+export const DUPLICATE_CODES = {
+  phone: 'DUPLICATE_PHONE',
+  instagram: 'DUPLICATE_INSTAGRAM',
+  both: 'DUPLICATE_PHONE_AND_INSTAGRAM',
+} as const
+
+export type DuplicateCheck = { phone_taken: boolean; instagram_taken: boolean }
+
+/**
+ * Asks whether a mobile number or Instagram account is already registered.
+ *
+ * This cannot be a `select`: `applications` is insert-only for `anon` and
+ * readable only by admins, which is what stops the sign-up form doubling as a
+ * directory of everyone who has applied. The RPC is `security definer` and
+ * answers with two booleans — never a row, never whose account it collides
+ * with.
+ *
+ * `email` is the applicant's own address, so a half-finished earlier attempt of
+ * their own never locks them out of their own number.
+ */
+export async function checkApplicationDuplicates(input: {
+  phone?: string | null
+  instagram?: string | null
+  email?: string | null
+}): Promise<DuplicateCheck> {
+  const { data, error } = await supabase.rpc('check_application_duplicates', {
+    p_phone: input.phone?.trim() || undefined,
+    p_instagram: input.instagram?.trim() || undefined,
+    p_email: input.email?.trim() || undefined,
+  })
+  if (error) throw toAppError(error)
+  return (data as DuplicateCheck | null) ?? { phone_taken: false, instagram_taken: false }
+}
+
 /**
  * Uploads an application file to the private `applications` bucket and returns
  * its path. No public URL exists — admins read it through a signed link.
@@ -125,7 +175,13 @@ export async function listApplications(p: {
   if (statuses) q = statuses.length === 1 ? q.eq('status', statuses[0]) : q.in('status', [...statuses])
   if (p.search?.trim()) {
     const term = p.search.trim().replace(/[%,()]/g, '')
-    q = q.or(`full_name.ilike.%${term}%,email.ilike.%${term}%,brand_name.ilike.%${term}%,social_handle.ilike.%${term}%`)
+    // The referral code lives in the `profile` jsonb rather than its own
+    // column, so it needs the json path spelled out — searching the columns
+    // alone would never find it. Stored upper-cased; `ilike` makes the search
+    // box case-insensitive either way.
+    q = q.or(
+      `full_name.ilike.%${term}%,email.ilike.%${term}%,brand_name.ilike.%${term}%,social_handle.ilike.%${term}%,profile->>referral_code.ilike.%${term}%`,
+    )
   }
   const { data, error, count } = await q
   if (error) throw toAppError(error)

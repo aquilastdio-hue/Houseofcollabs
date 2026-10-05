@@ -119,6 +119,10 @@ export const creatorApplicationSchema = z
       .trim()
       .refine((v) => v === '' || PHONE_RE.test(v), 'Enter a valid number, like +91 98765 43210'),
     email: z.string().trim().toLowerCase().email('Enter a valid email address').max(254, 'That email is too long'),
+    // Optional: most people arrive without one. Upper-cased on the way in so
+    // 'abc123', 'ABC123' and ' abc123 ' are the same code when you come to
+    // count them.
+    referral_code: z.string().trim().toUpperCase().max(40, 'Use 40 characters or fewer'),
     city: z.string().trim().max(80, 'Use 80 characters or fewer'),
     photo_path: z.string(),
 
@@ -187,7 +191,7 @@ export type CreatorApplicationValues = z.infer<typeof creatorApplicationSchema>
 
 /** Which paths belong to which page, so one page validates at a time. */
 export const STEP_FIELDS = [
-  ['full_name', 'creator_name', 'whatsapp', 'email', 'city', 'photo_path'],
+  ['full_name', 'creator_name', 'whatsapp', 'email', 'referral_code', 'city', 'photo_path'],
   ['instagram', 'youtube', 'categories'],
   ['videos', 'photos'],
   ['rates', 'barter_available', 'barter_stance', 'travel_scope'],
@@ -213,6 +217,7 @@ export const CREATOR_APPLICATION_DEFAULTS: CreatorApplicationValues = {
   creator_name: '',
   whatsapp: '',
   email: '',
+  referral_code: '',
   city: '',
   photo_path: '',
   instagram: { handle: '', url: '', followers: '' },

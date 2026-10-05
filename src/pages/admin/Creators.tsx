@@ -76,7 +76,7 @@ export default function Creators() {
       <FilterBar
         activeCount={activeCount}
         onReset={reset}
-        search={<SearchInput value={search} onCommit={(q) => url.update({ q })} placeholder="Search name, email, city or handle" label="Search creators" />}
+        search={<SearchInput value={search} onCommit={(q) => url.update({ q })} placeholder="Search name, email, city or referral code" label="Search creators" />}
       >
         <FilterField label="Status" htmlFor="creator-status">
           <Select id="creator-status" size="sm" value={status} onValueChange={(v) => url.update({ status: v })} options={STATUS_OPTIONS} anyLabel="All statuses" />

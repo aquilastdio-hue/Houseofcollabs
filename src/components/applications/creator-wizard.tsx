@@ -7,7 +7,13 @@ import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react'
 import { site } from '@/config/site'
 import { toAppError } from '@/lib/errors'
 import { POPULAR_CITIES } from '@/lib/constants'
-import { submitApplication } from '@/services/applications.service'
+import { scrollToFirstError } from '@/lib/scroll-to-error'
+import {
+  DUPLICATE_CODES,
+  DUPLICATE_MESSAGES,
+  checkApplicationDuplicates,
+  submitApplication,
+} from '@/services/applications.service'
 import {
   BARTER_STANCES, COLLABORATIONS, TRAVEL_SCOPES, CONFIRMATION, CREATOR_APPLICATION_DEFAULTS, CREATOR_CATEGORIES,
   MAX_CATEGORIES, MAX_PHOTOS, MAX_VIDEOS, OPEN_TO, STEP_FIELDS, STEP_META,
@@ -52,29 +58,39 @@ function Page1({ form }: { form: Form }) {
         </Field>
       </div>
 
+      {/* Referral code is half the width of the row, so the photo picker sits
+          beside it rather than leaving a gap. `items-start` keeps the two
+          aligned at the top: the hints under them are different lengths, and
+          stretched boxes of unequal height would look like a mistake. */}
+      <div className="grid items-start gap-5 sm:grid-cols-2">
+        <Field label="Referral code" htmlFor="referral_code" optional error={errors.referral_code?.message} hint="If a creator or brand invited you, enter their code.">
+          <Input id="referral_code" autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="e.g. HOC1234" {...register('referral_code')} />
+        </Field>
+
+        <Controller
+          control={control}
+          name="photo_path"
+          render={({ field, fieldState }) => (
+            <Field label="Profile photo" required error={fieldState.error?.message}>
+              <FileDrop
+                kind="image"
+                path={field.value}
+                label="Upload photo"
+                hint="A well-lit headshot works best."
+                onUploaded={(p) => field.onChange(p)}
+                onClear={() => field.onChange('')}
+              />
+            </Field>
+          )}
+        />
+      </div>
+
       <Controller
         control={control}
         name="city"
         render={({ field, fieldState }) => (
           <Field label="City" htmlFor="city" required error={fieldState.error?.message}>
             <Combobox id="city" value={field.value} onChange={field.onChange} options={CITY_OPTIONS} allowCustom clearable placeholder="Choose or type your city" />
-          </Field>
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="photo_path"
-        render={({ field, fieldState }) => (
-          <Field label="Profile photo" required error={fieldState.error?.message}>
-            <FileDrop
-              kind="image"
-              path={field.value}
-              label="Upload photo"
-              hint="A well-lit headshot works best."
-              onUploaded={(p) => field.onChange(p)}
-              onClear={() => field.onChange('')}
-            />
           </Field>
         )}
       />
@@ -275,10 +291,16 @@ function Submitted() {
   )
 }
 
+/** Which page collects each of the two values we check for duplicates. */
+const PHONE_STEP = 0
+const INSTAGRAM_STEP = 1
+
 export function CreatorApplicationWizard() {
   const [step, setStep] = React.useState(0)
   const [done, setDone] = React.useState(false)
+  const [checking, setChecking] = React.useState(false)
   const topRef = React.useRef<HTMLDivElement>(null)
+  const formRef = React.useRef<HTMLFormElement>(null)
 
   const form = useForm<CreatorApplicationValues>({
     resolver: zodResolver(creatorApplicationSchema),
@@ -297,11 +319,20 @@ export function CreatorApplicationWizard() {
   })
 
   React.useEffect(() => {
-    const sub = form.watch((values) => {
+    const sub = form.watch((values, { name }) => {
       try {
         localStorage.setItem(DRAFT_KEY, JSON.stringify(values))
       } catch {
         // nothing we can do, and nothing that should break the form
+      }
+      // A "already registered" error is about one specific value, so editing
+      // that value retires it. Zod's own errors re-run on their own; this one
+      // was set by hand and would otherwise sit there until the next Continue.
+      if (name === 'whatsapp' && form.getFieldState('whatsapp').error?.type === 'duplicate') {
+        form.clearErrors('whatsapp')
+      }
+      if (name === 'instagram.handle' && form.getFieldState('instagram.handle').error?.type === 'duplicate') {
+        form.clearErrors('instagram.handle')
       }
     })
     return () => sub.unsubscribe()
@@ -338,7 +369,27 @@ export function CreatorApplicationWizard() {
       }
       setDone(true)
     },
-    onError: (e) => form.setError('root', { message: toAppError(e).message }),
+    onError: (e) => {
+      const err = toAppError(e)
+      // The trigger catches anyone who got past the per-page check — a stale
+      // tab, a second tab, or a request that skipped the form entirely. Put the
+      // message on the field it belongs to and go back to that page, rather
+      // than showing it at the bottom of page 5 next to an unrelated button.
+      const onPhone = err.code === DUPLICATE_CODES.phone || err.code === DUPLICATE_CODES.both
+      const onInstagram = err.code === DUPLICATE_CODES.instagram || err.code === DUPLICATE_CODES.both
+      if (onPhone) form.setError('whatsapp', { type: 'duplicate', message: DUPLICATE_MESSAGES.phone })
+      if (onInstagram) form.setError('instagram.handle', { type: 'duplicate', message: DUPLICATE_MESSAGES.instagram })
+      if (onPhone || onInstagram) {
+        form.setError('root', {
+          message: onPhone && onInstagram ? DUPLICATE_MESSAGES.both : onPhone ? DUPLICATE_MESSAGES.phone : DUPLICATE_MESSAGES.instagram,
+        })
+        go(onPhone ? PHONE_STEP : INSTAGRAM_STEP)
+        scrollToFirstError(formRef.current)
+        return
+      }
+      form.setError('root', { message: err.message })
+      scrollToFirstError(formRef.current)
+    },
   })
 
   const go = (next: number) => {
@@ -346,9 +397,46 @@ export function CreatorApplicationWizard() {
     topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  /**
+   * Continue runs the page's own validation first, then — only on the two pages
+   * that collect them — asks whether the number or the Instagram account is
+   * already registered. Checked on Continue rather than per keystroke, so a
+   * half-typed number never reports itself taken.
+   *
+   * The number is on page 1 and the account on page 2, so each is checked as
+   * the creator leaves the page that asks for it, and the combined message is
+   * left to submit, which is the only point where both have been entered.
+   */
   const next = async () => {
     const ok = await form.trigger(STEP_FIELDS[step] as never)
-    if (ok) go(step + 1)
+    if (!ok) return scrollToFirstError(formRef.current)
+
+    const phone = step === PHONE_STEP ? form.getValues('whatsapp') : null
+    const instagram = step === INSTAGRAM_STEP ? form.getValues('instagram.handle') : null
+    if (!phone && !instagram) return go(step + 1)
+
+    setChecking(true)
+    try {
+      const taken = await checkApplicationDuplicates({ phone, instagram, email: form.getValues('email') })
+      let blocked = false
+      if (phone && taken.phone_taken) {
+        form.setError('whatsapp', { type: 'duplicate', message: DUPLICATE_MESSAGES.phone })
+        blocked = true
+      }
+      if (instagram && taken.instagram_taken) {
+        form.setError('instagram.handle', { type: 'duplicate', message: DUPLICATE_MESSAGES.instagram })
+        blocked = true
+      }
+      if (blocked) scrollToFirstError(formRef.current)
+      else go(step + 1)
+    } catch {
+      // A dropped connection shouldn't strand someone three pages into a form.
+      // This check is a courtesy; the insert trigger is the real gate, so let
+      // them carry on and let the server have the final say at submit.
+      go(step + 1)
+    } finally {
+      setChecking(false)
+    }
   }
 
   /**
@@ -360,6 +448,7 @@ export function CreatorApplicationWizard() {
     const broken = Object.keys(errors)
     const owner = STEP_FIELDS.findIndex((fields) => (fields as readonly string[]).some((f) => broken.includes(f)))
     if (owner >= 0 && owner !== step) go(owner)
+    scrollToFirstError(formRef.current)
   }
 
   if (done) return <Submitted />
@@ -383,6 +472,7 @@ export function CreatorApplicationWizard() {
 
         <Card className="mt-6 p-5 sm:p-8">
           <form
+            ref={formRef}
             onSubmit={(e) => {
               e.preventDefault()
               if (last) void form.handleSubmit((v) => submit.mutate(v), onInvalid)(e)
@@ -406,9 +496,11 @@ export function CreatorApplicationWizard() {
               <Button type="button" variant="ghost" disabled={step === 0} onClick={() => go(step - 1)}>
                 <ArrowLeft /> Back
               </Button>
-              <Button type="submit" size="lg" loading={submit.isPending}>
-                {last ? 'Create my profile' : 'Continue'}
-                {!last && <ArrowRight />}
+              {/* `loading` also disables the button, so a second click cannot
+                  start a second check while the first is in flight. */}
+              <Button type="submit" size="lg" loading={submit.isPending || checking}>
+                {checking ? 'Checking…' : last ? 'Create my profile' : 'Continue'}
+                {!last && !checking && <ArrowRight />}
               </Button>
             </div>
           </form>

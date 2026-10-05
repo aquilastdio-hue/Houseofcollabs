@@ -6,8 +6,14 @@ import { useMutation } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight, BadgeCheck } from 'lucide-react'
 import { site } from '@/config/site'
 import { toAppError } from '@/lib/errors'
+import { scrollToFirstError } from '@/lib/scroll-to-error'
 import { POPULAR_CITIES } from '@/lib/constants'
-import { submitApplication } from '@/services/applications.service'
+import {
+  DUPLICATE_CODES,
+  DUPLICATE_MESSAGES,
+  checkApplicationDuplicates,
+  submitApplication,
+} from '@/services/applications.service'
 import {
   BRAND_APPLICATION_DEFAULTS, BRAND_CONFIRMATION, BRAND_STEP_META, BRAND_SUBMITTED_COPY, BRAND_TOTAL_STEPS,
   BUDGET_RANGES, COLLABORATION_TYPES, CREATOR_CATEGORIES, CREATOR_LOCATIONS, INDUSTRIES,
@@ -283,10 +289,15 @@ function Submitted() {
   )
 }
 
+/** The page that collects the WhatsApp number. */
+const PHONE_STEP = 0
+
 export function BrandApplicationWizard() {
   const [step, setStep] = React.useState(0)
   const [done, setDone] = React.useState(false)
+  const [checking, setChecking] = React.useState(false)
   const topRef = React.useRef<HTMLDivElement>(null)
+  const formRef = React.useRef<HTMLFormElement>(null)
 
   const form = useForm<BrandApplicationValues>({
     resolver: zodResolver(brandApplicationSchema),
@@ -304,11 +315,16 @@ export function BrandApplicationWizard() {
   })
 
   React.useEffect(() => {
-    const sub = form.watch((values) => {
+    const sub = form.watch((values, { name }) => {
       try {
         localStorage.setItem(DRAFT_KEY, JSON.stringify(values))
       } catch {
         // nothing we can do, and nothing that should break the form
+      }
+      // Set by hand rather than by Zod, so it needs retiring by hand once the
+      // value it complained about has changed.
+      if (name === 'whatsapp' && form.getFieldState('whatsapp').error?.type === 'duplicate') {
+        form.clearErrors('whatsapp')
       }
     })
     return () => sub.unsubscribe()
@@ -360,7 +376,18 @@ export function BrandApplicationWizard() {
       }
       setDone(true)
     },
-    onError: (e) => form.setError('root', { message: toAppError(e).message }),
+    onError: (e) => {
+      const err = toAppError(e)
+      if (err.code === DUPLICATE_CODES.phone || err.code === DUPLICATE_CODES.both) {
+        form.setError('whatsapp', { type: 'duplicate', message: DUPLICATE_MESSAGES.phone })
+        form.setError('root', { message: DUPLICATE_MESSAGES.phone })
+        go(PHONE_STEP)
+        scrollToFirstError(formRef.current)
+        return
+      }
+      form.setError('root', { message: err.message })
+      scrollToFirstError(formRef.current)
+    },
   })
 
   const go = (next: number) => {
@@ -368,9 +395,35 @@ export function BrandApplicationWizard() {
     topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  /**
+   * Page 1 collects the WhatsApp number, so that is where it is checked against
+   * numbers already registered. A brand application carries no Instagram
+   * handle — page 3 asks for a profile URL, which the form stores as a link
+   * rather than as the identity we de-duplicate on — so only the number is
+   * checked here.
+   */
   const next = async () => {
     const ok = await form.trigger(STEP_FIELDS[step] as never)
-    if (ok) go(step + 1)
+    if (!ok) return scrollToFirstError(formRef.current)
+    const phone = step === PHONE_STEP ? form.getValues('whatsapp') : null
+    if (!phone) return go(step + 1)
+
+    setChecking(true)
+    try {
+      const taken = await checkApplicationDuplicates({ phone, email: form.getValues('business_email') })
+      if (taken.phone_taken) {
+        form.setError('whatsapp', { type: 'duplicate', message: DUPLICATE_MESSAGES.phone })
+        scrollToFirstError(formRef.current)
+        return
+      }
+      go(step + 1)
+    } catch {
+      // The insert trigger is the real gate; a dropped request shouldn't trap
+      // someone mid-form.
+      go(step + 1)
+    } finally {
+      setChecking(false)
+    }
   }
 
   /**
@@ -382,6 +435,7 @@ export function BrandApplicationWizard() {
     const broken = Object.keys(errors)
     const owner = STEP_FIELDS.findIndex((fields) => (fields as readonly string[]).some((f) => broken.includes(f)))
     if (owner >= 0 && owner !== step) go(owner)
+    scrollToFirstError(formRef.current)
   }
 
   if (done) return <Submitted />
@@ -405,6 +459,7 @@ export function BrandApplicationWizard() {
 
         <Card className="mt-6 p-5 sm:p-8">
           <form
+            ref={formRef}
             onSubmit={(e) => {
               e.preventDefault()
               if (last) void form.handleSubmit((v) => submit.mutate(v), onInvalid)(e)
@@ -426,7 +481,7 @@ export function BrandApplicationWizard() {
               <Button type="button" variant="ghost" disabled={step === 0} onClick={() => go(step - 1)}>
                 <ArrowLeft /> Back
               </Button>
-              <Button type="submit" size="lg" loading={submit.isPending}>
+              <Button type="submit" size="lg" loading={submit.isPending || checking}>
                 {last ? 'Submit for verification' : 'Continue'}
                 {!last && <ArrowRight />}
               </Button>

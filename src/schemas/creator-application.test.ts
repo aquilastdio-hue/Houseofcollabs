@@ -169,3 +169,28 @@ describe('full_name rejects handles and links', () => {
     expect(nameOf('A').success).toBe(false)
   })
 })
+
+describe('referral code', () => {
+  const parse = (v: string) => creatorApplicationSchema.safeParse({ ...complete, referral_code: v })
+
+  it('is optional — nobody is blocked for arriving without one', () => {
+    expect(issues({ ...complete, referral_code: '' })).toEqual([])
+  })
+
+  it('belongs to page 1, so it validates with the rest of that page', () => {
+    expect(STEP_FIELDS[0]).toContain('referral_code')
+  })
+
+  it('normalises case and padding so one code counts as one code', () => {
+    for (const v of ['hoc1234', 'HOC1234', '  hoc1234  ', 'Hoc1234']) {
+      const r = parse(v)
+      expect(r.success, v).toBe(true)
+      if (r.success) expect(r.data.referral_code).toBe('HOC1234')
+    }
+  })
+
+  it('refuses something too long to be a code', () => {
+    expect(issues({ ...complete, referral_code: 'X'.repeat(41) })).toContain('referral_code')
+    expect(issues({ ...complete, referral_code: 'X'.repeat(40) })).toEqual([])
+  })
+})

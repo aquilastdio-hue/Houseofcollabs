@@ -143,6 +143,10 @@ export function CreatorAccountCard({ creator: c }: { creator: AdminCreatorDetail
         <DetailItem label="Account status">{p ? <StatusBadge meta={ACCOUNT_STATUS_META} value={p.status} size="sm" /> : null}</DetailItem>
         <DetailItem label="Last seen">{p?.last_seen_at ? <span title={formatDateTime(p.last_seen_at)}>{formatRelative(p.last_seen_at)}</span> : 'Never'}</DetailItem>
         <DetailItem label="Signed up">{p ? formatDate(p.created_at) : null}</DetailItem>
+        {/* Carried over from their application at approval (migration 0062), so
+            "where did this creator come from?" is answerable here rather than
+            only by digging out the original application. */}
+        <DetailItem label="Referral code">{c.referral_code ?? <span className="text-faint">None</span>}</DetailItem>
         <DetailItem label="Creator id">
           <IdText value={c.id} />
         </DetailItem>
