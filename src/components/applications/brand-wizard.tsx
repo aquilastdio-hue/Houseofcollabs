@@ -21,6 +21,8 @@ import {
   type BrandApplicationValues,
 } from '@/schemas/brand-application'
 import { Button } from '@/components/ui/button'
+import { GoogleButton } from '@/components/auth/auth-parts'
+import { signInWithGoogle } from '@/services/auth.service'
 import { Card } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -272,7 +274,32 @@ function Page3({ form }: { form: Form }) {
 // ===========================================================================
 // Wizard
 // ===========================================================================
-function Submitted() {
+/**
+ * Brands are self-serve, so this is the end of signing up rather than the start
+ * of waiting. The account itself is created on first sign-in: the application
+ * was written as approved, and the profile row that Google sign-in creates is
+ * what triggers provisioning (migration 0068).
+ *
+ * Which is why the address is spelled out. Signing in with a different Google
+ * account finds no application to claim and silently produces an account with
+ * no brand attached — so the one address that works is on screen, not implied.
+ */
+function Submitted({ email }: { email: string }) {
+  const [busy, setBusy] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+
+  const go = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await signInWithGoogle({ role: 'brand', redirect: '/brand' })
+      // A redirect to Google follows; leave the button spinning behind it.
+    } catch (e) {
+      setError(toAppError(e).message)
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="container-page flex min-h-[calc(100dvh-var(--header-height))] items-center justify-center py-12">
       <Card className="w-full max-w-lg p-8 text-center sm:p-10">
@@ -281,7 +308,22 @@ function Submitted() {
         </span>
         <h1 className="mt-5 font-display text-display-sm font-semibold tracking-tight">{BRAND_SUBMITTED_COPY.title}</h1>
         <p className="mt-3 text-muted">{BRAND_SUBMITTED_COPY.body}</p>
-        <Button asChild className="mt-7" size="lg">
+
+        <div className="mt-7">
+          <GoogleButton onClick={() => void go()} loading={busy} />
+        </div>
+
+        <p className="mt-3 text-sm text-muted">
+          {BRAND_SUBMITTED_COPY.emailNote} <span className="font-medium break-all text-ink">{email}</span>
+        </p>
+
+        {error && (
+          <p role="alert" className="mt-3 rounded-control bg-danger-soft px-3 py-2.5 text-sm text-danger">
+            {error}
+          </p>
+        )}
+
+        <Button asChild variant="ghost" size="sm" className="mt-4">
           <Link to="/">Back to {site.name}</Link>
         </Button>
       </Card>
@@ -294,7 +336,7 @@ const PHONE_STEP = 0
 
 export function BrandApplicationWizard() {
   const [step, setStep] = React.useState(0)
-  const [done, setDone] = React.useState(false)
+  const [done, setDone] = React.useState<string | null>(null)
   const [checking, setChecking] = React.useState(false)
   const topRef = React.useRef<HTMLDivElement>(null)
   const formRef = React.useRef<HTMLFormElement>(null)
@@ -367,14 +409,15 @@ export function BrandApplicationWizard() {
           },
         },
       }),
-    meta: { successMessage: 'Brand submitted for verification' },
-    onSuccess: () => {
+    meta: { successMessage: 'Your brand account is ready' },
+    // The submitted values carry the address the account will be claimed with.
+    onSuccess: (_result, v) => {
       try {
         localStorage.removeItem(DRAFT_KEY)
       } catch {
         // the draft is a convenience; failing to clear it is not an error
       }
-      setDone(true)
+      setDone(v.business_email)
     },
     onError: (e) => {
       const err = toAppError(e)
@@ -438,7 +481,7 @@ export function BrandApplicationWizard() {
     scrollToFirstError(formRef.current)
   }
 
-  if (done) return <Submitted />
+  if (done) return <Submitted email={done} />
 
   const meta = BRAND_STEP_META[step]
   const pct = Math.round(((step + 1) / BRAND_TOTAL_STEPS) * 100)

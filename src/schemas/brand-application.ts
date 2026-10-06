@@ -66,8 +66,10 @@ export const REGISTRATION_DOCS = [
 export const BRAND_CONFIRMATION = 'I confirm that I am authorized to represent this brand/company.'
 
 export const BRAND_SUBMITTED_COPY = {
-  title: 'Thanks — your brand is in for verification',
-  body: 'We check every brand by hand so House of Collabs stays trusted for creators. We’ll email you as soon as you’re verified.',
+  title: 'Your account is ready',
+  body: 'Sign in and your brand dashboard is waiting — browse every creator on House of Collabs, save the ones you like and send your first brief.',
+  /** Said plainly, because signing in with a different address gets them nothing. */
+  emailNote: 'Use the same email you applied with:',
 } as const
 
 // ----------------------------------------------------------------- schema ---
