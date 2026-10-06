@@ -32,6 +32,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.4.0",
+    "firebase": "^12.19.0",
     "lucide-react": "^0.577.0",
     "radix-ui": "^1.6.7",
     "react": "^19.3.0",
@@ -54,6 +55,6 @@
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.3",
     "vite": "^7.3.6",
-    "vitest": "^3.2.7"
+    "vitest": "^5.0.3"
   }
 }

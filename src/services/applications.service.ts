@@ -228,3 +228,12 @@ export async function applicationFileUrl(path: string) {
   if (error) throw toAppError(error)
   return data.signedUrl
 }
+
+/**
+ * Hands the Firebase ID token to the server, which checks its signature before
+ * recording that this number was verified. The browser's own word for it is
+ * worth nothing — see the `verify-phone` Edge Function.
+ */
+export async function verifyPhoneToken(idToken: string) {
+  return invokeFunction<{ verified: boolean; phone: string }>('verify-phone', { id_token: idToken })
+}

@@ -16,9 +16,27 @@ const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') ?? Deno.env.get('SITE_UR
   .map((s) => s.trim().replace(/\/$/, ''))
   .filter(Boolean)
 
+/**
+ * Any port on the dev machine. Vite moves to the next free port whenever one is
+ * taken, so a second or third tab lands on 5174 or 5175 and silently fails CORS
+ * — the browser throws the response away and the app reports it as "could not
+ * reach the server", which is a long way from the truth.
+ *
+ * This is not the security boundary: every function here still demands a user
+ * JWT, an admin JWT, a provider signature or a signed Firebase token. A page on
+ * someone's own localhost gains nothing by being allowed to ask. `http://localhost:5173`
+ * was already on the allow-list in production, so this widens an existing
+ * decision rather than taking a new one.
+ */
+const isLocalhost = (origin: string) => /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+
 export function corsHeaders(req: Request): Record<string, string> {
   const origin = (req.headers.get('origin') ?? '').replace(/\/$/, '')
-  const allow = allowedOrigins.includes('*') ? '*' : allowedOrigins.includes(origin) ? origin : allowedOrigins[0] ?? ''
+  const allow = allowedOrigins.includes('*')
+    ? '*'
+    : allowedOrigins.includes(origin) || isLocalhost(origin)
+      ? origin
+      : allowedOrigins[0] ?? ''
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',

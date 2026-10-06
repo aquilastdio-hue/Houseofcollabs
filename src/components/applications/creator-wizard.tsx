@@ -5,9 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react'
 import { site } from '@/config/site'
+import { cn } from '@/lib/utils'
 import { toAppError } from '@/lib/errors'
 import { POPULAR_CITIES } from '@/lib/constants'
 import { scrollToFirstError } from '@/lib/scroll-to-error'
+import { toE164 } from '@/lib/phone-otp'
+import { usePhoneVerification } from './phone-verify'
 import {
   DUPLICATE_CODES,
   DUPLICATE_MESSAGES,
@@ -33,6 +36,56 @@ type Form = UseFormReturn<CreatorApplicationValues>
 const CITY_OPTIONS = POPULAR_CITIES.map((c) => ({ value: c, label: c }))
 const DRAFT_KEY = 'hoc:creator-application'
 
+/**
+ * The number field with its OTP action inside it.
+ *
+ * `Field` keeps the `Input` as its only child so the error stays bound to the
+ * real input; the "Get OTP" control rides in the input's own `rightSlot`, and
+ * the code box appears underneath once a code has been sent.
+ */
+function PhoneField({
+  phone,
+  verified,
+  onVerified,
+  error,
+  register,
+}: {
+  phone: string
+  verified: boolean
+  onVerified: (e164: string) => void
+  error?: string
+  register: Form['register']
+}) {
+  const { trailing, panel } = usePhoneVerification({ phone, verified, onVerified })
+  // India is the default, shown rather than assumed, so nobody has to wonder
+  // which country the number is read as. It is a label, not a value: the field
+  // holds the local number and `toE164` adds the +91. Someone typing their own
+  // '+' is giving a country code, so the prefix gets out of their way.
+  const ownCountryCode = phone.trim().startsWith('+')
+  return (
+    <div>
+      <Field label="WhatsApp number" htmlFor="whatsapp" required error={error}>
+        <Input
+          id="whatsapp"
+          type="tel"
+          inputMode="tel"
+          placeholder={ownCountryCode ? '+1 415 555 0123' : '98765 43210'}
+          leftIcon={ownCountryCode ? undefined : <span className="text-sm text-ink-soft">+91</span>}
+          rightSlot={trailing}
+          className={cn(
+            // Room for the widest label the slot ever shows ("Resend OTP"),
+            // so a typed number never runs underneath it.
+            trailing && 'pr-28',
+            !ownCountryCode && 'pl-12',
+          )}
+          {...register('whatsapp')}
+        />
+      </Field>
+      {panel}
+    </div>
+  )
+}
+
 // ===========================================================================
 // Pages
 // ===========================================================================
@@ -50,9 +103,25 @@ function Page1({ form }: { form: Form }) {
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="WhatsApp number" htmlFor="whatsapp" required error={errors.whatsapp?.message}>
-          <Input id="whatsapp" type="tel" placeholder="+91 98765 43210" {...register('whatsapp')} />
-        </Field>
+        <Controller
+          control={control}
+          name="verified_phone"
+          render={({ field: verifiedField }) => {
+            const typed = form.watch('whatsapp')
+            // Verified means "this exact number passed", so editing the field
+            // retires the badge without any extra bookkeeping.
+            const isVerified = Boolean(verifiedField.value) && toE164(typed) === verifiedField.value
+            return (
+              <PhoneField
+                phone={typed}
+                verified={isVerified}
+                onVerified={(e164) => verifiedField.onChange(e164)}
+                error={errors.whatsapp?.message}
+                register={register}
+              />
+            )
+          }}
+        />
         <Field label="Email" htmlFor="email" required error={errors.email?.message}>
           <Input id="email" type="email" autoComplete="email" placeholder="you@example.com" {...register('email')} />
         </Field>

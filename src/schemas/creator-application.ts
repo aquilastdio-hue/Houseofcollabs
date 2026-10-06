@@ -123,6 +123,11 @@ export const creatorApplicationSchema = z
     // 'abc123', 'ABC123' and ' abc123 ' are the same code when you come to
     // count them.
     referral_code: z.string().trim().toUpperCase().max(40, 'Use 40 characters or fewer'),
+    // The E.164 number the applicant passed an SMS check on. Client state for
+    // the form's own benefit only — the authority is `private.phone_verifications`,
+    // which the insert guard consults and the browser cannot reach. Holding the
+    // number rather than a boolean is what makes editing the field un-verify it.
+    verified_phone: z.string(),
     city: z.string().trim().max(80, 'Use 80 characters or fewer'),
     photo_path: z.string(),
 
@@ -218,6 +223,7 @@ export const CREATOR_APPLICATION_DEFAULTS: CreatorApplicationValues = {
   whatsapp: '',
   email: '',
   referral_code: '',
+  verified_phone: '',
   city: '',
   photo_path: '',
   instagram: { handle: '', url: '', followers: '' },
