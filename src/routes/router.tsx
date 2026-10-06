@@ -160,6 +160,7 @@ const routes: RouteObject[] = [
           { path: 'creator-ranking', ...page(() => import('@/pages/admin/CreatorRanking')) },
           { path: 'creators/:id', ...page(() => import('@/pages/admin/CreatorDetail')) },
           { path: 'brands', ...page(() => import('@/pages/admin/Brands')) },
+          { path: 'rejected', ...page(() => import('@/pages/admin/RejectedApplications')) },
           { path: 'brands/:id', ...page(() => import('@/pages/admin/BrandDetail')) },
           { path: 'orders', ...page(() => import('@/pages/admin/Orders')) },
           { path: 'orders/:id', ...page(() => import('@/pages/admin/OrderDetail')) },

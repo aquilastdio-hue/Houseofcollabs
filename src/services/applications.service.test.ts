@@ -2,25 +2,33 @@ import { describe, expect, it } from 'vitest'
 import { LISTED_STATUSES, statusesFor, type ApplicationStatus } from './applications.service'
 
 /**
- * Approving is the only decision that takes an application off the list — the
- * applicant has an account now, so the row's job is done. A rejected one stays
- * visible with its status, because "did we already look at this person?" is a
- * question the admin asks, and hiding the answer behind a filter is worse than
- * a slightly longer list.
+ * The queue holds what still needs a decision, and nothing else. Either
+ * decision takes an application off it: approved people have accounts now, and
+ * rejected ones moved to their own page.
+ *
+ * Rejected applications are kept, not deleted — "did we already look at this
+ * person?" is a question the admin asks when someone applies again — so the
+ * tests below also pin that they stay reachable.
  */
 describe('statusesFor', () => {
-  it('lists everything except approved by default', () => {
-    expect(statusesFor('')).toEqual(['new', 'reviewing', 'rejected'])
+  it('shows only what still needs a decision, by default', () => {
+    expect(statusesFor('')).toEqual(['new', 'reviewing'])
   })
 
-  it('drops an application from the list once it is approved', () => {
-    expect(statusesFor('') as readonly ApplicationStatus[]).not.toContain('approved')
-  })
-
-  it('keeps rejected and reviewing on the list', () => {
+  it('drops an application from the queue once it is decided, either way', () => {
     const listed = statusesFor('') as readonly ApplicationStatus[]
-    expect(listed).toContain('rejected')
+    expect(listed).not.toContain('approved')
+    expect(listed).not.toContain('rejected')
+  })
+
+  it('keeps work that is still open on the queue', () => {
+    const listed = statusesFor('') as readonly ApplicationStatus[]
+    expect(listed).toContain('new')
     expect(listed).toContain('reviewing')
+  })
+
+  it('still reaches rejected applications when asked — they have their own page', () => {
+    expect(statusesFor('rejected')).toEqual(['rejected'])
   })
 
   it('still reaches approved applications when asked for them explicitly', () => {

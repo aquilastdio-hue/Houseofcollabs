@@ -11,15 +11,16 @@ export type ApplicationStatus = 'new' | 'reviewing' | 'approved' | 'rejected'
 
 /** Statuses that still need a decision from someone. */
 /**
- * What the list shows by default.
+ * What the applications queue shows by default: only what still needs a
+ * decision.
  *
- * Only approving takes an application off the list — that person now has an
- * account, so the row's job is done and leaving it there would make the queue
- * grow forever. Rejected stays: an admin needs to see who was turned down
- * without hunting through a filter, and it is the answer to "did we already
- * look at this person?" when they apply again.
+ * Deciding either way takes an application off this list. Approved people have
+ * accounts now, so the row's job is done. Rejected ones moved to their own
+ * page — they are still worth keeping (they answer "did we already look at this
+ * person?" when someone applies again), but they are not work, and leaving them
+ * in the queue made it look permanently full.
  */
-export const LISTED_STATUSES = ['new', 'reviewing', 'rejected'] as const
+export const LISTED_STATUSES = ['new', 'reviewing'] as const
 
 /** What the Status filter can ask for. `''` is the default list, `'all'` is everything. */
 export type StatusFilter = ApplicationStatus | 'all' | ''
@@ -145,8 +146,12 @@ export type ApplicationStats = {
   reviewing: number
   approved: number
   rejected: number
+  /** Applications by role — includes rejected ones and people never provisioned. */
   creators: number
   brands: number
+  /** Accounts that actually exist right now, which is a different question. */
+  live_creators: number
+  live_brands: number
   new_7d: number
 }
 

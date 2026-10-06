@@ -36,7 +36,7 @@ import { useAdminMutation } from '@/components/admin/use-admin-mutation'
 
 const PAGE_SIZE = 25
 
-const applicationKeys = {
+export const applicationKeys = {
   all: [...qk.admin.all, 'applications'] as const,
   list: (params: unknown) => [...qk.admin.all, 'applications', params] as const,
   stats: [...qk.admin.all, 'application-stats'] as const,
@@ -48,8 +48,12 @@ const STATUS_META: Record<ApplicationStatus, { label: string; tone: BadgeTone }>
   approved: { label: 'Approved', tone: 'success' },
   rejected: { label: 'Rejected', tone: 'danger' },
 }
+// Rejected lives on its own page, so it is not offered here — the queue is for
+// applications still waiting on a decision.
 const STATUS_OPTIONS = [
-  ...(Object.keys(STATUS_META) as ApplicationStatus[]).map((v) => ({ value: v, label: STATUS_META[v].label })),
+  ...(Object.keys(STATUS_META) as ApplicationStatus[])
+    .filter((v) => v !== 'rejected')
+    .map((v) => ({ value: v, label: STATUS_META[v].label })),
   { value: 'all', label: 'All statuses' },
 ]
 const ROLE_OPTIONS = [
@@ -57,7 +61,7 @@ const ROLE_OPTIONS = [
   { value: 'brand', label: 'Brands' },
 ] as const
 
-const columns: Column<ApplicationRow>[] = [
+export const applicationColumns: Column<ApplicationRow>[] = [
   {
     key: 'created',
     header: 'Received',
@@ -186,7 +190,7 @@ function ApprovalPanel({ result }: { result: ApprovalResult }) {
   )
 }
 
-function ReviewDialog({ row, onClose }: { row: ApplicationRow | null; onClose: () => void }) {
+export function ReviewDialog({ row, onClose }: { row: ApplicationRow | null; onClose: () => void }) {
   const [decision, setDecision] = React.useState<ApplicationStatus | null>(null)
   const [approval, setApproval] = React.useState<ApprovalResult | null>(null)
 
@@ -410,7 +414,7 @@ export default function Applications() {
       <PageHeader
         eyebrow="Accounts"
         title="Applications"
-        description="People who applied through Create your profile. Approving takes someone off this list — rejected and reviewing stay, so you can see what was already decided."
+        description="People who applied through Create your profile. Deciding takes someone off this list — approved accounts appear under People, and rejected ones have their own page."
       />
 
       <div className="space-y-6">
@@ -418,7 +422,15 @@ export default function Applications() {
           <StatsCard label="Waiting" value={formatNumber(s?.new)} icon={<Inbox />} tone="brand" loading={stats.isPending} hint={s ? `${formatNumber(s.new_7d)} in the last 7 days` : undefined} />
           <StatsCard label="Reviewing" value={formatNumber(s?.reviewing)} loading={stats.isPending} hint="Picked up but not decided" />
           <StatsCard label="Approved" value={formatNumber(s?.approved)} icon={<UserPlus />} loading={stats.isPending} hint={s ? `${formatNumber(s.rejected)} rejected` : undefined} />
-          <StatsCard label="Total" value={formatNumber(s?.total)} loading={stats.isPending} hint={s ? `${formatNumber(s.creators)} creators · ${formatNumber(s.brands)} brands` : undefined} />
+          {/* Accounts, not applications. This used to count applications by
+              role, so it included rejected ones and people who applied but were
+              never provisioned — it read "3 brands" while there were none. */}
+          <StatsCard
+            label="On the platform"
+            value={formatNumber((s?.live_creators ?? 0) + (s?.live_brands ?? 0))}
+            loading={stats.isPending}
+            hint={s ? `${formatNumber(s.live_creators)} creators · ${formatNumber(s.live_brands)} brands` : undefined}
+          />
         </div>
 
         <FilterBar
@@ -438,7 +450,7 @@ export default function Applications() {
 
         <DataTable
           className={cn(query.isPlaceholderData && 'opacity-60 transition-opacity')}
-          columns={columns}
+          columns={applicationColumns}
           rows={query.data?.items}
           rowKey={(a) => a.id}
           loading={query.isPending}

@@ -16,6 +16,7 @@ import {
   Sparkles,
   TrendingUp,
   Users,
+  UserX,
   ListOrdered,
   Wallet,
 } from 'lucide-react'
@@ -31,6 +32,7 @@ const sections: NavSection[] = [
       { label: 'Creators', href: '/admin/creators', icon: Sparkles },
       { label: 'Creator ranking', href: '/admin/creator-ranking', icon: ListOrdered },
       { label: 'Brands', href: '/admin/brands', icon: Building2 },
+      { label: 'Rejected', href: '/admin/rejected', icon: UserX },
     ],
   },
   {
