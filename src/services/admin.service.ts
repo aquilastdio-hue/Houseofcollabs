@@ -732,3 +732,21 @@ export async function setApplicationDiscover(id: string, discover: boolean) {
 export async function reorderCreators(ids: string[]) {
   return unwrap(await supabase.rpc('admin_reorder_creators', { p_ids: ids }))
 }
+
+export type AccountAction = 'suspend' | 'reactivate' | 'delete'
+
+/**
+ * Account-level moderation that needs the server.
+ *
+ * `setUserStatus` only flips `profiles.status`, which blocks writes and shows
+ * the suspended screen but leaves the person able to *sign in*. This goes
+ * through an Edge Function that also bans or unbans the Supabase Auth user, so
+ * a suspended account cannot get through the door — and can delete one
+ * outright, which nothing in the database is allowed to do.
+ */
+export function accountAction(profileId: string, action: AccountAction, reason?: string) {
+  return invokeFunction<{ ok: true; action: AccountAction; status?: string; deleted?: boolean }>(
+    'admin-account-action',
+    { profile_id: profileId, action, reason },
+  )
+}

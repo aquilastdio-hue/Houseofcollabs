@@ -7,6 +7,7 @@ import { getBrand } from '@/services/admin.service'
 import { Seo } from '@/components/shared/seo'
 import { Breadcrumb } from '@/components/shared/breadcrumb'
 import { EmptyState, ErrorState } from '@/components/shared/states'
+import { AccountActionsPanel } from '@/components/admin/account-actions'
 import { Button } from '@/components/ui/button'
 import { DetailPageSkeleton } from '@/components/admin/detail'
 import { BrandAccountCard, BrandDetailsCard, BrandIdentity, BrandRecentOrders } from '@/components/admin/brand-profile'
@@ -80,6 +81,12 @@ export default function BrandDetail() {
           <BrandRecentOrders brandId={b.id} />
         </div>
         <aside className="space-y-6">
+          <AccountActionsPanel
+            profileId={b.profile_id}
+            name={b.brand_name}
+            status={b.profile?.status ?? 'active'}
+            afterDelete="/admin/brands"
+          />
           <BrandAccountCard brand={b} />
         </aside>
       </div>

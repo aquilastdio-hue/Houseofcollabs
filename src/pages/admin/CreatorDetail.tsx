@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { DetailCard, DetailPageSkeleton } from '@/components/admin/detail'
 import { CreatorAccountCard, CreatorIdentity, CreatorOverview, CreatorStorefront } from '@/components/admin/creator-profile'
 import { CreatorActionsPanel } from '@/components/admin/creator-actions'
+import { AccountActionsPanel } from '@/components/admin/account-actions'
 import { CreatorEditDialog } from '@/components/admin/creator-edit-dialog'
 import { PortfolioModerationGrid } from '@/components/admin/portfolio-moderation'
 import { CreatorSetupCard, CreatorVerificationsCard } from '@/components/admin/creator-setup'
@@ -104,6 +105,12 @@ export default function CreatorDetail() {
         </div>
         <aside className="space-y-6">
           <CreatorActionsPanel creator={c} />
+          <AccountActionsPanel
+            profileId={c.profile_id}
+            name={c.display_name}
+            status={c.profile?.status ?? 'active'}
+            afterDelete="/admin/creators"
+          />
           <CreatorSetupCard creatorId={c.id} />
           <CreatorAccountCard creator={c} />
         </aside>
