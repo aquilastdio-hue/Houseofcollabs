@@ -90,5 +90,12 @@ export const creatorColumns: Column<AdminCreatorRow>[] = [
         <span className="text-xs text-faint">Unverified</span>
       ),
   },
+  {
+    // Beside "Joined", because both say how this creator arrived.
+    key: 'referral',
+    header: 'Referral',
+    cell: (c) =>
+      c.referral_code ? <span className="font-mono text-xs tracking-wide">{c.referral_code}</span> : <span className="text-faint">—</span>,
+  },
   { key: 'joined', header: 'Joined', className: 'whitespace-nowrap text-muted', cell: (c) => formatDate(c.joined_at) },
 ]

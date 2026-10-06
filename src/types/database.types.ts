@@ -2695,6 +2695,7 @@ export type Database = {
           profile_id: string
           profile_image_url: string
           rating: number
+          referral_code: string
           revenue: number
           review_count: number
           slug: string
@@ -2725,6 +2726,7 @@ export type Database = {
           last_seen_at: string
           onboarding_completed: boolean
           orders_count: number
+          referral_code: string
           role: string
           status: string
           total_count: number
@@ -4056,6 +4058,10 @@ export type Database = {
           p_status: string
         }
         Returns: undefined
+      }
+      record_phone_verification: {
+        Args: { p_phone: string; p_provider?: string; p_provider_uid: string }
+        Returns: Json
       }
       record_profile_view: {
         Args: { p_creator_id: string }

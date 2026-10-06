@@ -126,6 +126,19 @@ const COLUMNS: Column<PersonRow>[] = [
     cell: (r) => (r.last_seen_at ? <span className="text-xs">{formatRelative(r.last_seen_at)}</span> : <span className="text-faint">Never</span>),
   },
   {
+    // Next to "Joined", because both answer how this person arrived.
+    key: 'referral',
+    header: 'Referral',
+    mobileLabel: 'Referral',
+    hideOnMobile: true,
+    cell: (r) =>
+      r.referral_code ? (
+        <span className="font-mono text-xs tracking-wide">{r.referral_code}</span>
+      ) : (
+        <span className="text-faint">—</span>
+      ),
+  },
+  {
     key: 'joined',
     header: 'Joined',
     mobileLabel: 'Joined',
