@@ -86,7 +86,7 @@
       "destination": "https://sxndiarrdfqiepnnczmy.supabase.co/functions/v1/sitemap"
     },
     {
-      "source": "/((?!assets/|demo/|favicon.ico|apple-touch-icon.png|robots.txt|sitemap.xml|og-image.svg|og-image.png).*)",
+      "source": "/((?!assets/|favicon.ico|favicon.png|apple-touch-icon.png|robots.txt|sitemap.xml|og-image.png).*)",
       "destination": "/index.html"
     }
   ],

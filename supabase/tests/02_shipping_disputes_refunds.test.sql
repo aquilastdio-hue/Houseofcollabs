@@ -18,7 +18,7 @@ select pg_temp.claims(pg_temp.id('creator_uid'));
 set local role authenticated;
 insert into public.creators (profile_id, display_name, bio, city, gender, age, creator_type, profile_image_url)
 values (auth.uid(), 'Riya Reviews', 'Unboxings and honest reviews of gadgets and home products.', 'Pune', 'female', 29,
-        'ugc_creator', '/demo/avatars/creator-02.svg');
+        'ugc_creator', 'https://example.com/avatar.jpg');
 select public.set_creator_categories(array[(select id from public.categories where slug = 'technology')]);
 select public.set_creator_languages(array['English', 'Marathi']);
 insert into public.creator_services (creator_id, title, price, delivery_days, revisions_included, content_type, requires_shipping)

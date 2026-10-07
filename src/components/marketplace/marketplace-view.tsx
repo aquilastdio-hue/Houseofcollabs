@@ -28,6 +28,7 @@ export type MarketplaceMode = 'brand' | 'public'
 const NO_FIXED: Partial<CreatorSearchParams> = {}
 /** The results column sits beside a filter sidebar from `lg`, so cards need wider tracks than the default grid. */
 const GRID_CLASS = 'lg:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-3'
+const THREE_COLUMN_QUERY = '(min-width: 80rem)'
 
 /**
  * Marketplace search used by `/brand/creators`, `/discover` and
@@ -50,7 +51,21 @@ export function MarketplaceView({
   className?: string
 }) {
   const { params, setParams } = useMarketplaceFilters(fixed)
-  const search = useCreatorSearch(params, { track: mode === 'brand' })
+  const [threeColumnGrid, setThreeColumnGrid] = React.useState(
+    () => typeof window !== 'undefined' && window.matchMedia?.(THREE_COLUMN_QUERY).matches === true,
+  )
+  React.useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const media = window.matchMedia(THREE_COLUMN_QUERY)
+    const update = () => setThreeColumnGrid(media.matches)
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+  const columns = threeColumnGrid ? 3 : 2
+  const pageSize = Math.ceil(PAGE_SIZE / columns) * columns
+  const searchParams = React.useMemo(() => ({ ...params, pageSize }), [params, pageSize])
+  const search = useCreatorSearch(searchParams, { track: mode === 'brand' })
   const categories = useCategories()
   const creatorTypes = useCreatorTypes()
 
@@ -157,7 +172,7 @@ export function MarketplaceView({
             ))}
           </CreatorGrid>
         </div>
-        <Pagination className="mt-8" page={page} pageSize={PAGE_SIZE} total={search.data.total} onPageChange={goToPage} label="creators" />
+        <Pagination className="mt-8" page={page} pageSize={pageSize} total={search.data.total} onPageChange={goToPage} label="creators" />
       </>
     )
   }

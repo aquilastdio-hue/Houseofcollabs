@@ -45,7 +45,7 @@ set local role authenticated;
 insert into public.creators (profile_id, display_name, headline, bio, city, state, gender, age, creator_type, profile_image_url)
 values (auth.uid(), 'Casey Creator', 'Skincare stories that convert',
         'I make honest skincare videos for Indian skin, with real textures and results.',
-        'New Delhi', 'Delhi', 'female', 26, 'micro_creator', '/demo/avatars/creator-01.svg');
+        'New Delhi', 'Delhi', 'female', 26, 'micro_creator', 'https://example.com/avatar.jpg');
 select pg_temp.expect_error($$ update public.creators set verified = true where profile_id = auth.uid() $$, '%permission denied%');
 select pg_temp.expect_error($$ update public.creators set status = 'published' where profile_id = auth.uid() $$, '%permission denied%');
 select pg_temp.expect_error($$ update public.creators set rating = 5 where profile_id = auth.uid() $$, '%permission denied%');
@@ -64,7 +64,7 @@ values (pg_temp.id('service_id'), 'Extra revision', 300, 'extra_revision', 1);
 insert into public.service_addons (service_id, name, price, addon_type, delivery_days_override)
 values (pg_temp.id('service_id'), '24-hour delivery', 1000, 'express_delivery', 1);
 insert into public.portfolio_items (creator_id, type, title, media_url)
-values (private.my_creator_id(), 'image', 'Serum texture shot', '/demo/portfolio/skincare-01.svg');
+values (private.my_creator_id(), 'image', 'Serum texture shot', 'https://example.com/portfolio.jpg');
 select pg_temp.expect_error($$ update public.portfolio_items set is_hidden = false $$, '%permission denied%');
 select pg_temp.check((public.get_creator_completion() ->> 'can_publish')::boolean, 'required steps complete');
 select public.publish_creator_profile();

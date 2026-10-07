@@ -3,6 +3,7 @@ import {
   Bell,
   Building2,
   CreditCard,
+  ClipboardList,
   FileClock,
   Flag,
   FolderTree,
@@ -64,6 +65,15 @@ const sections: NavSection[] = [
       { label: 'Announcements', href: '/admin/notifications', icon: Bell, counter: 'notifications' },
       { label: 'Email log', href: '/admin/emails', icon: Mail },
       { label: 'Audit log', href: '/admin/audit-logs', icon: FileClock },
+      {
+        label: 'Forms',
+        href: '/admin/forms',
+        icon: ClipboardList,
+        children: [
+          { label: 'Creators', href: '/admin/forms/creators' },
+          { label: 'Brands', href: '/admin/forms/brands' },
+        ],
+      },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },

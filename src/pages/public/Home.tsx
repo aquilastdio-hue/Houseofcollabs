@@ -4,7 +4,6 @@ import { site } from '@/config/site'
 import { Seo } from '@/components/shared/seo'
 import { organizationSchema, websiteSchema } from '@/lib/structured-data'
 import { Button } from '@/components/ui/button'
-import { BrandMarquee } from '@/components/marketing/brand-marquee'
 import { BrandBenefitsSection, CreatorBenefitsSection } from '@/components/marketing/benefits'
 import { CategoryDiscoverySection } from '@/components/marketing/category-grid'
 import { CtaPanel } from '@/components/marketing/cta-panel'
@@ -18,7 +17,6 @@ import { MarketplacePreviewSection } from '@/components/marketing/marketplace-pr
 import { OrderJourneySection } from '@/components/marketing/order-journey'
 import { usePlatformTerms } from '@/components/marketing/platform-terms'
 import { Accent, DotGrid, TextLink, stagger } from '@/components/marketing/primitives'
-import { TestimonialsSection } from '@/components/marketing/testimonials'
 import { WorkflowCompareSection } from '@/components/marketing/workflow-compare'
 
 const TRUST_POINTS = [
@@ -89,44 +87,35 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2 · Marketplace preview — real creators, straight after the hero.
-             The pitch above it promises storefronts with prices on them; this
-             is the proof, so it comes before the logos rather than four
-             sections later. */}
+      {/* 2 · Marketplace preview — real published creators from the database. */}
       <MarketplacePreviewSection />
 
-      {/* 3 · Trusted brands */}
-      <BrandMarquee />
-
-      {/* 4 · Brand benefits */}
+      {/* 3 · Brand benefits */}
       <BrandBenefitsSection />
 
-      {/* 5 · Creator benefits */}
+      {/* 4 · Creator benefits */}
       <CreatorBenefitsSection />
 
-      {/* 6 · Old vs new workflow */}
+      {/* 5 · Old vs new workflow */}
       <WorkflowCompareSection />
 
-      {/* 7 · How it works */}
+      {/* 6 · How it works */}
       <HowItWorksSection />
 
-      {/* 8 · Creator discovery */}
+      {/* 7 · Creator discovery */}
       <CategoryDiscoverySection />
 
-      {/* 9 · Order workflow */}
+      {/* 8 · Order workflow */}
       <OrderJourneySection />
 
-      {/* 10 · Testimonials */}
-      <TestimonialsSection />
-
-      {/* 11 · FAQ */}
+      {/* 9 · FAQ */}
       <FaqSection
         items={homeFaqs(terms)}
         description="Pricing, payments, revisions, payouts and usage rights — the things brands and creators ask us most."
         className="pb-section"
       />
 
-      {/* 12 · Final CTA */}
+      {/* 10 · Final CTA */}
       <CtaPanel
         id="home-cta"
         className="pt-0"

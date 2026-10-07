@@ -15,8 +15,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "gen:types": "supabase gen types typescript --local > src/types/database.types.ts",
-    "gen:seed": "node scripts/generate-seed.mjs",
-    "gen:assets": "node scripts/generate-demo-assets.mjs",
     "gen:sitemap": "node scripts/generate-sitemap.mjs",
     "db:test": "node scripts/run-db-tests.mjs",
     "build:site": "node scripts/build-site.mjs"

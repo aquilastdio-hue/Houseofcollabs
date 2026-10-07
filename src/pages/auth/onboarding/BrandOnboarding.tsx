@@ -82,7 +82,7 @@ export default function BrandOnboarding() {
         </Field>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <Field label="Brand name" htmlFor="brand_name" required error={errors.brand_name?.message}>
-            <Input id="brand_name" placeholder="Saffron Street" {...form.register('brand_name')} />
+            <Input id="brand_name" placeholder="Your brand name" {...form.register('brand_name')} />
           </Field>
           <Field label="Industry" htmlFor="industry" required error={errors.industry?.message}>
             <Controller

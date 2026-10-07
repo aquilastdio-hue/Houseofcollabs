@@ -43,13 +43,14 @@ const opts = (xs: readonly string[]) => xs.map((x) => ({ value: x, label: x }))
 // ===========================================================================
 // Pages
 // ===========================================================================
-function Page1({ form }: { form: Form }) {
+/** Exported so Admin → Forms can render the same UI applicants see. */
+export function Page1({ form }: { form: Form }) {
   const { control, register, formState: { errors } } = form
   return (
     <div className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Brand / company name" htmlFor="brand_name" required error={errors.brand_name?.message}>
-          <Input id="brand_name" placeholder="e.g. Kumkum Naturals" {...register('brand_name')} />
+          <Input id="brand_name" placeholder="e.g. your brand name" {...register('brand_name')} />
         </Field>
         <Field
           label="Website / Instagram handle"
@@ -120,7 +121,8 @@ function Page1({ form }: { form: Form }) {
   )
 }
 
-function Page2({ form }: { form: Form }) {
+/** Exported so Admin → Forms can render the same UI applicants see. */
+export function Page2({ form }: { form: Form }) {
   const { control, watch } = form
   const where = watch('creator_location')
   return (
@@ -181,7 +183,8 @@ function Page2({ form }: { form: Form }) {
   )
 }
 
-function Page3({ form }: { form: Form }) {
+/** Exported so Admin → Forms can render the same UI applicants see. */
+export function Page3({ form }: { form: Form }) {
   const { control, register, formState: { errors } } = form
   return (
     <div className="space-y-6">
@@ -314,7 +317,10 @@ function Submitted({ email }: { email: string }) {
         </div>
 
         <p className="mt-3 text-sm text-muted">
-          {BRAND_SUBMITTED_COPY.emailNote} <span className="font-medium break-all text-ink">{email}</span>
+          {BRAND_SUBMITTED_COPY.emailNote}{' '}
+          {/* inline-block keeps the full address together: if it won't fit beside
+              the note, the whole email moves to the next line instead of splitting. */}
+          <span className="inline-block max-w-full font-medium break-all text-ink">{email}</span>
         </p>
 
         {error && (
@@ -323,7 +329,7 @@ function Submitted({ email }: { email: string }) {
           </p>
         )}
 
-        <Button asChild variant="ghost" size="sm" className="mt-4">
+        <Button asChild variant="primary" size="md" className="mt-6">
           <Link to="/">Back to {site.name}</Link>
         </Button>
       </Card>
@@ -333,6 +339,13 @@ function Submitted({ email }: { email: string }) {
 
 /** The page that collects the WhatsApp number. */
 const PHONE_STEP = 0
+
+/** One step of the live brand form — used by the wizard and Admin → Forms. */
+export function BrandApplicationStep({ step, form }: { step: number; form: Form }) {
+  if (step === 0) return <Page1 form={form} />
+  if (step === 1) return <Page2 form={form} />
+  return <Page3 form={form} />
+}
 
 export function BrandApplicationWizard() {
   const [step, setStep] = React.useState(0)
@@ -510,9 +523,7 @@ export function BrandApplicationWizard() {
             }}
             noValidate
           >
-            {step === 0 && <Page1 form={form} />}
-            {step === 1 && <Page2 form={form} />}
-            {step === 2 && <Page3 form={form} />}
+            <BrandApplicationStep step={step} form={form} />
 
             {form.formState.errors.root?.message && (
               <p role="alert" className="mt-5 rounded-control bg-danger-soft px-3 py-2.5 text-sm text-danger">
@@ -525,7 +536,7 @@ export function BrandApplicationWizard() {
                 <ArrowLeft /> Back
               </Button>
               <Button type="submit" size="lg" loading={submit.isPending || checking}>
-                {last ? 'Submit for verification' : 'Continue'}
+                {last ? 'Submit' : 'Continue'}
                 {!last && <ArrowRight />}
               </Button>
             </div>

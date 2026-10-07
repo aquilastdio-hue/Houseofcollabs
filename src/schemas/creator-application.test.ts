@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   CREATOR_APPLICATION_DEFAULTS,
+  BARTER_STANCES,
   MAX_PHOTOS,
   MAX_VIDEOS,
+  OPEN_TO,
   STEP_FIELDS,
   creatorApplicationSchema,
 } from './creator-application'
@@ -31,6 +33,11 @@ const issues = (input: unknown) => {
 }
 
 describe('creator sign-up schema', () => {
+  it('offers a single Yes, Selective or No barter choice outside the final-page options', () => {
+    expect(BARTER_STANCES.map(({ label }) => label)).toEqual(['Yes', 'Selective', 'No'])
+    expect(OPEN_TO).not.toContain('Barter collaborations')
+  })
+
   it('accepts a creator who answered every page', () => {
     expect(issues(complete)).toEqual([])
   })

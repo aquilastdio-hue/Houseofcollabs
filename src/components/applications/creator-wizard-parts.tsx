@@ -132,7 +132,6 @@ export function MultiFileDrop({
   const [errors, setErrors] = React.useState<string[]>([])
   const [names, setNames] = React.useState<Record<string, string>>({})
   const [busy, setBusy] = React.useState(0)
-  const maxMb = BUCKET_RULES.applications.maxBytes / (1024 * 1024)
   const room = maxFiles - value.length
 
   const add = async (files: File[]) => {
@@ -193,7 +192,7 @@ export function MultiFileDrop({
       </Button>
 
       <p className={cn('text-xs', errors.length ? 'text-danger' : 'text-muted')}>
-        {errors.length ? errors.join(' ') : `${DESCRIBE[kind]}, up to ${maxMb} MB each. ${value.length} of ${maxFiles} added.`}
+        {errors.length ? errors.join(' ') : `${DESCRIBE[kind]}. ${value.length} of ${maxFiles} added.`}
       </p>
     </div>
   )

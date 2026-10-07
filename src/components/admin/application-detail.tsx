@@ -45,7 +45,7 @@ function Line({ label: text, children }: { label: string; children: React.ReactN
   return (
     <div className="flex flex-col gap-0.5 py-2 sm:flex-row sm:gap-4">
       <dt className="w-40 shrink-0 text-sm text-muted">{text}</dt>
-      <dd className="min-w-0 text-sm break-words">{children}</dd>
+      <dd className="min-w-0 text-sm wrap-break-word">{children}</dd>
     </div>
   )
 }

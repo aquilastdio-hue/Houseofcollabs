@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { Combobox } from '@/components/ui/combobox'
 import { CheckboxRow } from '@/components/ui/checkbox'
-import { Chips, FileDrop, Money, MultiFileDrop, RadioRow, YesNo } from './creator-wizard-parts'
+import { Chips, FileDrop, Money, MultiFileDrop, RadioRow } from './creator-wizard-parts'
 
 type Form = UseFormReturn<CreatorApplicationValues>
 
@@ -89,7 +89,8 @@ function PhoneField({
 // ===========================================================================
 // Pages
 // ===========================================================================
-function Page1({ form }: { form: Form }) {
+/** Exported so Admin → Forms can render the same UI applicants see. */
+export function Page1({ form }: { form: Form }) {
   const { control, register, formState: { errors } } = form
   return (
     <div className="space-y-5">
@@ -167,7 +168,8 @@ function Page1({ form }: { form: Form }) {
   )
 }
 
-function Page2({ form }: { form: Form }) {
+/** Exported so Admin → Forms can render the same UI applicants see. */
+export function Page2({ form }: { form: Form }) {
   const { control, register, formState: { errors } } = form
   return (
     <div className="space-y-7">
@@ -214,7 +216,8 @@ function Page2({ form }: { form: Form }) {
   )
 }
 
-function Page3({ control }: { control: Control<CreatorApplicationValues> }) {
+/** Exported so Admin → Forms can render the same UI applicants see. */
+export function Page3({ control }: { control: Control<CreatorApplicationValues> }) {
   return (
     <div className="space-y-6">
       {/* The videos hint asks for brand work rather than just "a video": it is
@@ -250,9 +253,9 @@ function Page3({ control }: { control: Control<CreatorApplicationValues> }) {
   )
 }
 
-function Page4({ form }: { form: Form }) {
-  const { control, watch, formState: { errors } } = form
-  const barter = watch('barter_available')
+/** Exported so Admin → Forms can render the same UI applicants see. */
+export function Page4({ form }: { form: Form }) {
+  const { control, formState: { errors } } = form
   return (
     <div className="space-y-5">
       {COLLABORATIONS.map((row) => (
@@ -281,25 +284,23 @@ function Page4({ form }: { form: Form }) {
 
       <Controller
         control={control}
-        name="barter_available"
+        name="barter_stance"
         render={({ field }) => (
-          <Field label="Barter collaboration" className="border-t border-line pt-6 sm:grid sm:grid-cols-[1fr_12rem] sm:items-center sm:gap-4">
-            <YesNo value={field.value} onChange={field.onChange} name="barter" label="Barter collaboration" />
+          <Field label="Barter collaboration" className="border-t border-line pt-6">
+            <RadioRow
+              value={field.value || (form.getValues('barter_available') ? 'yes' : 'no')}
+              onChange={(stance) => {
+                field.onChange(stance)
+                form.setValue('barter_available', stance !== 'no')
+              }}
+              options={BARTER_STANCES}
+              name="barter_stance"
+              label="Barter collaboration"
+              className="flex min-w-0 max-w-full flex-wrap gap-x-7 gap-y-2"
+            />
           </Field>
         )}
       />
-
-      {barter && (
-        <Controller
-          control={control}
-          name="barter_stance"
-          render={({ field, fieldState }) => (
-            <Field label="How does barter work for you?" required error={fieldState.error?.message}>
-              <RadioRow value={field.value} onChange={field.onChange} options={BARTER_STANCES} name="barter_stance" label="Barter" />
-            </Field>
-          )}
-        />
-      )}
 
       <Controller
         control={control}
@@ -314,7 +315,8 @@ function Page4({ form }: { form: Form }) {
   )
 }
 
-function Page5({ control }: { control: Control<CreatorApplicationValues> }) {
+/** Exported so Admin → Forms can render the same UI applicants see. */
+export function Page5({ control }: { control: Control<CreatorApplicationValues> }) {
   return (
     <div className="space-y-6">
       <Controller
@@ -363,6 +365,15 @@ function Submitted() {
 /** Which page collects each of the two values we check for duplicates. */
 const PHONE_STEP = 0
 const INSTAGRAM_STEP = 1
+
+/** One step of the live creator form — used by the wizard and Admin → Forms. */
+export function CreatorApplicationStep({ step, form }: { step: number; form: Form }) {
+  if (step === 0) return <Page1 form={form} />
+  if (step === 1) return <Page2 form={form} />
+  if (step === 2) return <Page3 control={form.control} />
+  if (step === 3) return <Page4 form={form} />
+  return <Page5 control={form.control} />
+}
 
 export function CreatorApplicationWizard() {
   const [step, setStep] = React.useState(0)
@@ -549,11 +560,7 @@ export function CreatorApplicationWizard() {
             }}
             noValidate
           >
-            {step === 0 && <Page1 form={form} />}
-            {step === 1 && <Page2 form={form} />}
-            {step === 2 && <Page3 control={form.control} />}
-            {step === 3 && <Page4 form={form} />}
-            {step === 4 && <Page5 control={form.control} />}
+            <CreatorApplicationStep step={step} form={form} />
 
             {form.formState.errors.root?.message && (
               <p role="alert" className="mt-5 rounded-control bg-danger-soft px-3 py-2.5 text-sm text-danger">

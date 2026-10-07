@@ -11,12 +11,16 @@ import { PageLoader } from '@/components/ui/spinner'
 import { NotificationBell } from '@/components/notifications/notification-bell'
 import { AccountMenu } from './account-menu'
 
+export type NavChild = { label: string; href: string }
+
 export type NavItem = {
   label: string
   href: string
   icon: LucideIcon
   end?: boolean
   counter?: 'notifications'
+  /** Nested links shown when this item (or a child) is active. */
+  children?: NavChild[]
 }
 
 export type NavSection = { title?: string; items: NavItem[] }
@@ -32,35 +36,62 @@ function Counter({ value }: { value?: number }) {
 
 function SideNav({ sections, onNavigate }: { sections: NavSection[]; onNavigate?: () => void }) {
   const counts = useUnreadCounts()
+  const { pathname } = useLocation()
   return (
     <nav aria-label="Primary" className="flex flex-col gap-6">
       {sections.map((section, si) => (
         <div key={si}>
           {section.title && <p className="eyebrow mb-2 px-3 text-faint">{section.title}</p>}
           <ul className="flex flex-col gap-0.5">
-            {section.items.map((item) => (
-              <li key={item.href}>
-                <NavLink
-                  to={item.href}
-                  end={item.end}
-                  onClick={onNavigate}
-                  className={({ isActive }) =>
-                    cn(
-                      'group focus-ring flex items-center gap-3 rounded-control px-3 py-2.5 text-sm font-medium transition-colors',
-                      isActive ? 'bg-ink text-white' : 'text-ink-soft hover:bg-subtle hover:text-ink',
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <span data-active={isActive} className="group flex w-full items-center gap-3">
-                      <item.icon className={cn('size-[1.125rem] shrink-0', isActive ? 'text-brand' : 'text-muted group-hover:text-ink')} />
-                      <span className="truncate">{item.label}</span>
-                      {item.counter && <Counter value={counts.data?.[item.counter]} />}
-                    </span>
+            {section.items.map((item) => {
+              const childOpen =
+                !!item.children?.length &&
+                (pathname === item.href || pathname.startsWith(`${item.href}/`) || item.children.some((c) => pathname === c.href || pathname.startsWith(`${c.href}/`)))
+              return (
+                <li key={item.href}>
+                  <NavLink
+                    to={item.href}
+                    end={item.end}
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      cn(
+                        'group focus-ring flex items-center gap-3 rounded-control px-3 py-2.5 text-sm font-medium transition-colors',
+                        isActive || childOpen ? 'bg-ink text-white' : 'text-ink-soft hover:bg-subtle hover:text-ink',
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <span data-active={isActive || childOpen} className="group flex w-full items-center gap-3">
+                        <item.icon className={cn('size-[1.125rem] shrink-0', isActive || childOpen ? 'text-brand' : 'text-muted group-hover:text-ink')} />
+                        <span className="truncate">{item.label}</span>
+                        {item.counter && <Counter value={counts.data?.[item.counter]} />}
+                      </span>
+                    )}
+                  </NavLink>
+                  {childOpen && item.children && (
+                    <ul className="mt-0.5 ml-4 flex flex-col gap-0.5 border-l border-line pl-2">
+                      {item.children.map((child) => (
+                        <li key={child.href}>
+                          <NavLink
+                            to={child.href}
+                            end
+                            onClick={onNavigate}
+                            className={({ isActive }) =>
+                              cn(
+                                'focus-ring block rounded-control px-3 py-2 text-sm font-medium transition-colors',
+                                isActive ? 'bg-subtle text-ink' : 'text-ink-soft hover:bg-subtle/70 hover:text-ink',
+                              )
+                            }
+                          >
+                            {child.label}
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
                   )}
-                </NavLink>
-              </li>
-            ))}
+                </li>
+              )
+            })}
           </ul>
         </div>
       ))}

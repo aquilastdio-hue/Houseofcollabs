@@ -53,12 +53,12 @@ export const TRAVEL_SCOPES = [
 
 export const BARTER_STANCES = [
   { value: 'yes', label: 'Yes' },
-  { value: 'selectively', label: 'Selectively' },
+  { value: 'selectively', label: 'Selective' },
   { value: 'no', label: 'No' },
 ] as const
 
 /** Page 5 — what a creator is open to. */
-export const OPEN_TO = ['Paid collaborations', 'Long-term brand partnerships', 'Barter collaborations'] as const
+export const OPEN_TO = ['Paid collaborations', 'Long-term brand partnerships'] as const
 
 export const CONFIRMATION =
   'I confirm that my information and uploaded content are authentic and can be displayed on my House of Collabs creator profile.'

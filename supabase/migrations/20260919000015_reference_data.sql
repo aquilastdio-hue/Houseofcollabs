@@ -1,6 +1,6 @@
 -- =============================================================================
 -- Spotlit · 0015 · reference data required in every environment
--- (demo users/orders live in supabase/seed.sql)
+-- (categories, creator types, platform settings — not demo users)
 -- =============================================================================
 
 insert into public.categories (name, slug, description, icon, color, sort_order) values
