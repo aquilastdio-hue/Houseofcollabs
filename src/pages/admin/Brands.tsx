@@ -1,12 +1,13 @@
 import { Link, useNavigate } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Building2 } from 'lucide-react'
+import { Activity, Building2, CalendarDays } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatNumber } from '@/lib/format'
-import { listBrands } from '@/services/admin.service'
+import { getPeopleStats, listBrands } from '@/services/admin.service'
 import { Seo } from '@/components/shared/seo'
 import { PageHeader } from '@/components/shared/page-header'
+import { StatsCard } from '@/components/shared/stats-card'
 import { DataTable } from '@/components/shared/data-table'
 import { EmptyState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
@@ -40,6 +41,7 @@ export default function Brands() {
     queryFn: () => listBrands(params),
     placeholderData: keepPreviousData,
   })
+  const stats = useQuery({ queryKey: qk.admin.peopleStats, queryFn: getPeopleStats, staleTime: 60_000 })
 
   const activeCount = [status, sort !== 'newest'].filter(Boolean).length
   const filtered = activeCount > 0 || !!search
@@ -53,6 +55,30 @@ export default function Brands() {
         title="Brands"
         description={query.data ? `${formatNumber(query.data.total)} ${filtered ? 'matching' : 'registered'} brands.` : 'Brand accounts, their spend and activity.'}
       />
+
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatsCard
+          label="Total brands"
+          value={formatNumber(stats.data?.brands_total)}
+          icon={<Building2 />}
+          loading={stats.isPending}
+          hint={stats.data ? `${formatNumber(stats.data.brands_active)} active accounts` : undefined}
+        />
+        <StatsCard
+          label="Active today"
+          value={formatNumber(stats.data?.brands_active_today)}
+          icon={<Activity />}
+          loading={stats.isPending}
+          hint="Seen in the last 24 hours"
+        />
+        <StatsCard
+          label="Onboarded today"
+          value={formatNumber(stats.data?.brands_onboarded_today)}
+          icon={<CalendarDays />}
+          loading={stats.isPending}
+          hint="Brand accounts created today"
+        />
+      </div>
 
       <FilterBar
         activeCount={activeCount}

@@ -11,7 +11,7 @@ import type { PortfolioItem } from '@/types'
 type Item = Pick<PortfolioItem, 'id' | 'type' | 'title' | 'description' | 'media_url' | 'thumbnail_url' | 'brand_name' | 'platform'>
 
 /** Single portfolio tile (image / video / external link). */
-export function MediaTile({ item, onOpen, className, children }: { item: Item; onOpen?: () => void; className?: string; children?: React.ReactNode }) {
+export function MediaTile({ item, onOpen, className, children, eager = false }: { item: Item; onOpen?: () => void; className?: string; children?: React.ReactNode; eager?: boolean }) {
   const isVideo = item.type === 'video'
   const hover = useHoverPlay()
   const Icon = item.type === 'link' ? Link2 : ImageOff
@@ -23,7 +23,7 @@ export function MediaTile({ item, onOpen, className, children }: { item: Item; o
         // The video underneath takes no pointer events, so the hover handlers
         // belong here — this button is the whole media surface.
         {...hover.hoverProps}
-        className="focus-ring block aspect-[4/5] w-full text-left"
+        className="focus-ring block aspect-4/5 w-full text-left"
         aria-label={`Open ${item.title ?? item.type}`}
       >
         {isVideo ? (
@@ -41,7 +41,7 @@ export function MediaTile({ item, onOpen, className, children }: { item: Item; o
             {...hover.videoProps}
             src={`${item.media_url}#t=0.1`}
             poster={item.thumbnail_url ?? undefined}
-            preload="metadata"
+            preload={item.thumbnail_url ? 'none' : 'metadata'}
             muted
             loop
             playsInline
@@ -50,12 +50,13 @@ export function MediaTile({ item, onOpen, className, children }: { item: Item; o
           />
         ) : (
           <SmartImage
-            src={item.type === 'image' ? item.media_url : item.thumbnail_url}
+            src={item.type === 'image' ? item.thumbnail_url ?? item.media_url : item.thumbnail_url}
             alt={item.title ?? ''}
             className="absolute inset-0 size-full"
             imgClassName="transition-transform duration-700 ease-spring group-hover:scale-[1.04]"
+            eager={eager}
             fallback={
-              <div className="flex size-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-sand-soft to-lilac-soft p-4 text-center text-ink-soft">
+              <div className="flex size-full flex-col items-center justify-center gap-2 bg-linear-to-br from-sand-soft to-lilac-soft p-4 text-center text-ink-soft">
                 <Icon className="size-6" />
                 <span className="line-clamp-2 text-sm font-medium">{item.title ?? (item.type === 'link' ? 'External link' : 'Preview unavailable')}</span>
               </div>
@@ -71,7 +72,7 @@ export function MediaTile({ item, onOpen, className, children }: { item: Item; o
           </span>
         )}
         {(item.title || item.brand_name) && (
-          <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-night/75 to-transparent p-3 pt-10 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
+          <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-night/75 to-transparent p-3 pt-10 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
             {item.title && <span className="block truncate text-sm font-medium">{item.title}</span>}
             {item.brand_name && <span className="block truncate text-xs text-white/75">for {item.brand_name}</span>}
           </span>
@@ -94,10 +95,11 @@ export function PortfolioGrid({ items, className, columns = 'default' }: { items
           className,
         )}
       >
-        {items.map((item) => (
+        {items.map((item, index) => (
           <MediaTile
             key={item.id}
             item={item}
+            eager={index < 3}
             onOpen={() => (item.type === 'link' ? window.open(item.media_url, '_blank', 'noopener,noreferrer') : setOpen(item))}
           />
         ))}

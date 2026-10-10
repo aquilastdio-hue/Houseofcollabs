@@ -2,7 +2,6 @@ import * as React from 'react'
 import { Link } from 'react-router'
 import { ArrowRight, SearchX, Sparkles, Users } from 'lucide-react'
 import { cn, range } from '@/lib/utils'
-import { pluralize } from '@/lib/format'
 import { PAGE_SIZE, SORT_OPTIONS } from '@/lib/constants'
 import { useAuth } from '@/contexts/auth-context'
 import { useCategories, useCreatorTypes } from '@/hooks/use-catalog'
@@ -172,7 +171,7 @@ export function MarketplaceView({
             ))}
           </CreatorGrid>
         </div>
-        <Pagination className="mt-8" page={page} pageSize={pageSize} total={search.data.total} onPageChange={goToPage} label="creators" />
+        <Pagination className="mt-8" page={page} pageSize={pageSize} total={search.data.total} onPageChange={goToPage} label="creators" showSummary={false} />
       </>
     )
   }
@@ -229,7 +228,7 @@ export function MarketplaceView({
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 id="marketplace-results-heading" aria-live="polite" className="font-display text-lg font-semibold tracking-tight">
               {search.data ? (
-                pluralize(search.data.total, 'creator')
+                'Creators'
               ) : search.isError ? (
                 'Creators'
               ) : (

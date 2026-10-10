@@ -22,6 +22,7 @@ export function Pagination({
   onPageChange,
   className,
   label = 'results',
+  showSummary = true,
 }: {
   page: number
   pageSize: number
@@ -29,17 +30,20 @@ export function Pagination({
   onPageChange: (page: number) => void
   className?: string
   label?: string
+  showSummary?: boolean
 }) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
-  if (total === 0) return null
+  if (total === 0 || (!showSummary && totalPages <= 1)) return null
   const from = (page - 1) * pageSize + 1
   const to = Math.min(total, page * pageSize)
   return (
     <nav aria-label="Pagination" className={cn('flex flex-col items-center justify-between gap-3 sm:flex-row', className)}>
-      <p className="text-sm text-muted">
-        Showing <span className="font-medium text-ink">{formatNumber(from)}–{formatNumber(to)}</span> of{' '}
-        <span className="font-medium text-ink">{formatNumber(total)}</span> {label}
-      </p>
+      {showSummary && (
+        <p className="text-sm text-muted">
+          Showing <span className="font-medium text-ink">{formatNumber(from)}–{formatNumber(to)}</span> of{' '}
+          <span className="font-medium text-ink">{formatNumber(total)}</span> {label}
+        </p>
+      )}
       {totalPages > 1 && (
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon-sm" aria-label="Previous page" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>

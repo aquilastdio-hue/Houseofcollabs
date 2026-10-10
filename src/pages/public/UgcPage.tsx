@@ -113,7 +113,7 @@ export default function UgcPage() {
                   <Link to="/get-started?role=creator">Sell UGC on {site.name}</Link>
                 </Button>
               </div>
-              <LiveStats className="mt-10 animate-fade-up border-t border-line pt-8" keys={['creators', 'cities', 'categories']} />
+              <LiveStats className="mt-10 animate-fade-up border-t border-line pt-8" keys={['cities', 'categories']} />
             </div>
             <HeroShowcase params={SHOWCASE_PARAMS} />
           </div>

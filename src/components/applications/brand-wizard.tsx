@@ -7,7 +7,6 @@ import { ArrowLeft, ArrowRight, BadgeCheck } from 'lucide-react'
 import { site } from '@/config/site'
 import { toAppError } from '@/lib/errors'
 import { scrollToFirstError } from '@/lib/scroll-to-error'
-import { POPULAR_CITIES } from '@/lib/constants'
 import {
   DUPLICATE_CODES,
   DUPLICATE_MESSAGES,
@@ -28,7 +27,7 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { Select } from '@/components/ui/select'
-import { Combobox, MultiSelect } from '@/components/ui/combobox'
+import { MultiSelect } from '@/components/ui/combobox'
 import { CheckboxRow } from '@/components/ui/checkbox'
 // Shared with the creator wizard — the uploader, chips and radio row are the
 // same controls, so they live in one place rather than being rebuilt here.
@@ -36,7 +35,6 @@ import { Chips, FileDrop, RadioRow } from './creator-wizard-parts'
 
 type Form = UseFormReturn<BrandApplicationValues>
 
-const CITY_OPTIONS = POPULAR_CITIES.map((c) => ({ value: c, label: c }))
 const DRAFT_KEY = 'hoc:brand-application'
 const opts = (xs: readonly string[]) => xs.map((x) => ({ value: x, label: x }))
 
@@ -94,7 +92,7 @@ export function Page1({ form }: { form: Form }) {
           name="location"
           render={({ field, fieldState }) => (
             <Field label="Company location" htmlFor="location" required error={fieldState.error?.message}>
-              <Combobox id="location" value={field.value} onChange={field.onChange} options={CITY_OPTIONS} allowCustom clearable placeholder="Choose or type your city" />
+              <Input id="location" placeholder="Enter your city" {...field} />
             </Field>
           )}
         />
@@ -163,7 +161,7 @@ export function Page2({ form }: { form: Form }) {
             name="specific_cities"
             render={({ field, fieldState }) => (
               <Field label="Which cities?" required error={fieldState.error?.message} hint={`Up to ${MAX_SPECIFIC_CITIES}.`}>
-                <MultiSelect value={field.value} onChange={field.onChange} options={CITY_OPTIONS} max={MAX_SPECIFIC_CITIES} allowCustom placeholder="Choose cities" />
+                <MultiSelect value={field.value} onChange={field.onChange} options={[]} max={MAX_SPECIFIC_CITIES} allowCustom placeholder="Type a city and add it" searchPlaceholder="Type a city" />
               </Field>
             )}
           />

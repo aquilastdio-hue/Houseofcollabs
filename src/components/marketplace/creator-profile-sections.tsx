@@ -231,7 +231,7 @@ export function AboutSection({ creator }: { creator: CreatorProfile }) {
           // portrait, and forcing 16:9 letterboxed them inside a wide black
           // box. Capping the height and letting the width follow means the
           // element takes the video's own shape, whichever way it was shot.
-          className="mt-6 max-h-[30rem] w-auto max-w-full rounded-card bg-night"
+          className="mt-6 max-h-120 w-auto max-w-full rounded-card bg-night"
         />
       )}
 
@@ -243,7 +243,7 @@ export function AboutSection({ creator }: { creator: CreatorProfile }) {
             </span>
             <div className="min-w-0">
               <dt className="text-xs text-muted">{d.label}</dt>
-              <dd className="text-sm font-medium break-words">{d.value}</dd>
+              <dd className="text-sm font-medium wrap-break-word">{d.value}</dd>
             </div>
           </div>
         ))}

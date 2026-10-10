@@ -5,7 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { AppError } from '@/lib/errors'
 import { formatNumber } from '@/lib/format'
-import { GENDERS, INDIAN_STATES, LANGUAGES, POPULAR_CITIES } from '@/lib/constants'
+import { GENDERS, INDIAN_STATES, LANGUAGES } from '@/lib/constants'
 import { useAuth } from '@/contexts/auth-context'
 import {
   createMyCreator,
@@ -20,14 +20,13 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
-import { Combobox, MultiSelect } from '@/components/ui/combobox'
+import { MultiSelect } from '@/components/ui/combobox'
 import { ImageUploader } from '@/components/shared/image-uploader'
 import type { Creator } from '@/types'
 import { basicInfoSchema, type BasicInfoInput, type BasicInfoOutput } from './schemas'
 import { FormActions, StudioSection } from './parts'
 import { useStudioSync } from './use-studio'
 
-const CITY_OPTIONS = POPULAR_CITIES.map((c) => ({ value: c, label: c }))
 const STATE_OPTIONS = INDIAN_STATES.map((s) => ({ value: s, label: s }))
 const LANGUAGE_OPTIONS = LANGUAGES.map((l) => ({ value: l, label: l }))
 const BIO_MIN_TO_PUBLISH = 40
@@ -232,17 +231,7 @@ export function BasicInfoForm({
               control={form.control}
               name="city"
               render={({ field }) => (
-                <Combobox
-                  id="city"
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={CITY_OPTIONS}
-                  allowCustom
-                  clearable
-                  placeholder="Choose or type your city"
-                  searchPlaceholder="Search or type a city…"
-                  aria-invalid={!!errors.city}
-                />
+                <Input id="city" placeholder="Enter your city" aria-invalid={!!errors.city} {...field} />
               )}
             />
           </Field>

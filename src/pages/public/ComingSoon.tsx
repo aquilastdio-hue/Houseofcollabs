@@ -44,8 +44,8 @@ export default function ComingSoon({ side = 'brand' }: { side?: Side }) {
         className="relative isolate flex min-h-[calc(100dvh-var(--header-height))] flex-col items-center justify-center overflow-hidden bg-canvas text-center"
       >
         <DotGrid className="-z-10 opacity-50" />
-        <Glow tone="brand" className="-top-56 -left-48 -z-10 size-[30rem] opacity-70" />
-        <Glow tone="lilac" className="-top-44 -right-48 -z-10 size-[28rem] opacity-60" />
+        <Glow tone="brand" className="-top-56 -left-48 -z-10 size-120 opacity-70" />
+        <Glow tone="lilac" className="-top-44 -right-48 -z-10 size-112 opacity-60" />
 
         <div className="container-page flex flex-col items-center py-16">
           <span

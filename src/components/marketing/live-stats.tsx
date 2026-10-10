@@ -1,14 +1,12 @@
 import { cn } from '@/lib/utils'
-import { site } from '@/config/site'
 import { formatNumber } from '@/lib/format'
 import { usePublicStats } from '@/hooks/use-catalog'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { PublicStats } from '@/types'
 
-type StatKey = 'creators' | 'cities' | 'categories' | 'completed_orders'
+type StatKey = 'cities' | 'categories' | 'completed_orders'
 
 const LABELS: Record<StatKey, [singular: string, plural: string]> = {
-  creators: [`creator on ${site.name}`, `creators on ${site.name}`],
   cities: ['city represented', 'cities represented'],
   categories: ['content category', 'content categories'],
   completed_orders: ['order completed', 'orders completed'],
@@ -19,7 +17,7 @@ const LABELS: Record<StatKey, [singular: string, plural: string]> = {
  * hidden; the whole row disappears if nothing is worth showing.
  */
 export function LiveStats({
-  keys = ['creators', 'cities', 'categories'],
+  keys = ['cities', 'categories'],
   inverse,
   className,
 }: {

@@ -396,7 +396,7 @@ export function PortfolioManager({
       {portfolio.isPending ? (
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4" aria-busy="true">
           {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="aspect-[4/5] rounded-card" />
+            <Skeleton key={i} className="rounded-card" style={{ aspectRatio: '4 / 5' }} />
           ))}
         </div>
       ) : portfolio.isError ? (
@@ -475,7 +475,8 @@ export function PortfolioManager({
               <button
                 type="button"
                 onClick={openFilePicker}
-                className="focus-ring flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 rounded-card border border-dashed border-line-strong bg-surface/60 text-sm font-medium text-muted transition-colors hover:border-ink hover:text-ink"
+                className="focus-ring flex w-full flex-col items-center justify-center gap-2 rounded-card border border-dashed border-line-strong bg-surface/60 text-sm font-medium text-muted transition-colors hover:border-ink hover:text-ink"
+                style={{ aspectRatio: '4 / 5' }}
               >
                 <Plus className="size-5" aria-hidden />
                 Add more

@@ -1,12 +1,13 @@
 import { Link, useNavigate } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Users } from 'lucide-react'
+import { Activity, CalendarDays, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatNumber } from '@/lib/format'
-import { listCreators, type AdminCreatorParams } from '@/services/admin.service'
+import { countCreatorsByReferralCode, getPeopleStats, listCreators, type AdminCreatorParams } from '@/services/admin.service'
 import { Seo } from '@/components/shared/seo'
 import { PageHeader } from '@/components/shared/page-header'
+import { StatsCard } from '@/components/shared/stats-card'
 import { DataTable } from '@/components/shared/data-table'
 import { EmptyState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
@@ -59,6 +60,13 @@ export default function Creators() {
     queryFn: () => listCreators(params),
     placeholderData: keepPreviousData,
   })
+  const stats = useQuery({ queryKey: qk.admin.peopleStats, queryFn: getPeopleStats, staleTime: 60_000 })
+  const referralSearch = search.trim().toUpperCase()
+  const referralCount = useQuery({
+    queryKey: qk.admin.creatorReferralCount(referralSearch, includeDeleted),
+    queryFn: () => countCreatorsByReferralCode(referralSearch, includeDeleted),
+    enabled: referralSearch.length > 0,
+  })
 
   const activeCount = [status, yesNo(verified) !== undefined, yesNo(featured) !== undefined, includeDeleted, sort !== 'newest'].filter(Boolean).length
   const filtered = activeCount > 0 || !!search
@@ -73,10 +81,40 @@ export default function Creators() {
         description={query.data ? `${formatNumber(query.data.total)} ${filtered ? 'matching' : 'total'} creator profiles.` : 'Review, verify and manage creator profiles.'}
       />
 
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatsCard
+          label="Total creators"
+          value={formatNumber(stats.data?.creators_total)}
+          icon={<Users />}
+          loading={stats.isPending}
+          hint={stats.data ? `${formatNumber(stats.data.creators_published)} published · ${formatNumber(stats.data.creators_verified)} verified` : undefined}
+        />
+        <StatsCard
+          label="Active today"
+          value={formatNumber(stats.data?.creators_active_today)}
+          icon={<Activity />}
+          loading={stats.isPending}
+          hint="Seen in the last 24 hours"
+        />
+        <StatsCard
+          label="Onboarded today"
+          value={formatNumber(stats.data?.creators_onboarded_today)}
+          icon={<CalendarDays />}
+          loading={stats.isPending}
+          hint="Creator profiles created today"
+        />
+      </div>
+
       <FilterBar
         activeCount={activeCount}
         onReset={reset}
         search={<SearchInput value={search} onCommit={(q) => url.update({ q })} placeholder="Search name, email, city or referral code" label="Search creators" />}
+        toolbar={referralCount.data ? (
+          <p className="text-sm text-muted">
+            Referral code <span className="font-mono font-medium text-ink">{referralSearch}</span> was used by{' '}
+            <span className="font-medium text-ink">{formatNumber(referralCount.data)} creator{referralCount.data === 1 ? '' : 's'}</span>.
+          </p>
+        ) : undefined}
       >
         <FilterField label="Status" htmlFor="creator-status">
           <Select id="creator-status" size="sm" value={status} onValueChange={(v) => url.update({ status: v })} options={STATUS_OPTIONS} anyLabel="All statuses" />

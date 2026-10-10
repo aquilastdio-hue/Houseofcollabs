@@ -1,6 +1,9 @@
 import * as React from 'react'
 import { Link } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { ArrowUpToLine, ExternalLink, GripVertical, MoreHorizontal, Pin, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
@@ -32,21 +35,12 @@ const rankingKey = [...qk.admin.all, 'creator-ranking'] as const
 function Row({
   creator,
   rank,
-  dragging,
-  over,
-  onDragStart,
-  onDragEnter,
-  onDragEnd,
 }: {
   creator: CreatorRanking
   rank: number
-  dragging: boolean
-  over: boolean
-  onDragStart: () => void
-  onDragEnter: () => void
-  onDragEnd: () => void
 }) {
   const pinned = !!creator.pinned_at
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: creator.id })
 
   const rate = useAdminMutation((rating: number | null) => setCreatorRating(creator.id, rating), {
     invalidate: [rankingKey],
@@ -60,58 +54,22 @@ function Row({
 
   return (
     <li
-      draggable
-      onDragStart={(e) => {
-        // Firefox refuses to start a drag unless something is set.
-        e.dataTransfer.effectAllowed = 'move'
-        e.dataTransfer.setData('text/plain', creator.id)
-        // The thing that follows the cursor is a clone of this row with the
-        // rank stripped out.
-        //
-        // The browser's default preview is a snapshot taken at mousedown, so
-        // it keeps showing the position the row started at while the real row
-        // beneath already shows the new one — two different numbers for one
-        // creator. Removing it entirely left nothing under the cursor, which
-        // made the drag feel like it jumped between slots rather than moving.
-        // A clone gives the smooth follow without the stale number.
-        //
-        // It has to be in the document for the browser to rasterise it, so it
-        // is parked off-screen and removed on the next frame — by which point
-        // the snapshot has been taken.
-        const row = e.currentTarget
-        const rect = row.getBoundingClientRect()
-        const clone = row.cloneNode(true) as HTMLElement
-        clone.querySelector('[data-rank]')?.remove()
-        clone.style.position = 'fixed'
-        clone.style.top = '-10000px'
-        clone.style.left = '0'
-        clone.style.width = `${rect.width}px`
-        clone.classList.add('rounded-card', 'border', 'border-line', 'bg-surface', 'shadow-float')
-        document.body.appendChild(clone)
-        e.dataTransfer.setDragImage(clone, e.clientX - rect.left, e.clientY - rect.top)
-        requestAnimationFrame(() => clone.remove())
-        onDragStart()
-      }}
-      onDragEnter={onDragEnter}
-      onDragOver={(e) => e.preventDefault()}
-      onDragEnd={onDragEnd}
-      onDrop={(e) => {
-        e.preventDefault()
-        onDragEnd()
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      role="listitem"
+      aria-label={`Reorder ${creator.display_name}`}
+      style={{
+        transform: transform ? CSS.Transform.toString({ ...transform, x: 0 }) : undefined,
+        transition,
       }}
       className={cn(
-        'flex flex-wrap items-center gap-4 px-4 py-3.5 transition-colors',
+        'flex flex-wrap items-center gap-4 px-4 py-3.5 cursor-grab active:cursor-grabbing transition-colors',
         pinned && 'bg-brand-soft/40',
-        // The row being dragged keeps its full colour. Fading it made the
-        // reordering hard to follow — the one row you are watching was the one
-        // washed out, right when the list is rearranging underneath it. A ring
-        // marks it instead, which reads as "this is the one you're holding"
-        // without hiding it.
-        dragging && 'ring-2 ring-brand ring-inset',
-        over && !dragging && 'bg-subtle',
+        isDragging && 'relative z-10 ring-2 ring-brand ring-inset shadow-float',
       )}
     >
-      <span aria-hidden className="shrink-0 cursor-grab text-faint active:cursor-grabbing">
+      <span aria-hidden className="shrink-0 text-faint">
         <GripVertical className="size-4" />
       </span>
       <span data-rank className="w-8 shrink-0 text-sm font-semibold text-muted tabular-nums">
@@ -193,36 +151,24 @@ export default function CreatorRankingPage() {
   React.useEffect(() => setOrder(null), [fetchedKey])
 
   const items = order ?? fetched
-  const [draggingId, setDraggingId] = React.useState<string | null>(null)
-  const [overId, setOverId] = React.useState<string | null>(null)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   const reorder = useAdminMutation((ids: string[]) => reorderCreators(ids), {
     invalidate: [rankingKey],
     success: () => 'Order saved',
   })
 
-  const moveOver = (targetId: string) => {
-    setOverId(targetId)
-    if (!draggingId || draggingId === targetId) return
-    setOrder((current) => {
-      const list = [...(current ?? fetched)]
-      const from = list.findIndex((c) => c.id === draggingId)
-      const to = list.findIndex((c) => c.id === targetId)
-      if (from < 0 || to < 0) return current
-      const [moved] = list.splice(from, 1)
-      list.splice(to, 0, moved)
-      return list
-    })
-  }
-
-  const commit = () => {
-    const moved = !!draggingId && !!order
-    setDraggingId(null)
-    setOverId(null)
-    // Only write when something actually changed position.
-    if (moved && order!.map((c) => c.id).join() !== fetched.map((c) => c.id).join()) {
-      reorder.mutate(order!.map((c) => c.id))
-    }
+  const commit = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return
+    const from = items.findIndex((creator) => creator.id === active.id)
+    const to = items.findIndex((creator) => creator.id === over.id)
+    if (from < 0 || to < 0) return
+    const next = arrayMove(items, from, to)
+    setOrder(next)
+    reorder.mutate(next.map((creator) => creator.id))
   }
 
   return (
@@ -261,22 +207,15 @@ export default function CreatorRankingPage() {
           <p className="border-b border-line px-4 py-2.5 text-sm text-muted">
             {formatNumber(total)} creator{total === 1 ? '' : 's'} · showing the live order · drag a row to place it by hand
           </p>
-          <ul className="divide-y divide-line">
-            {items.map((c, i) => (
-              <Row
-                key={c.id}
-                creator={c}
-                // While dragging, the position on screen is the truth; the
-                // server-side rank only catches up after the save.
-                rank={order ? i + 1 : c.rank_position}
-                dragging={draggingId === c.id}
-                over={overId === c.id}
-                onDragStart={() => setDraggingId(c.id)}
-                onDragEnter={() => moveOver(c.id)}
-                onDragEnd={commit}
-              />
-            ))}
-          </ul>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={commit}>
+            <SortableContext items={items.map((creator) => creator.id)} strategy={verticalListSortingStrategy}>
+              <ul className="divide-y divide-line">
+                {items.map((c, i) => (
+                  <Row key={c.id} creator={c} rank={order ? i + 1 : c.rank_position} />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
         </div>
       )}
 

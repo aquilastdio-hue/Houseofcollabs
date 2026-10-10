@@ -145,6 +145,8 @@ export type ApplicationStats = {
   new: number
   reviewing: number
   approved: number
+  approved_creators: number
+  approved_brands: number
   rejected: number
   /** Applications by role — includes rejected ones and people never provisioned. */
   creators: number

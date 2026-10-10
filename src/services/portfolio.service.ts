@@ -52,17 +52,28 @@ export async function uploadPortfolioMedia(userId: string, file: File): Promise<
     }
   }
 
-  const img = await optimizeImage(file, 1800, 0.85)
+  const [img, preview] = await Promise.all([
+    optimizeImage(file, 1800, 0.85),
+    file.type === 'image/gif' ? Promise.resolve(null) : optimizeImage(file, 640, 0.76).catch(() => null),
+  ])
   const name = img.type === 'image/webp' ? 'image.webp' : file.name
   const uploaded = await uploadFile('creator-portfolio', ownerPath(userId, name), img.blob, {
     fileName: name,
     contentType: img.type,
     skipValidation: true,
   })
+  const previewName = preview?.type === 'image/webp' ? 'preview.webp' : file.name
+  const previewUpload = preview
+    ? await uploadFile('creator-portfolio', ownerPath(userId, previewName), preview.blob, {
+        fileName: previewName,
+        contentType: preview.type,
+        skipValidation: true,
+      }).catch(() => null)
+    : null
   return {
     type: 'image',
     media_url: uploaded.publicUrl!,
-    thumbnail_url: null,
+    thumbnail_url: previewUpload?.publicUrl ?? null,
     storage_path: uploaded.path,
     width: img.width,
     height: img.height,

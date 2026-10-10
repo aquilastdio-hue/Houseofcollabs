@@ -7,7 +7,6 @@ import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react'
 import { site } from '@/config/site'
 import { cn } from '@/lib/utils'
 import { toAppError } from '@/lib/errors'
-import { POPULAR_CITIES } from '@/lib/constants'
 import { scrollToFirstError } from '@/lib/scroll-to-error'
 import { toE164 } from '@/lib/phone-otp'
 import { usePhoneVerification } from './phone-verify'
@@ -27,13 +26,11 @@ import { Card } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
-import { Combobox } from '@/components/ui/combobox'
 import { CheckboxRow } from '@/components/ui/checkbox'
 import { Chips, FileDrop, Money, MultiFileDrop, RadioRow } from './creator-wizard-parts'
 
 type Form = UseFormReturn<CreatorApplicationValues>
 
-const CITY_OPTIONS = POPULAR_CITIES.map((c) => ({ value: c, label: c }))
 const DRAFT_KEY = 'hoc:creator-application'
 
 /**
@@ -160,7 +157,7 @@ export function Page1({ form }: { form: Form }) {
         name="city"
         render={({ field, fieldState }) => (
           <Field label="City" htmlFor="city" required error={fieldState.error?.message}>
-            <Combobox id="city" value={field.value} onChange={field.onChange} options={CITY_OPTIONS} allowCustom clearable placeholder="Choose or type your city" />
+            <Input id="city" placeholder="Enter your city" {...field} />
           </Field>
         )}
       />

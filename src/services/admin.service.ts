@@ -65,6 +65,13 @@ export async function listCreators(p: AdminCreatorParams) {
   return { items, total: Number(items[0]?.total_count ?? 0), page, pageSize }
 }
 
+export async function countCreatorsByReferralCode(code: string, includeDeleted = false) {
+  const query = supabase.from('creators').select('id', { count: 'exact', head: true }).eq('referral_code', code.trim().toUpperCase())
+  const result = includeDeleted ? await query : await query.is('deleted_at', null)
+  if (result.error) throw result.error
+  return result.count ?? 0
+}
+
 const ADMIN_CREATOR_SELECT = `
   *,
   profile:profiles ( id, email, full_name, status, created_at, last_seen_at ),
@@ -444,8 +451,12 @@ export type PeopleStats = {
   creators_published: number
   creators_verified: number
   creators_pending: number
+  creators_active_today: number
+  creators_onboarded_today: number
   brands_total: number
   brands_active: number
+  brands_active_today: number
+  brands_onboarded_today: number
   onboarding_done: number
   contact_open: number
   reports_open: number

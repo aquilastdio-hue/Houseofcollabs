@@ -372,6 +372,12 @@
   }
 }
 
+@layer components {
+  [cmdk-group-heading] {
+    @apply px-2.5 py-1.5 text-xs text-faint;
+  }
+}
+
 /* react-day-picker v9 theming via tokens */
 .rdp-root {
   --rdp-accent-color: var(--color-ink);

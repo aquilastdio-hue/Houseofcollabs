@@ -28,6 +28,7 @@ export function SmartImage({
           alt={alt}
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
+          fetchPriority={eager ? 'high' : 'auto'}
           onLoad={() => setState('loaded')}
           onError={() => setState('error')}
           className={cn('size-full object-cover transition-opacity duration-500', state === 'loaded' ? 'opacity-100' : 'opacity-0', imgClassName)}

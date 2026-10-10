@@ -9,13 +9,12 @@ import { brandOnboardingSchema, type BrandOnboardingValues } from '@/schemas/aut
 import { createMyBrand, updateMyBrand, uploadBrandLogo } from '@/services/brands.service'
 import { completeOnboarding } from '@/services/auth.service'
 import { toAppError } from '@/lib/errors'
-import { INDUSTRIES, POPULAR_CITIES } from '@/lib/constants'
+import { INDUSTRIES } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
-import { Combobox } from '@/components/ui/combobox'
 import { ImageUploader } from '@/components/shared/image-uploader'
 
 /** Single-step brand onboarding: creates the brand record and completes onboarding. */
@@ -100,21 +99,7 @@ export default function BrandOnboarding() {
             <Input id="instagram_url" type="url" placeholder="https://instagram.com/yourbrand" {...form.register('instagram_url')} />
           </Field>
           <Field label="Location" htmlFor="location" optional error={errors.location?.message}>
-            <Controller
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <Combobox
-                  id="location"
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={POPULAR_CITIES.map((c) => ({ value: c, label: c }))}
-                  placeholder="City"
-                  allowCustom
-                  clearable
-                />
-              )}
-            />
+            <Input id="location" placeholder="Enter your city" {...form.register('location')} />
           </Field>
           <Field label="Contact phone" htmlFor="contact_phone" optional error={errors.contact_phone?.message}>
             <Input id="contact_phone" type="tel" placeholder="+91 98xxxxxxx" {...form.register('contact_phone')} />

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Building2, Check, Copy, Inbox, MailWarning, Sparkles, UserPlus } from 'lucide-react'
+import { Building2, Check, Copy, Inbox, MailWarning, Sparkles, UserPlus, UserX } from 'lucide-react'
 import { RatingStars } from '@/components/admin/rating-stars'
 import { ApplicationSubmission } from '@/components/admin/application-detail'
 import { rateApplication, setApplicationDiscover } from '@/services/admin.service'
@@ -131,7 +131,7 @@ function Line({ label, children }: { label: string; children: React.ReactNode })
   return (
     <div className="flex flex-col gap-0.5 py-2 sm:flex-row sm:gap-4">
       <dt className="w-40 shrink-0 text-sm text-muted">{label}</dt>
-      <dd className="min-w-0 text-sm break-words">{children}</dd>
+      <dd className="min-w-0 text-sm wrap-break-word">{children}</dd>
     </div>
   )
 }
@@ -421,7 +421,12 @@ export default function Applications() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatsCard label="Waiting" value={formatNumber(s?.new)} icon={<Inbox />} tone="brand" loading={stats.isPending} hint={s ? `${formatNumber(s.new_7d)} in the last 7 days` : undefined} />
           <StatsCard label="Reviewing" value={formatNumber(s?.reviewing)} loading={stats.isPending} hint="Picked up but not decided" />
-          <StatsCard label="Approved" value={formatNumber(s?.approved)} icon={<UserPlus />} loading={stats.isPending} hint={s ? `${formatNumber(s.rejected)} rejected` : undefined} />
+          <StatsCard
+            label="Rejected"
+            value={formatNumber(s?.rejected)}
+            icon={<UserX />}
+            loading={stats.isPending}
+          />
           {/* Accounts, not applications. This used to count applications by
               role, so it included rejected ones and people who applied but were
               never provisioned — it read "3 brands" while there were none. */}
