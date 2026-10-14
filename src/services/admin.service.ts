@@ -74,7 +74,10 @@ export async function countCreatorsByReferralCode(code: string, includeDeleted =
 
 const ADMIN_CREATOR_SELECT = `
   *,
-  profile:profiles ( id, email, full_name, status, created_at, last_seen_at ),
+  profile:profiles (
+    id, email, full_name, status, created_at, last_seen_at, phone,
+    applications!applications_profile_id_fkey ( role, status, phone, created_at, whatsapp:profile->>whatsapp )
+  ),
   creator_type_info:creator_types ( slug, name ),
   creator_categories ( is_primary, category:categories ( id, name, slug ) ),
   creator_languages ( id, language ),

@@ -108,7 +108,7 @@ export default function Creators() {
       <FilterBar
         activeCount={activeCount}
         onReset={reset}
-        search={<SearchInput value={search} onCommit={(q) => url.update({ q })} placeholder="Search name, email, city or referral code" label="Search creators" />}
+        search={<SearchInput value={search} onCommit={(q) => url.update({ q })} placeholder="Search name, email, WhatsApp, city or referral code" label="Search creators" />}
         toolbar={referralCount.data ? (
           <p className="text-sm text-muted">
             Referral code <span className="font-mono font-medium text-ink">{referralSearch}</span> was used by{' '}

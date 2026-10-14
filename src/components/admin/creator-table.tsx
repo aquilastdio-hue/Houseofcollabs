@@ -31,6 +31,12 @@ export const creatorColumns: Column<AdminCreatorRow>[] = [
     ),
   },
   {
+    key: 'whatsapp',
+    header: 'WhatsApp',
+    className: 'whitespace-nowrap tabular-nums',
+    cell: (c) => (c.whatsapp ? c.whatsapp : <span className="text-faint">—</span>),
+  },
+  {
     key: 'category',
     header: 'Category',
     cell: (c) => {
