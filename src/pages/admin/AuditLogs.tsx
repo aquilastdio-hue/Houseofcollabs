@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ScrollText } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatDateTime, formatNumber, formatRelative, titleCase } from '@/lib/format'
@@ -20,7 +21,6 @@ import { JsonDialogButton, isEmptyJson } from '@/components/admin/json-view'
 import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 
-const PAGE_SIZE = 50
 
 /** Entity types written by `private.audit()` across the migrations. */
 const ENTITY_TYPES = [
@@ -131,12 +131,10 @@ export default function AuditLogs() {
     // `to` is a plain date; include the whole day.
     from: from ? `${from}T00:00:00.000Z` : '',
     to: to ? `${to}T23:59:59.999Z` : '',
-    page: url.page,
-    pageSize: PAGE_SIZE,
   }
   const query = useQuery({
     queryKey: qk.admin.auditLogs(params),
-    queryFn: () => listAuditLogs(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listAuditLogs({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
 
@@ -199,7 +197,6 @@ export default function AuditLogs() {
             }
           />
         }
-        pagination={query.data ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'events' } : undefined}
       />
     </>
   )

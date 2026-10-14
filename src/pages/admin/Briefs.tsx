@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Megaphone } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatINR, formatNumber, formatRelative } from '@/lib/format'
@@ -17,7 +18,6 @@ import { FilterBar, FilterField, SearchInput } from '@/components/admin/filter-b
 import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 
-const PAGE_SIZE = 25
 
 /** Campaign brief lifecycle, mirroring public.brief_status. */
 const STATUS_META: Record<BriefStatus, { label: string; tone: BadgeTone }> = {
@@ -118,10 +118,10 @@ export default function Briefs() {
   const raw = url.get('status')
   const status: BriefStatus | '' = isOneOf(STATUS_VALUES, raw) ? raw : ''
 
-  const params = { status, search, page: url.page, pageSize: PAGE_SIZE }
+  const params = { status, search }
   const query = useQuery({
     queryKey: qk.admin.content({ kind: 'briefs', ...params }),
-    queryFn: () => listBriefs(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listBriefs({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
 
@@ -174,7 +174,6 @@ export default function Briefs() {
             }
           />
         }
-        pagination={query.data ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'briefs' } : undefined}
       />
     </>
   )

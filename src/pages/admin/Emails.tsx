@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { AlertTriangle, CheckCheck, Clock, Eye, Mail, MailX, MessageSquare, RefreshCw, Send } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { formatDate, formatDateTime, formatNumber, formatRelative, pluralize, titleCase } from '@/lib/format'
 import {
@@ -34,7 +35,6 @@ import { adminKeys } from '@/components/admin/admin-keys'
 import { useAdminMutation } from '@/components/admin/use-admin-mutation'
 import { useUrlState } from '@/components/admin/use-url-state'
 
-const PAGE_SIZE = 25
 
 /** Mirrors the `status` check constraint on public.email_deliveries. */
 const EMAIL_STATUS_META: Record<EmailDeliveryStatus, StatusMeta> = {
@@ -318,10 +318,10 @@ export default function Emails() {
 
   const stats = useQuery({ queryKey: adminKeys.emailStats, queryFn: getEmailStats })
 
-  const params = { status, category, search, page: url.page, pageSize: PAGE_SIZE }
+  const params = { status, category, search }
   const query = useQuery({
     queryKey: adminKeys.emails(params),
-    queryFn: () => listEmailDeliveries(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listEmailDeliveries({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
 
@@ -437,7 +437,6 @@ export default function Emails() {
               }
             />
           }
-          pagination={query.data ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'emails' } : undefined}
         />
 
         <p className="text-xs text-muted">

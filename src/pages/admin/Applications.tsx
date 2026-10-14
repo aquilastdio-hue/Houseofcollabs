@@ -4,6 +4,7 @@ import { Building2, Check, Copy, Inbox, MailWarning, Sparkles, UserPlus, UserX }
 import { RatingStars } from '@/components/admin/rating-stars'
 import { ApplicationSubmission } from '@/components/admin/application-detail'
 import { rateApplication, setApplicationDiscover } from '@/services/admin.service'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatDateTime, formatNumber, formatRelative, titleCase } from '@/lib/format'
@@ -34,7 +35,6 @@ import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 import { useAdminMutation } from '@/components/admin/use-admin-mutation'
 
-const PAGE_SIZE = 25
 
 export const applicationKeys = {
   all: [...qk.admin.all, 'applications'] as const,
@@ -387,10 +387,10 @@ export default function Applications() {
   const role: ApplicationRole | '' = isOneOf(ROLE_VALUES, rawRole) ? rawRole : ''
 
   const stats = useQuery({ queryKey: applicationKeys.stats, queryFn: getApplicationStats })
-  const params = { status, role, search, page: url.page, pageSize: PAGE_SIZE }
+  const params = { status, role, search }
   const query = useQuery({
     queryKey: applicationKeys.list(params),
-    queryFn: () => listApplications(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listApplications({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
 
@@ -477,7 +477,6 @@ export default function Applications() {
               }
             />
           }
-          pagination={query.data ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'applications' } : undefined}
         />
       </div>
 

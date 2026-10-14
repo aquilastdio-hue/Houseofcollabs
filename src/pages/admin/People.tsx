@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ShieldCheck, UserRound, Users } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatINR, formatNumber, formatRelative } from '@/lib/format'
@@ -21,7 +22,6 @@ import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 import type { AccountStatus } from '@/types'
 
-const PAGE_SIZE = 25
 
 const ROLE_OPTIONS = [
   { value: 'creator', label: 'Creators' },
@@ -157,10 +157,10 @@ export default function People() {
   const rawSort = url.get('sort')
   const sort = isOneOf(SORT_VALUES, rawSort) ? rawSort : 'recent'
 
-  const params = { search, role, status, sort, page: url.page, pageSize: PAGE_SIZE }
+  const params = { search, role, status, sort }
   const query = useQuery({
     queryKey: qk.admin.people(params),
-    queryFn: () => listPeople(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listPeople({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
   const stats = useQuery({ queryKey: qk.admin.peopleStats, queryFn: getPeopleStats, staleTime: 60_000 })
@@ -228,7 +228,6 @@ export default function People() {
             }
           />
         }
-        pagination={query.data ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'people' } : undefined}
       />
     </>
   )

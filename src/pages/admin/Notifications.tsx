@@ -6,11 +6,11 @@ import { z } from 'zod'
 import { Megaphone, Send, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { formatDateTime, formatNumber, formatRelative, pluralize } from '@/lib/format'
 import { broadcastNotification, listAnnouncements } from '@/services/admin.service'
 import { Seo } from '@/components/shared/seo'
 import { PageHeader, SectionTitle } from '@/components/shared/page-header'
-import { Pagination } from '@/components/shared/pagination'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { EmptyState, ErrorState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
@@ -23,9 +23,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { RadioCard, RadioGroup } from '@/components/ui/radio-group'
 import { adminKeys } from '@/components/admin/admin-keys'
 import { useAdminMutation } from '@/components/admin/use-admin-mutation'
-import { useUrlState } from '@/components/admin/use-url-state'
-
-const PAGE_SIZE = 20
 
 const AUDIENCES = [
   { value: 'all', label: 'Everyone', description: 'Every active brand and creator account.' },
@@ -157,10 +154,9 @@ function BroadcastForm() {
 }
 
 function History() {
-  const url = useUrlState()
   const query = useQuery({
-    queryKey: adminKeys.announcements(url.page),
-    queryFn: () => listAnnouncements(url.page, PAGE_SIZE),
+    queryKey: adminKeys.announcementsAll,
+    queryFn: () => fetchAllPages((page, pageSize) => listAnnouncements(page, pageSize)),
   })
 
   if (query.isError) return <ErrorState error={query.error} title="Couldn’t load past announcements" onRetry={() => void query.refetch()} />
@@ -202,7 +198,6 @@ function History() {
           </Card>
         )
       })}
-      <Pagination page={url.page} pageSize={PAGE_SIZE} total={query.data.total} onPageChange={url.setPage} label="announcements" />
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { ArrowUpToLine, ExternalLink, GripVertical, MoreHorizontal, Pin, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { formatNumber } from '@/lib/format'
 import { listCreatorRankings, pinCreator, reorderCreators, setCreatorRating, type CreatorRanking } from '@/services/admin.service'
 import { Seo } from '@/components/shared/seo'
@@ -16,7 +17,6 @@ import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
-import { Pagination } from '@/components/shared/pagination'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { FilterBar, FilterField, SearchInput } from '@/components/admin/filter-bar'
 import { CREATOR_STATUS_META, metaOptions } from '@/components/admin/admin-status'
@@ -26,7 +26,6 @@ import { useAdminMutation } from '@/components/admin/use-admin-mutation'
 import { RatingStars } from '@/components/admin/rating-stars'
 import type { CreatorStatus } from '@/types'
 
-const PAGE_SIZE = 50
 const STATUS_OPTIONS = metaOptions(CREATOR_STATUS_META)
 const STATUS_VALUES = STATUS_OPTIONS.map((o) => o.value)
 const rankingKey = [...qk.admin.all, 'creator-ranking'] as const
@@ -133,8 +132,8 @@ export default function CreatorRankingPage() {
   const filtered = !!search || !!status
 
   const query = useQuery({
-    queryKey: [...rankingKey, { search, status, page: url.page }],
-    queryFn: () => listCreatorRankings({ search, status, page: url.page, pageSize: PAGE_SIZE }),
+    queryKey: [...rankingKey, { search, status }],
+    queryFn: () => fetchAllPages((page, pageSize) => listCreatorRankings({ search, status, page, pageSize })),
     placeholderData: keepPreviousData,
   })
 
@@ -217,10 +216,6 @@ export default function CreatorRankingPage() {
             </SortableContext>
           </DndContext>
         </div>
-      )}
-
-      {total > PAGE_SIZE && (
-        <Pagination className="mt-5" page={url.page} pageSize={PAGE_SIZE} total={total} onPageChange={url.setPage} label="creators" />
       )}
     </>
   )

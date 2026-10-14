@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Activity, CalendarDays, Users } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatNumber } from '@/lib/format'
@@ -20,7 +21,6 @@ import { isOneOf, yesNo } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 import type { CreatorStatus } from '@/types'
 
-const PAGE_SIZE = 25
 const STATUS_OPTIONS = metaOptions(CREATOR_STATUS_META)
 const STATUS_VALUES = STATUS_OPTIONS.map((o) => o.value)
 const SORT_VALUES = CREATOR_SORTS.map((s) => s.value)
@@ -52,12 +52,10 @@ export default function Creators() {
     featured: yesNo(featured),
     includeDeleted,
     sort,
-    page: url.page,
-    pageSize: PAGE_SIZE,
   }
   const query = useQuery({
     queryKey: qk.admin.creators(params),
-    queryFn: () => listCreators(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listCreators({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
   const stats = useQuery({ queryKey: qk.admin.peopleStats, queryFn: getPeopleStats, staleTime: 60_000 })
@@ -164,7 +162,6 @@ export default function Creators() {
             }
           />
         }
-        pagination={query.data ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'creators' } : undefined}
       />
     </>
   )

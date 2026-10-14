@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Package } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatNumber } from '@/lib/format'
@@ -21,7 +22,6 @@ import { dayEndIso, dayParam, dayStartIso, isOneOf, parseAmount } from '@/compon
 import { useUrlState } from '@/components/admin/use-url-state'
 import type { OrderStatus, PaymentStatus } from '@/types'
 
-const PAGE_SIZE = 25
 const PAYMENT_OPTIONS = metaOptions(PAYMENT_STATUS_META)
 const PAYMENT_VALUES = PAYMENT_OPTIONS.map((o) => o.value)
 const PRESET_OPTIONS = ORDER_PRESETS.map((p) => ({ value: p.value, label: p.label }))
@@ -54,12 +54,10 @@ export default function Orders() {
     minAmount: parseAmount(min),
     maxAmount: parseAmount(max),
     paymentStatus,
-    page: url.page,
-    pageSize: PAGE_SIZE,
   }
   const query = useQuery({
     queryKey: qk.admin.orders(params),
-    queryFn: () => listOrders(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listOrders({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
 
@@ -146,7 +144,6 @@ export default function Orders() {
             }
           />
         }
-        pagination={query.data ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'orders' } : undefined}
       />
     </>
   )
