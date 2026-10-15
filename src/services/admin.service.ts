@@ -99,7 +99,7 @@ export async function getCreator(id: string): Promise<AdminCreatorDetail | null>
   const legacyApplication = unwrap(
     await supabase
       .from('applications')
-      .select('phone, role, status')
+      .select('phone, role, status, created_at, whatsapp')
       .eq('email', profile.email)
       .eq('role', 'creator')
       .eq('status', 'approved')
@@ -114,7 +114,7 @@ export async function getCreator(id: string): Promise<AdminCreatorDetail | null>
     ...creator,
     profile: {
       ...profile,
-      applications: [...(profile.applications ?? []), legacyApplication],
+      applications: [...(profile.applications ?? []), legacyApplication as any],
     },
   }
 }
