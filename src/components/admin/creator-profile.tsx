@@ -135,10 +135,13 @@ export function CreatorOverview({ creator: c }: { creator: AdminCreatorDetail })
 
 export function CreatorAccountCard({ creator: c }: { creator: AdminCreatorDetail }) {
   const p = c.profile
+  const onboardingPhone = p?.onboarding_applications?.find((application) => application.role === 'creator' && application.status === 'approved' && application.phone)?.phone
+  const phone = onboardingPhone ?? p?.phone
   return (
     <DetailCard title="Account" description="Login identity behind this storefront.">
       <DetailList className="sm:grid-cols-1">
         <DetailItem label="Email">{p?.email ? <a href={`mailto:${p.email}`} className="focus-ring rounded-sm underline decoration-ink/25 underline-offset-2 hover:decoration-ink">{p.email}</a> : null}</DetailItem>
+        <DetailItem label="WhatsApp number">{phone ? <a href={`tel:${phone}`} className="focus-ring rounded-sm underline decoration-ink/25 underline-offset-2 hover:decoration-ink">{phone}</a> : null}</DetailItem>
         <DetailItem label="Full name">{p?.full_name}</DetailItem>
         <DetailItem label="Account status">{p ? <StatusBadge meta={ACCOUNT_STATUS_META} value={p.status} size="sm" /> : null}</DetailItem>
         <DetailItem label="Last seen">{p?.last_seen_at ? <span title={formatDateTime(p.last_seen_at)}>{formatRelative(p.last_seen_at)}</span> : 'Never'}</DetailItem>

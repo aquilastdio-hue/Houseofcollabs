@@ -74,7 +74,10 @@ export async function countCreatorsByReferralCode(code: string, includeDeleted =
 
 const ADMIN_CREATOR_SELECT = `
   *,
-  profile:profiles ( id, email, full_name, status, created_at, last_seen_at ),
+  profile:profiles (
+    id, email, full_name, status, created_at, last_seen_at, phone,
+    onboarding_applications:applications!applications_profile_id_fkey ( phone, role, status )
+  ),
   creator_type_info:creator_types ( slug, name ),
   creator_categories ( is_primary, category:categories ( id, name, slug ) ),
   creator_languages ( id, language ),
@@ -86,7 +89,34 @@ const adminCreatorQuery = () => supabase.from('creators').select(ADMIN_CREATOR_S
 export type AdminCreatorDetail = QueryData<ReturnType<typeof adminCreatorQuery>>[number]
 
 export async function getCreator(id: string): Promise<AdminCreatorDetail | null> {
-  return unwrap(await adminCreatorQuery().eq('id', id).maybeSingle())
+  const creator = unwrap(await adminCreatorQuery().eq('id', id).maybeSingle())
+  const profile = creator?.profile
+  if (!creator || !profile?.email) return creator
+
+  const hasOnboardingPhone = profile.onboarding_applications?.some((application) => application.role === 'creator' && application.status === 'approved' && application.phone)
+  if (hasOnboardingPhone) return creator
+
+  const legacyApplication = unwrap(
+    await supabase
+      .from('applications')
+      .select('phone, role, status')
+      .eq('email', profile.email)
+      .eq('role', 'creator')
+      .eq('status', 'approved')
+      .not('phone', 'is', null)
+      .order('reviewed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  )
+  if (!legacyApplication) return creator
+
+  return {
+    ...creator,
+    profile: {
+      ...profile,
+      onboarding_applications: [...(profile.onboarding_applications ?? []), legacyApplication],
+    },
+  }
 }
 
 export async function setCreatorStatus(id: string, status: CreatorStatus, reason?: string) {

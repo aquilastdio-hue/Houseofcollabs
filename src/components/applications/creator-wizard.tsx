@@ -130,7 +130,7 @@ export function Page1({ form }: { form: Form }) {
           aligned at the top: the hints under them are different lengths, and
           stretched boxes of unequal height would look like a mistake. */}
       <div className="grid items-start gap-5 sm:grid-cols-2">
-        <Field label="Referral code" htmlFor="referral_code" optional error={errors.referral_code?.message} hint="If a creator or brand invited you, enter their code.">
+        <Field label="Referral code" htmlFor="referral_code" optional error={errors.referral_code?.message} hint="Fill only, if you have a referral code">
           <Input id="referral_code" autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="e.g. HOC1234" {...register('referral_code')} />
         </Field>
 
@@ -143,7 +143,7 @@ export function Page1({ form }: { form: Form }) {
                 kind="image"
                 path={field.value}
                 label="Upload photo"
-                hint="A well-lit headshot works best."
+                hint="Face should be clearly visible"
                 onUploaded={(p) => field.onChange(p)}
                 onClear={() => field.onChange('')}
               />

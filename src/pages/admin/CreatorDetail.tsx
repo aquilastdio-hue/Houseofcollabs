@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ExternalLink, Package, Pencil, UserX } from 'lucide-react'
 import { qk } from '@/lib/query-keys'
@@ -19,8 +19,11 @@ import { ordersHref } from '@/components/admin/order-presets'
 
 export default function CreatorDetail() {
   const { id = '' } = useParams()
+  const [searchParams] = useSearchParams()
   const [editing, setEditing] = React.useState(false)
   const query = useQuery({ queryKey: qk.admin.creator(id), queryFn: () => getCreator(id), enabled: !!id })
+  
+  const backUrl = `/admin/creators${searchParams.toString() ? '?' + searchParams.toString() : ''}`
 
   if (query.isPending) {
     return (
@@ -34,7 +37,7 @@ export default function CreatorDetail() {
     return (
       <>
         <Seo title="Creator" noindex />
-        <Breadcrumb items={[{ label: 'Creators', href: '/admin/creators' }, { label: 'Creator' }]} />
+        <Breadcrumb items={[{ label: 'Creators', href: backUrl }, { label: 'Creator' }]} />
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
       </>
     )
@@ -44,14 +47,14 @@ export default function CreatorDetail() {
     return (
       <>
         <Seo title="Creator not found" noindex />
-        <Breadcrumb items={[{ label: 'Creators', href: '/admin/creators' }, { label: 'Not found' }]} />
+        <Breadcrumb items={[{ label: 'Creators', href: backUrl }, { label: 'Not found' }]} />
         <EmptyState
           icon={<UserX />}
           title="Creator not found"
           description="This creator profile doesn’t exist or the link is wrong."
           action={
             <Button asChild variant="secondary" size="sm">
-              <Link to="/admin/creators">Back to creators</Link>
+              <Link to={backUrl}>Back to creators</Link>
             </Button>
           }
         />
@@ -65,7 +68,7 @@ export default function CreatorDetail() {
   return (
     <>
       <Seo title={`${c.display_name} · Creators`} noindex />
-      <Breadcrumb items={[{ label: 'Creators', href: '/admin/creators' }, { label: c.display_name }]} />
+      <Breadcrumb items={[{ label: 'Creators', href: backUrl }, { label: c.display_name }]} />
 
       <header className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <CreatorIdentity creator={c} />
@@ -109,7 +112,7 @@ export default function CreatorDetail() {
             profileId={c.profile_id}
             name={c.display_name}
             status={c.profile?.status ?? 'active'}
-            afterDelete="/admin/creators"
+            afterDelete={backUrl}
           />
           <CreatorSetupCard creatorId={c.id} />
           <CreatorAccountCard creator={c} />
