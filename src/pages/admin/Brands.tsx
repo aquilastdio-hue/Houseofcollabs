@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Activity, Building2, CalendarDays } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatNumber } from '@/lib/format'
@@ -18,7 +19,6 @@ import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 import type { AccountStatus } from '@/types'
 
-const PAGE_SIZE = 25
 const STATUS_OPTIONS: { value: AccountStatus; label: string }[] = [
   { value: 'active', label: 'Active' },
   { value: 'suspended', label: 'Suspended' },
@@ -35,10 +35,10 @@ export default function Brands() {
   const rawSort = url.get('sort')
   const sort = isOneOf(SORT_VALUES, rawSort) ? rawSort : 'newest'
 
-  const params = { search, status, sort, page: url.page, pageSize: PAGE_SIZE }
+  const params = { search, status, sort }
   const query = useQuery({
     queryKey: qk.admin.brands(params),
-    queryFn: () => listBrands(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listBrands({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
   const stats = useQuery({ queryKey: qk.admin.peopleStats, queryFn: getPeopleStats, staleTime: 60_000 })
@@ -121,7 +121,6 @@ export default function Brands() {
             }
           />
         }
-        pagination={query.data ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'brands' } : undefined}
       />
     </>
   )

@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Flag } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatNumber } from '@/lib/format'
@@ -18,7 +19,6 @@ import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 import type { ReportStatus, ReportTarget } from '@/types'
 
-const PAGE_SIZE = 25
 const STATUS_OPTIONS = metaOptions(REPORT_STATUS_META)
 const STATUS_VALUES = STATUS_OPTIONS.map((o) => o.value)
 const TARGET_OPTIONS = (Object.keys(REPORT_TARGET_LABEL) as ReportTarget[]).map((value) => ({ value, label: REPORT_TARGET_LABEL[value] }))
@@ -31,10 +31,10 @@ export default function Reports() {
   const rawTarget = url.get('target')
   const targetType: ReportTarget | '' = isOneOf(TARGET_VALUES, rawTarget) ? rawTarget : ''
 
-  const params = { status, targetType, page: url.page, pageSize: PAGE_SIZE }
+  const params = { status, targetType }
   const query = useQuery({
     queryKey: qk.admin.reports(params),
-    queryFn: () => listReports(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listReports({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
   const { columns, dialog } = useReportTable()
@@ -87,7 +87,6 @@ export default function Reports() {
             }
           />
         }
-        pagination={query.data ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'reports' } : undefined}
       />
       {dialog}
     </>

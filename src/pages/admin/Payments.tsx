@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { AlertCircle, CreditCard } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatINR, formatNumber, titleCase } from '@/lib/format'
@@ -19,7 +20,6 @@ import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 import type { PaymentStatus } from '@/types'
 
-const PAGE_SIZE = 25
 const STATUS_OPTIONS = metaOptions(PAYMENT_STATUS_META)
 const STATUS_VALUES = STATUS_OPTIONS.map((o) => o.value)
 
@@ -137,10 +137,10 @@ export default function Payments() {
   const rawStatus = url.get('status')
   const status: PaymentStatus | '' = isOneOf(STATUS_VALUES, rawStatus) ? rawStatus : ''
 
-  const params = { status, search, page: url.page, pageSize: PAGE_SIZE }
+  const params = { status, search }
   const query = useQuery({
     queryKey: qk.admin.payments(params),
-    queryFn: () => listPayments(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listPayments({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
 
@@ -194,7 +194,6 @@ export default function Payments() {
             }
           />
         }
-        pagination={query.data ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'payments' } : undefined}
       />
     </>
   )

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { UserX } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { listApplications, type ApplicationRole, type ApplicationRow } from '@/services/applications.service'
 import { Seo } from '@/components/shared/seo'
@@ -14,7 +15,6 @@ import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 import { ReviewDialog, applicationColumns, applicationKeys } from './Applications'
 
-const PAGE_SIZE = 25
 
 const ROLE_OPTIONS = [
   { value: 'creator', label: 'Creators' },
@@ -40,10 +40,10 @@ export default function RejectedApplications() {
   const rawRole = url.get('role')
   const role: ApplicationRole | '' = isOneOf(ROLE_OPTIONS.map((o) => o.value), rawRole) ? rawRole : ''
 
-  const params = { status: 'rejected' as const, role, search, page: url.page, pageSize: PAGE_SIZE }
+  const params = { status: 'rejected' as const, role, search }
   const query = useQuery({
     queryKey: applicationKeys.list(params),
-    queryFn: () => listApplications(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listApplications({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
 
@@ -105,11 +105,6 @@ export default function RejectedApplications() {
                 ) : undefined
               }
             />
-          }
-          pagination={
-            query.data
-              ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'rejected applications' }
-              : undefined
           }
         />
       </div>

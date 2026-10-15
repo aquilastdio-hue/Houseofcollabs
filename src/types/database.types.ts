@@ -2703,6 +2703,7 @@ export type Database = {
           status: Database["public"]["Enums"]["creator_status"]
           total_count: number
           verified: boolean
+          whatsapp: string
         }[]
       }
       admin_list_people: {

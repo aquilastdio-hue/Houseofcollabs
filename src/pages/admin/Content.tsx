@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Archive, Eye, EyeOff, Images, Mail, MailOpen, MessageSquareQuote } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { formatDateTime, formatNumber, formatRelative } from '@/lib/format'
 import {
   listContactMessages,
@@ -14,7 +15,6 @@ import {
 } from '@/services/admin.service'
 import { Seo } from '@/components/shared/seo'
 import { PageHeader } from '@/components/shared/page-header'
-import { Pagination } from '@/components/shared/pagination'
 import { StarRating } from '@/components/shared/star-rating'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { EmptyState, ErrorState } from '@/components/shared/states'
@@ -32,9 +32,6 @@ import { useAdminMutation } from '@/components/admin/use-admin-mutation'
 import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 
-const REVIEW_PAGE_SIZE = 20
-const PORTFOLIO_PAGE_SIZE = 24
-const CONTACT_PAGE_SIZE = 20
 
 const TABS = ['reviews', 'portfolio', 'contact'] as const
 type Tab = (typeof TABS)[number]
@@ -69,10 +66,10 @@ function ReviewsTab() {
   const status: 'published' | 'hidden' | '' = isOneOf(REVIEW_STATUS_VALUES, raw) ? raw : ''
   const [pending, setPending] = React.useState<ReviewRow | null>(null)
 
-  const params = { status, page: url.page, pageSize: REVIEW_PAGE_SIZE }
+  const params = { status }
   const query = useQuery({
     queryKey: qk.admin.content({ kind: 'reviews', ...params }),
-    queryFn: () => listReviews(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listReviews({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
 
@@ -155,7 +152,6 @@ function ReviewsTab() {
               )}
             </Card>
           ))}
-          <Pagination page={url.page} pageSize={REVIEW_PAGE_SIZE} total={query.data.total} onPageChange={url.setPage} label="reviews" />
         </div>
       )}
 
@@ -188,10 +184,10 @@ function PortfolioTab() {
   const visibility = raw === 'hidden' || raw === 'visible' ? raw : ''
   const hidden = visibility === '' ? undefined : visibility === 'hidden'
 
-  const params = { hidden, page: url.page, pageSize: PORTFOLIO_PAGE_SIZE }
+  const params = { hidden }
   const query = useQuery({
     queryKey: qk.admin.content({ kind: 'portfolio', ...params }),
-    queryFn: () => listPortfolioItems(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listPortfolioItems({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
 
@@ -230,9 +226,6 @@ function PortfolioTab() {
                 : 'Creators’ portfolio pieces show up here for moderation as they upload them.'
             }
           />
-          {query.data.total > 0 && (
-            <Pagination page={url.page} pageSize={PORTFOLIO_PAGE_SIZE} total={query.data.total} onPageChange={url.setPage} label="items" />
-          )}
         </div>
       )}
     </div>
@@ -247,10 +240,10 @@ function ContactTab() {
   const raw = url.get('contact_status')
   const status: 'new' | 'read' | 'archived' | '' = isOneOf(CONTACT_STATUS_VALUES, raw) ? raw : ''
 
-  const params = { status, page: url.page, pageSize: CONTACT_PAGE_SIZE }
+  const params = { status }
   const query = useQuery({
     queryKey: qk.admin.contact(params),
-    queryFn: () => listContactMessages(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listContactMessages({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
 
@@ -335,7 +328,6 @@ function ContactTab() {
               </Card>
             )
           })}
-          <Pagination page={url.page} pageSize={CONTACT_PAGE_SIZE} total={query.data.total} onPageChange={url.setPage} label="messages" />
         </div>
       )}
     </div>

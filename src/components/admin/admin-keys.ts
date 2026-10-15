@@ -10,7 +10,6 @@ export const adminKeys = {
   categories: [...qk.admin.all, 'categories'] as const,
   creatorTypes: [...qk.admin.all, 'creator-types'] as const,
   announcementsAll: [...qk.admin.all, 'announcements'] as const,
-  announcements: (page: number) => [...qk.admin.all, 'announcements', page] as const,
   emailsAll: [...qk.admin.all, 'emails'] as const,
   emails: (params: unknown) => [...qk.admin.all, 'emails', params] as const,
   emailStats: [...qk.admin.all, 'email-stats'] as const,

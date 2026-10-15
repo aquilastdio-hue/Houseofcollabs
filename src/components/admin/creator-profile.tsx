@@ -1,4 +1,4 @@
-import { BadgeCheck, Package, Sparkles, Star, Truck } from 'lucide-react'
+import { BadgeCheck, Package, Phone, Sparkles, Star, Truck } from 'lucide-react'
 import { formatCompact, formatDate, formatDateTime, formatDays, formatINR, formatLocation, formatNumber, formatRelative, titleCase } from '@/lib/format'
 import { ADDON_TYPES, CONTENT_TYPES, GENDERS, PLATFORMS, RESPONSE_TIMES, labelFor } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -34,6 +34,45 @@ export function CreatorBadges({ creator }: { creator: AdminCreatorDetail }) {
   )
 }
 
+/**
+ * The WhatsApp number the creator gave on the onboarding form: their creator
+ * application (approved first, then newest), else the profile phone that
+ * approval copied from it. Same rule as `private.creator_whatsapp` (0071).
+ */
+function creatorWhatsapp(c: AdminCreatorDetail): string | null {
+  const fromApplication = (c.profile?.applications ?? [])
+    .filter((a) => a.role === 'creator')
+    .map((a) => ({ ...a, number: a.phone?.trim() || a.whatsapp?.trim() || null }))
+    .filter((a) => a.number)
+    .sort((a, b) => Number(b.status === 'approved') - Number(a.status === 'approved') || b.created_at.localeCompare(a.created_at))[0]?.number
+  return fromApplication || c.profile?.phone?.trim() || null
+}
+
+/** wa.me wants the full international number; a bare 10-digit number is Indian. */
+function whatsappHref(number: string) {
+  const d = number.replace(/\D/g, '')
+  const intl = d.length === 10 ? `91${d}` : d.length === 11 && d.startsWith('0') ? `91${d.slice(1)}` : d
+  return `https://wa.me/${intl}`
+}
+
+/** The creator's WhatsApp number as a link that opens the chat. Admin-only. */
+export function CreatorWhatsapp({ creator }: { creator: AdminCreatorDetail }) {
+  const number = creatorWhatsapp(creator)
+  if (!number) return <span className="text-faint">No WhatsApp number</span>
+  return (
+    <a
+      href={whatsappHref(number)}
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Open in WhatsApp"
+      className="focus-ring rounded-sm font-medium tabular-nums text-ink underline decoration-ink/25 underline-offset-2 hover:decoration-ink"
+    >
+      {number}
+      <span className="sr-only"> (WhatsApp, opens in a new tab)</span>
+    </a>
+  )
+}
+
 /** Avatar + name + key facts for the page header. */
 export function CreatorIdentity({ creator }: { creator: AdminCreatorDetail }) {
   return (
@@ -44,6 +83,10 @@ export function CreatorIdentity({ creator }: { creator: AdminCreatorDetail }) {
         <p className="mt-0.5 truncate text-sm text-muted">
           @{creator.slug}
           {creator.headline ? ` · ${creator.headline}` : ''}
+        </p>
+        <p className="mt-1 flex items-center gap-1.5 text-sm">
+          <Phone className="size-3.5 shrink-0 text-muted" aria-hidden />
+          <CreatorWhatsapp creator={creator} />
         </p>
         <div className="mt-2">
           <CreatorBadges creator={creator} />
@@ -141,7 +184,9 @@ export function CreatorAccountCard({ creator: c }: { creator: AdminCreatorDetail
     <DetailCard title="Account" description="Login identity behind this storefront.">
       <DetailList className="sm:grid-cols-1">
         <DetailItem label="Email">{p?.email ? <a href={`mailto:${p.email}`} className="focus-ring rounded-sm underline decoration-ink/25 underline-offset-2 hover:decoration-ink">{p.email}</a> : null}</DetailItem>
-        <DetailItem label="WhatsApp number">{phone ? <a href={`tel:${phone}`} className="focus-ring rounded-sm underline decoration-ink/25 underline-offset-2 hover:decoration-ink">{phone}</a> : null}</DetailItem>
+        <DetailItem label="WhatsApp">
+          <CreatorWhatsapp creator={c} />
+        </DetailItem>
         <DetailItem label="Full name">{p?.full_name}</DetailItem>
         <DetailItem label="Account status">{p ? <StatusBadge meta={ACCOUNT_STATUS_META} value={p.status} size="sm" /> : null}</DetailItem>
         <DetailItem label="Last seen">{p?.last_seen_at ? <span title={formatDateTime(p.last_seen_at)}>{formatRelative(p.last_seen_at)}</span> : 'Never'}</DetailItem>

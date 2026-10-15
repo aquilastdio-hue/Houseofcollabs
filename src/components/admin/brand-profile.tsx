@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Link, useNavigate } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Package, ShieldCheck, UserX, Volume2 } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatDateTime, formatRelative } from '@/lib/format'
 import { listOrders, setUserStatus, type AdminBrandDetail } from '@/services/admin.service'
@@ -137,14 +138,15 @@ export function BrandAccountCard({ brand: b }: { brand: AdminBrandDetail }) {
   )
 }
 
-const RECENT_PAGE_SIZE = 10
-
-/** Latest orders placed by the brand, linking into the admin order view. */
+/** Every order placed by the brand, newest first, linking into the admin order view. */
 export function BrandRecentOrders({ brandId }: { brandId: string }) {
   const navigate = useNavigate()
-  const [page, setPage] = React.useState(1)
-  const params = { brandId, page, pageSize: RECENT_PAGE_SIZE }
-  const query = useQuery({ queryKey: qk.admin.orders(params), queryFn: () => listOrders(params), placeholderData: keepPreviousData })
+  const params = { brandId }
+  const query = useQuery({
+    queryKey: qk.admin.orders(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listOrders({ ...params, page, pageSize })),
+    placeholderData: keepPreviousData,
+  })
 
   return (
     <DetailCard
@@ -166,7 +168,6 @@ export function BrandRecentOrders({ brandId }: { brandId: string }) {
         onRowClick={(o) => navigate(`/admin/orders/${o.id}`)}
         mobilePrimary="number"
         empty={<EmptyState compact icon={<Package />} title="No orders yet" description="This brand hasn’t checked out with any creator." />}
-        pagination={query.data ? { page, pageSize: RECENT_PAGE_SIZE, total: query.data.total, onPageChange: setPage, label: 'orders' } : undefined}
       />
     </DetailCard>
   )

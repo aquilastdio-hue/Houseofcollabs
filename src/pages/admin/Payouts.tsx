@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Link } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Wallet } from 'lucide-react'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatDateTime, formatINR, formatNumber } from '@/lib/format'
@@ -19,7 +20,6 @@ import { PayoutMethodSummary, latestReference, linkedEarnings, readPayoutSnapsho
 import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 
-const PAGE_SIZE = 25
 const TABS = [
   { value: 'pending', label: 'Pending' },
   { value: 'processing', label: 'Processing' },
@@ -45,10 +45,10 @@ export default function Payouts() {
   const tab = isOneOf(TAB_VALUES, rawTab) ? rawTab : 'pending'
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-  const params = { status: tab === 'all' ? ('' as const) : tab, page: url.page, pageSize: PAGE_SIZE }
+  const params = { status: tab === 'all' ? ('' as const) : tab }
   const query = useQuery({
     queryKey: qk.admin.payouts(params),
-    queryFn: () => listPayouts(params),
+    queryFn: () => fetchAllPages((page, pageSize) => listPayouts({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
   })
   const selected = query.data?.items.find((p) => p.id === selectedId) ?? null
@@ -181,7 +181,6 @@ export default function Payouts() {
                 }
               />
             }
-            pagination={query.data ? { page: url.page, pageSize: PAGE_SIZE, total: query.data.total, onPageChange: url.setPage, label: 'requests' } : undefined}
           />
         </TabsContent>
       </Tabs>

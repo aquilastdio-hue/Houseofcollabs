@@ -76,7 +76,7 @@ const ADMIN_CREATOR_SELECT = `
   *,
   profile:profiles (
     id, email, full_name, status, created_at, last_seen_at, phone,
-    onboarding_applications:applications!applications_profile_id_fkey ( phone, role, status )
+    applications!applications_profile_id_fkey ( role, status, phone, created_at, whatsapp:profile->>whatsapp )
   ),
   creator_type_info:creator_types ( slug, name ),
   creator_categories ( is_primary, category:categories ( id, name, slug ) ),
