@@ -93,7 +93,7 @@ export async function getCreator(id: string): Promise<AdminCreatorDetail | null>
   const profile = creator?.profile
   if (!creator || !profile?.email) return creator
 
-  const hasOnboardingPhone = profile.onboarding_applications?.some((application) => application.role === 'creator' && application.status === 'approved' && application.phone)
+  const hasOnboardingPhone = profile.applications?.some((application: any) => application.role === 'creator' && application.status === 'approved' && application.phone)
   if (hasOnboardingPhone) return creator
 
   const legacyApplication = unwrap(
@@ -114,7 +114,7 @@ export async function getCreator(id: string): Promise<AdminCreatorDetail | null>
     ...creator,
     profile: {
       ...profile,
-      onboarding_applications: [...(profile.onboarding_applications ?? []), legacyApplication],
+      applications: [...(profile.applications ?? []), legacyApplication],
     },
   }
 }

@@ -178,8 +178,7 @@ export function CreatorOverview({ creator: c }: { creator: AdminCreatorDetail })
 
 export function CreatorAccountCard({ creator: c }: { creator: AdminCreatorDetail }) {
   const p = c.profile
-  const onboardingPhone = p?.onboarding_applications?.find((application) => application.role === 'creator' && application.status === 'approved' && application.phone)?.phone
-  const phone = onboardingPhone ?? p?.phone
+  const onboardingPhone = p?.applications?.find((application: any) => application.role === 'creator' && application.status === 'approved' && application.phone)?.phone
   return (
     <DetailCard title="Account" description="Login identity behind this storefront.">
       <DetailList className="sm:grid-cols-1">
