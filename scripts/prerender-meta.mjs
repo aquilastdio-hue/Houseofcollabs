@@ -37,7 +37,7 @@ const dist = path.join(root, 'dist')
 const SITE_NAME = 'House of Collabs'
 const DEFAULT_DESCRIPTION =
   'House of Collabs is the creator marketplace for brands in India. Discover vetted creators, compare fixed prices and delivery times, and order UGC, reels and reviews in minutes.'
-const OG_IMAGE = '/og-image.png'
+const OG_IMAGE = '/preview.png'
 
 const site = (process.env.SITE_URL ?? process.env.VITE_SITE_URL ?? '').replace(/\/$/, '')
 if (!site) {

@@ -2,7 +2,7 @@ import { useLocation } from 'react-router'
 import { site, siteUrl } from '@/config/site'
 
 /** The shared social card. 1200x630 PNG — SVG is not rendered by any major crawler. */
-export const DEFAULT_OG_IMAGE = '/og-image.png'
+export const DEFAULT_OG_IMAGE = '/preview.png'
 
 /**
  * Per-page document metadata. React 19 hoists <title>/<meta>/<link> into
