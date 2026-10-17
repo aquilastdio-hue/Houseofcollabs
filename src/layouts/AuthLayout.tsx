@@ -6,7 +6,7 @@ import { PageLoader } from '@/components/ui/spinner'
 export default function AuthLayout() {
   return (
     <div className="flex min-h-dvh flex-col bg-canvas px-5 py-6 sm:px-10">
-      <Link to="/" className="focus-ring self-start rounded-md" aria-label="House of Collabs home">
+      <Link to="/" className="focus-ring self-center rounded-md lg:self-start" aria-label="House of Collabs home">
         <Logo />
       </Link>
       <main id="main" className="flex flex-1 items-center justify-center py-10">
