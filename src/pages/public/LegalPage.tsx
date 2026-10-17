@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Link } from 'react-router'
 import { ArrowUpRight, CalendarDays, ChevronDown, Mail } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { site } from '@/config/site'
+import { site, supportEmailHref } from '@/config/site'
 import { Seo } from '@/components/shared/seo'
 import { Breadcrumb } from '@/components/shared/breadcrumb'
 import { usePlatformTerms } from '@/components/marketing/platform-terms'
@@ -157,7 +157,9 @@ export default function LegalPage({ doc }: { doc?: unknown }) {
             </div>
             <div className="flex flex-wrap gap-2">
               <a
-                href={`mailto:${site.supportEmail}`}
+                href={supportEmailHref()}
+                target="_blank"
+                rel="noreferrer"
                 className="focus-ring inline-flex h-10 items-center gap-2 rounded-pill bg-brand px-4 text-sm font-medium text-white transition-colors hover:bg-brand-strong"
               >
                 <Mail className="size-4" aria-hidden /> Email us

@@ -9,21 +9,25 @@ export const site = {
   description:
     'House of Collabs is the creator marketplace for brands in India. Discover vetted creators, compare fixed prices and delivery times, and order UGC, reels and reviews in minutes.',
   url: (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, '') || '',
-  supportEmail: 'support@houseofcollabs.example',
+  supportEmail: 'houseofcollabsofficial@gmail.com',
   partnershipsEmail: 'partners@houseofcollabs.example',
-  address: 'Indiranagar, Bengaluru, Karnataka 560038',
+  address: 'House of Collabs, Aquila Studios KG Marg, Cannaught Place, Delhi',
   /** Prefix of generated order numbers. Set by the DB column default — kept here for display copy. */
   orderPrefix: 'HOC',
   social: {
     instagram: 'https://instagram.com/',
-    linkedin: 'https://linkedin.com/',
-    x: 'https://x.com/',
+    facebook: 'https://facebook.com/',
   },
 } as const
 
 export function siteUrl(path = '/') {
   const base = site.url || (typeof window !== 'undefined' ? window.location.origin : '')
   return `${base}${path.startsWith('/') ? path : `/${path}`}`
+}
+
+/** Opens Gmail compose in the browser with our support address prefilled. */
+export function supportEmailHref(email = site.supportEmail) {
+  return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}`
 }
 
 /**

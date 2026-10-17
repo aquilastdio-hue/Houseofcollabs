@@ -1,9 +1,9 @@
 import { Link } from 'react-router'
-import { ArrowUpRight, Clock3, Handshake, LifeBuoy, MapPin, ScrollText, type LucideIcon } from 'lucide-react'
-import { site } from '@/config/site'
+import { ArrowUpRight, Clock3, LifeBuoy, MapPin, ScrollText, type LucideIcon } from 'lucide-react'
+import { site, supportEmailHref } from '@/config/site'
 import { Seo } from '@/components/shared/seo'
 import { ContactForm } from '@/components/marketing/contact-form'
-import { Accent, DotGrid, Eyebrow, Glow, IconChip, TextLink, stagger, type Tone } from '@/components/marketing/primitives'
+import { Accent, DotGrid, Eyebrow, Glow, IconChip, stagger, type Tone } from '@/components/marketing/primitives'
 
 const RESPONSE_TIMES = [
   { label: 'General questions', value: '1–2 business days' },
@@ -20,11 +20,39 @@ const HELP_LINKS = [
   { label: 'Terms of service', href: '/terms' },
 ]
 
-function InfoCard({ icon, tone, title, children }: { icon: LucideIcon; tone: Tone; title: string; children: React.ReactNode }) {
+function InfoCard({
+  icon,
+  tone,
+  title,
+  children,
+  iconHref,
+  iconLabel,
+}: {
+  icon: LucideIcon
+  tone: Tone
+  title: string
+  children: React.ReactNode
+  iconHref?: string
+  iconLabel?: string
+}) {
+  const chip = <IconChip icon={icon} tone={tone} size="sm" />
   return (
     <div className="rounded-card border border-line bg-surface p-5 sm:p-6">
       <div className="flex items-center gap-3">
-        <IconChip icon={icon} tone={tone} size="sm" />
+        {iconHref ? (
+          <a
+            href={iconHref}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={iconLabel ?? title}
+            className="focus-ring rounded-full"
+            title={iconLabel ?? title}
+          >
+            {chip}
+          </a>
+        ) : (
+          chip
+        )}
         <h2 className="font-display text-lg font-semibold tracking-tight">{title}</h2>
       </div>
       <div className="mt-4 text-sm leading-relaxed text-muted">{children}</div>
@@ -60,21 +88,23 @@ export default function Contact() {
         </div>
 
         <aside aria-label="Other ways to reach us" className="flex flex-col gap-4 animate-fade-up" style={stagger(4)}>
-          <InfoCard icon={LifeBuoy} tone="brand" title="Email support">
+          <InfoCard
+            icon={LifeBuoy}
+            tone="brand"
+            title="Email support"
+            iconHref={supportEmailHref()}
+            iconLabel={`Email ${site.supportEmail}`}
+          >
             <p>For help with your account, orders or storefront:</p>
             <p className="mt-1.5">
-              <TextLink to={`mailto:${site.supportEmail}`} className="break-all">
+              <a
+                href={supportEmailHref()}
+                target="_blank"
+                rel="noreferrer"
+                className="break-all font-medium text-ink-soft underline decoration-ink/20 underline-offset-2 transition-colors hover:text-ink hover:decoration-ink"
+              >
                 {site.supportEmail}
-              </TextLink>
-            </p>
-          </InfoCard>
-
-          <InfoCard icon={Handshake} tone="lilac" title="Partnerships & press">
-            <p>Agencies, platforms, events and media:</p>
-            <p className="mt-1.5">
-              <TextLink to={`mailto:${site.partnershipsEmail}`} className="break-all">
-                {site.partnershipsEmail}
-              </TextLink>
+              </a>
             </p>
           </InfoCard>
 
@@ -91,9 +121,9 @@ export default function Contact() {
 
           <InfoCard icon={MapPin} tone="peach" title="Office">
             <address className="not-italic">
-              {site.name} Technologies
+              House of Collabs, Aquila Studios
               <br />
-              {site.address}
+              KG Marg, Cannaught Place, Delhi
             </address>
           </InfoCard>
 

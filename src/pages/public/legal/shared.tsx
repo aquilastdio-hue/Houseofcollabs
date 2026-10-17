@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Info } from 'lucide-react'
-import { site } from '@/config/site'
+import { site, supportEmailHref } from '@/config/site'
 import type { PlatformTerms } from '@/components/marketing/platform-terms'
 
 export const LEGAL_DOC_KEYS = [
@@ -36,7 +36,11 @@ export const LAST_UPDATED = '2 October 2026'
 export const COMPANY = `${site.name} Technologies`
 
 export function SupportEmail() {
-  return <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a>
+  return (
+    <a href={supportEmailHref()} target="_blank" rel="noreferrer">
+      {site.supportEmail}
+    </a>
+  )
 }
 
 /** Highlighted note inside a policy section. */

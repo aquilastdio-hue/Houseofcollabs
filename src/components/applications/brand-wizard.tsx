@@ -11,6 +11,7 @@ import {
   DUPLICATE_CODES,
   DUPLICATE_MESSAGES,
   checkApplicationDuplicates,
+  type DuplicateCheck,
   submitApplication,
 } from '@/services/applications.service'
 import {
@@ -379,6 +380,9 @@ export function BrandApplicationWizard() {
       if (name === 'whatsapp' && form.getFieldState('whatsapp').error?.type === 'duplicate') {
         form.clearErrors('whatsapp')
       }
+      if (name === 'business_email' && form.getFieldState('business_email').error?.type === 'duplicate') {
+        form.clearErrors('business_email')
+      }
     })
     return () => sub.unsubscribe()
   }, [form])
@@ -393,6 +397,7 @@ export function BrandApplicationWizard() {
         email: v.business_email,
         phone: v.whatsapp || null,
         city: v.location || null,
+        message: null,
         brand_name: v.brand_name,
         website: v.company_website || v.website_or_handle || null,
         budget_range: v.budget_range || null,
@@ -400,6 +405,13 @@ export function BrandApplicationWizard() {
         // into it rather than leaving it empty for every brand.
         looking_for: summariseNeed(v),
         categories: v.creator_categories.length ? v.creator_categories : null,
+        // Brand applications don't have creator-specific fields
+        social_platform: null,
+        social_handle: null,
+        followers_count: null,
+        bio: null,
+        portfolio_url: null,
+        video_path: null,
         image_path: v.logo_path || null,
         profile: {
           website_or_handle: v.website_or_handle,
@@ -432,6 +444,14 @@ export function BrandApplicationWizard() {
     },
     onError: (e) => {
       const err = toAppError(e)
+      // Check for email duplicate
+      if (err.code === 'DUPLICATE_APPLICATION') {
+        form.setError('business_email', { type: 'duplicate', message: 'This email has an active application. If you were previously rejected, you can re-apply with this email.' })
+        form.setError('root', { message: 'This email has an active application. If you were previously rejected, you can re-apply with this email.' })
+        go(PHONE_STEP)
+        scrollToFirstError(formRef.current)
+        return
+      }
       if (err.code === DUPLICATE_CODES.phone || err.code === DUPLICATE_CODES.both) {
         form.setError('whatsapp', { type: 'duplicate', message: DUPLICATE_MESSAGES.phone })
         form.setError('root', { message: DUPLICATE_MESSAGES.phone })
@@ -460,13 +480,22 @@ export function BrandApplicationWizard() {
     const ok = await form.trigger(STEP_FIELDS[step] as never)
     if (!ok) return scrollToFirstError(formRef.current)
     const phone = step === PHONE_STEP ? form.getValues('whatsapp') : null
-    if (!phone) return go(step + 1)
+    const email = form.getValues('business_email')
+    if (!phone && !email) return go(step + 1)
 
     setChecking(true)
     try {
-      const taken = await checkApplicationDuplicates({ phone, email: form.getValues('business_email') })
-      if (taken.phone_taken) {
+      const taken = await checkApplicationDuplicates({ phone, email }) as DuplicateCheck
+      let blocked = false
+      if (email && taken.email_taken) {
+        form.setError('business_email', { type: 'duplicate', message: 'This email has an active application. If you were previously rejected, you can re-apply with this email.' })
+        blocked = true
+      }
+      if (phone && taken.phone_taken) {
         form.setError('whatsapp', { type: 'duplicate', message: DUPLICATE_MESSAGES.phone })
+        blocked = true
+      }
+      if (blocked) {
         scrollToFirstError(formRef.current)
         return
       }

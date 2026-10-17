@@ -97,7 +97,7 @@ export const DUPLICATE_CODES = {
   both: 'DUPLICATE_PHONE_AND_INSTAGRAM',
 } as const
 
-export type DuplicateCheck = { phone_taken: boolean; instagram_taken: boolean }
+export type DuplicateCheck = { email_taken: boolean; phone_taken: boolean; instagram_taken: boolean }
 
 /**
  * Asks whether a mobile number or Instagram account is already registered.
@@ -122,7 +122,7 @@ export async function checkApplicationDuplicates(input: {
     p_email: input.email?.trim() || undefined,
   })
   if (error) throw toAppError(error)
-  return (data as DuplicateCheck | null) ?? { phone_taken: false, instagram_taken: false }
+  return (data as DuplicateCheck | null) ?? { email_taken: false, phone_taken: false, instagram_taken: false }
 }
 
 /**

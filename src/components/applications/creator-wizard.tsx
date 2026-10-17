@@ -14,6 +14,7 @@ import {
   DUPLICATE_CODES,
   DUPLICATE_MESSAGES,
   checkApplicationDuplicates,
+  type DuplicateCheck,
   submitApplication,
 } from '@/services/applications.service'
 import {
@@ -411,6 +412,9 @@ export function CreatorApplicationWizard() {
       if (name === 'instagram.handle' && form.getFieldState('instagram.handle').error?.type === 'duplicate') {
         form.clearErrors('instagram.handle')
       }
+      if (name === 'email' && form.getFieldState('email').error?.type === 'duplicate') {
+        form.clearErrors('email')
+      }
     })
     return () => sub.unsubscribe()
   }, [form])
@@ -424,11 +428,18 @@ export function CreatorApplicationWizard() {
         email,
         phone: whatsapp || null,
         city: city || null,
+        message: null,
         categories: categories.length ? categories : null,
         social_platform: 'instagram',
         social_handle: instagram.handle || null,
         followers_count: instagram.followers ? Number(instagram.followers) : null,
+        bio: null,
         portfolio_url: instagram.url || youtube.url || null,
+        // Creator applications don't have brand-specific fields
+        brand_name: null,
+        website: null,
+        budget_range: null,
+        looking_for: null,
         // The first of each is mirrored into its own column so the admin list
         // and the existing provisioning keep working; the full set lives in
         // `profile` alongside everything else this form collects.
@@ -452,15 +463,18 @@ export function CreatorApplicationWizard() {
       // tab, a second tab, or a request that skipped the form entirely. Put the
       // message on the field it belongs to and go back to that page, rather
       // than showing it at the bottom of page 5 next to an unrelated button.
+      const onEmail = err.code === 'DUPLICATE_APPLICATION'
       const onPhone = err.code === DUPLICATE_CODES.phone || err.code === DUPLICATE_CODES.both
       const onInstagram = err.code === DUPLICATE_CODES.instagram || err.code === DUPLICATE_CODES.both
+      if (onEmail) form.setError('email', { type: 'duplicate', message: 'This email has an active application. If you were previously rejected, you can re-apply with this email.' })
       if (onPhone) form.setError('whatsapp', { type: 'duplicate', message: DUPLICATE_MESSAGES.phone })
       if (onInstagram) form.setError('instagram.handle', { type: 'duplicate', message: DUPLICATE_MESSAGES.instagram })
-      if (onPhone || onInstagram) {
+      if (onEmail || onPhone || onInstagram) {
         form.setError('root', {
-          message: onPhone && onInstagram ? DUPLICATE_MESSAGES.both : onPhone ? DUPLICATE_MESSAGES.phone : DUPLICATE_MESSAGES.instagram,
+          message: onEmail ? 'This email has an active application. If you were previously rejected, you can re-apply with this email.'
+            : onPhone && onInstagram ? DUPLICATE_MESSAGES.both : onPhone ? DUPLICATE_MESSAGES.phone : DUPLICATE_MESSAGES.instagram,
         })
-        go(onPhone ? PHONE_STEP : INSTAGRAM_STEP)
+        go(onEmail ? PHONE_STEP : onPhone ? PHONE_STEP : INSTAGRAM_STEP)
         scrollToFirstError(formRef.current)
         return
       }
@@ -490,12 +504,17 @@ export function CreatorApplicationWizard() {
 
     const phone = step === PHONE_STEP ? form.getValues('whatsapp') : null
     const instagram = step === INSTAGRAM_STEP ? form.getValues('instagram.handle') : null
-    if (!phone && !instagram) return go(step + 1)
+    const email = form.getValues('email')
+    if (!phone && !instagram && !email) return go(step + 1)
 
     setChecking(true)
     try {
-      const taken = await checkApplicationDuplicates({ phone, instagram, email: form.getValues('email') })
+      const taken = await checkApplicationDuplicates({ phone, instagram, email }) as DuplicateCheck
       let blocked = false
+      if (email && taken.email_taken) {
+        form.setError('email', { type: 'duplicate', message: 'This email has an active application. If you were previously rejected, you can re-apply with this email.' })
+        blocked = true
+      }
       if (phone && taken.phone_taken) {
         form.setError('whatsapp', { type: 'duplicate', message: DUPLICATE_MESSAGES.phone })
         blocked = true

@@ -1,5 +1,4 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build:site",
   "outputDirectory": "dist",
   "framework": "vite",
@@ -8,78 +7,6 @@
       "SITE_URL": "https://www.houseofcollabs.com"
     }
   },
-  "redirects": [
-    {
-      "source": "/creators/https-instagram-com-rohit-arora-5030-igshid-ymmymta2m2y",
-      "destination": "/creators/rohit-arora",
-      "permanent": true
-    },
-    {
-      "source": "/creators/https-www-instagram-com-simranmakeovers25-utm-source-qr",
-      "destination": "/creators/simran-kaur",
-      "permanent": true
-    },
-    {
-      "source": "/creators/aromasurimakeovers",
-      "destination": "/creators/aroma-suri",
-      "permanent": true
-    },
-    {
-      "source": "/creators/stylistchaitanya",
-      "destination": "/creators/chaitanya-sharma",
-      "permanent": true
-    },
-    {
-      "source": "/creators/creator-gungun-dheer",
-      "destination": "/creators/gungun-dheer",
-      "permanent": true
-    },
-    {
-      "source": "/creators/dawn-traveler",
-      "destination": "/creators/isha-verma",
-      "permanent": true
-    },
-    {
-      "source": "/creators/stylewith-mann",
-      "destination": "/creators/manna-arora",
-      "permanent": true
-    },
-    {
-      "source": "/creators/meghnabhatiaa",
-      "destination": "/creators/meghna-bhatia",
-      "permanent": true
-    },
-    {
-      "source": "/creators/neha-shrivastava-official",
-      "destination": "/creators/neha-shrivastava",
-      "permanent": true
-    },
-    {
-      "source": "/creators/pj-makeovers",
-      "destination": "/creators/prerna-jagwani",
-      "permanent": true
-    },
-    {
-      "source": "/creators/shilpsarora",
-      "destination": "/creators/shilpa-arora",
-      "permanent": true
-    },
-    {
-      "source": "/creators/shine-the-lioness",
-      "destination": "/creators/shine-sawhney",
-      "permanent": true
-    },
-    {
-      "source": "/creators/sonalarorra",
-      "destination": "/creators/sonal-arora",
-      "permanent": true
-    },
-    {
-      "source": "/creators/tanishasadhofficial",
-      "destination": "/creators/tanisha-sadh",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/sitemap-creators.xml",

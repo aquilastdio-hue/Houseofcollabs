@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { CalendarRange, Mail, Package, ReceiptText, ShieldCheck, Wallet } from 'lucide-react'
-import { site } from '@/config/site'
+import { site, supportEmailHref } from '@/config/site'
 import { formatDate, formatINR, formatNumber } from '@/lib/format'
 import { qk } from '@/lib/query-keys'
 import { useAuth } from '@/contexts/auth-context'
@@ -209,7 +209,7 @@ export default function BillingSettings() {
                 <p>
                   <Mail className="mr-1 inline size-3.5 align-[-0.125em]" aria-hidden />
                   Need an invoice? Invoices are available on request — email{' '}
-                  <a href={`mailto:${site.supportEmail}`} className="focus-ring rounded font-medium text-ink underline underline-offset-4">
+                  <a href={supportEmailHref()} target="_blank" rel="noreferrer" className="focus-ring rounded font-medium text-ink underline underline-offset-4">
                     {site.supportEmail}
                   </a>{' '}
                   with your order number.

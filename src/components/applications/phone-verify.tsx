@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { confirmOtp, otpErrorMessage, resetRecaptcha, sendOtp, toE164 } from '@/lib/phone-otp'
 import { firebaseConfigured } from '@/lib/firebase'
 import { verifyPhoneToken } from '@/services/applications.service'
+import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { ConfirmationResult } from 'firebase/auth'
@@ -68,6 +69,16 @@ export function usePhoneVerification({
     setBusy('sending')
     setError(null)
     try {
+      // Check if phone is already registered before sending OTP
+      const { data, error: checkError } = await supabase.rpc('check_phone_before_otp' as any, { p_phone: e164 })
+      if (checkError) throw checkError
+      const result = data as { can_send: boolean; reason: string | null } | null
+      if (!result?.can_send) {
+        setError(result?.reason || 'This mobile number is already registered. Please use a different mobile number.')
+        setBusy(null)
+        return
+      }
+
       const confirmation = await sendOtp(e164)
       setSent(confirmation)
       setSentTo(e164)
