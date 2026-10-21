@@ -4,7 +4,7 @@ import { BadgeCheck, CalendarDays, Cake, Handshake, Images, Languages, MapPin, P
 import { cn, isDefined } from '@/lib/utils'
 import { formatDate, formatINR, formatLocation, formatPercent } from '@/lib/format'
 import { CONTENT_TYPES, GENDERS, RESPONSE_TIMES, labelFor } from '@/lib/constants'
-import { BARTER_STANCES, TRAVEL_SCOPES } from '@/schemas/creator-application'
+import { TRAVEL_SCOPES } from '@/schemas/creator-application'
 import { isVideoUrl } from '@/utils/media'
 import type { CreatorProfile, CreatorProfileService } from '@/services/creators.service'
 import { Badge } from '@/components/ui/badge'
@@ -168,22 +168,15 @@ function barterAnswer(creator: CreatorProfile): 'yes' | 'selectively' | 'no' {
   return creator.barter_stance === 'selectively' ? 'selectively' : 'yes'
 }
 
-const BARTER_COPY: Record<ReturnType<typeof barterAnswer>, string> = {
-  yes: 'Open to collaborating in exchange for your product or service instead of a fee.',
-  selectively: 'Open to barter for the right brand or product — message to check it’s a fit.',
-  no: 'Paid collaborations only.',
-}
-
-function travelCopy(scope: string | null, city: string | null, name: string) {
-  if (scope === 'within_city') return city ? `Shoots in and around ${city}.` : 'Shoots within their own city.'
-  if (scope === 'within_country') return 'Will travel anywhere in the country for a shoot.'
-  if (scope === 'out_of_country') return 'Will travel within the country and abroad for a shoot.'
-  // Signed up before the form asked.
-  return `Message ${name} to check whether they can travel for your shoot.`
+/** How the barter answer reads on the card. The sign-up form words its option "Selective"; the card says "Selectively". */
+const BARTER_LABELS: Record<ReturnType<typeof barterAnswer>, string> = {
+  yes: 'Yes',
+  selectively: 'Selectively',
+  no: 'No',
 }
 
 /** A card the same shape as a service card, for an answer rather than a package. */
-function TermCard({ badge, title, value, icon: Icon, children }: { badge: string; title: string; value: string; icon: LucideIcon; children: React.ReactNode }) {
+function TermCard({ badge, title, value, icon: Icon }: { badge: string; title: string; value: string; icon: LucideIcon }) {
   return (
     <article className="flex flex-col rounded-card border border-line bg-surface p-5 shadow-card transition-[box-shadow,border-color] duration-300 hover:border-line-strong">
       <div className="flex items-start justify-between gap-3">
@@ -198,7 +191,6 @@ function TermCard({ badge, title, value, icon: Icon, children }: { badge: string
         </span>
       </div>
       <p className="mt-3 font-display text-2xl font-semibold">{value}</p>
-      <p className="mt-1 text-sm leading-relaxed text-muted">{children}</p>
     </article>
   )
 }
@@ -213,12 +205,8 @@ function CollaborationTermCards({ creator }: { creator: CreatorProfile }) {
   const travel = creator.travel_scope ?? null
   return (
     <>
-      <TermCard badge="Barter" title="Barter collaboration" value={labelFor(BARTER_STANCES, barter)} icon={Handshake}>
-        {BARTER_COPY[barter]}
-      </TermCard>
-      <TermCard badge="Travel" title="Open to travel" value={travel ? labelFor(TRAVEL_SCOPES, travel) : 'On request'} icon={Plane}>
-        {travelCopy(travel, creator.city, firstName(creator.display_name))}
-      </TermCard>
+      <TermCard badge="Barter" title="Barter collaboration" value={BARTER_LABELS[barter]} icon={Handshake} />
+      <TermCard badge="Travel" title="Open to travel" value={travel ? labelFor(TRAVEL_SCOPES, travel) : 'On request'} icon={Plane} />
     </>
   )
 }
