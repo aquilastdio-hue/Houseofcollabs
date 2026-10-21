@@ -1202,6 +1202,39 @@ export type Database = {
           },
         ]
       }
+      employees: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          referral_code: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          referral_code: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          referral_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -2647,6 +2680,24 @@ export type Database = {
       }
       admin_dashboard_stats: { Args: never; Returns: Json }
       admin_email_stats: { Args: never; Returns: Json }
+      admin_employee_referrals: {
+        Args: never
+        Returns: {
+          active: boolean
+          added_at: string
+          email: string
+          employee_id: string
+          full_name: string
+          last_onboarded_at: string
+          live: number
+          onboarded: number
+          onboarded_7d: number
+          onboarded_this_month: number
+          pending_applications: number
+          phone: string
+          referral_code: string
+        }[]
+      }
       admin_list_brands: {
         Args: {
           p_limit?: number

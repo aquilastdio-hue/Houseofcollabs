@@ -1,6 +1,6 @@
 import type { QueryData } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
-import { toAppError, unwrap } from '@/lib/errors'
+import { AppError, toAppError, unwrap } from '@/lib/errors'
 import { invokeFunction } from '@/lib/supabase/functions'
 import { signedUrl } from '@/lib/supabase/storage'
 import type { CreatorRequirements } from './creators.service'
@@ -9,6 +9,7 @@ import type {
   AccountStatus,
   AdminDashboardStats,
   CreatorStatus,
+  Database,
   Json,
   OrderStatus,
   PaymentStatus,
@@ -399,6 +400,47 @@ export async function listAnnouncements(page = 1, pageSize = 20) {
     .range(...range(page, pageSize))
   if (error) throw toAppError(error)
   return { items: data ?? [], total: count ?? 0, page, pageSize }
+}
+
+// ---------------------------------------------------------------------------
+// Employees & referral codes (admin_employee_referrals)
+// ---------------------------------------------------------------------------
+type ReferralRpcRow = Database['public']['Functions']['admin_employee_referrals']['Returns'][number]
+type EmployeeFields = 'employee_id' | 'full_name' | 'phone' | 'email' | 'active' | 'added_at' | 'last_onboarded_at'
+
+/**
+ * One row per referral code: every employee's code, plus each code creators
+ * typed that no employee owns — those have `employee_id` null. The generated
+ * type can't know a left join makes the employee columns nullable.
+ */
+export type EmployeeReferralRow = Omit<ReferralRpcRow, EmployeeFields> & {
+  [K in EmployeeFields]: ReferralRpcRow[K] | null
+}
+
+export async function listEmployeeReferrals() {
+  return (unwrap(await supabase.rpc('admin_employee_referrals')) ?? []) as EmployeeReferralRow[]
+}
+
+export type EmployeeInput = Pick<TablesInsert<'employees'>, 'full_name' | 'referral_code' | 'phone' | 'email' | 'active'>
+
+/** Codes are unique; say whose rule was broken rather than "That already exists." */
+function unwrapEmployee<R extends { data: unknown; error: unknown }>(result: R) {
+  if (result.error && (result.error as { code?: string }).code === '23505') {
+    throw new AppError('Another employee already has that referral code.', { kind: 'validation', code: '23505', cause: result.error })
+  }
+  return unwrap(result)
+}
+
+export async function createEmployee(input: EmployeeInput) {
+  return unwrapEmployee(await supabase.from('employees').insert(input).select('*').single())
+}
+
+export async function updateEmployee(id: string, patch: Partial<EmployeeInput>) {
+  return unwrapEmployee(await supabase.from('employees').update(patch).eq('id', id).select('*').single())
+}
+
+export async function deleteEmployee(id: string) {
+  unwrap(await supabase.from('employees').delete().eq('id', id))
 }
 
 // ---------------------------------------------------------------------------
