@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase/client'
-import { AppError, toAppError, unwrap } from '@/lib/errors'
+import { toAppError, unwrap } from '@/lib/errors'
 import { uploadFile } from '@/lib/supabase/storage'
-import { validateFile } from '@/lib/validation/files'
+import { prepareUpload } from '@/lib/video-compression'
 import { uuid, fileExtension } from '@/lib/utils'
 import { invokeFunction } from '@/lib/supabase/functions'
 import type { TablesInsert } from '@/types'
@@ -128,12 +128,16 @@ export async function checkApplicationDuplicates(input: {
 /**
  * Uploads an application file to the private `applications` bucket and returns
  * its path. No public URL exists — admins read it through a signed link.
+ * Videos are compressed in the browser first (see `prepareUpload`), so a phone
+ * clip over the limit still goes through; `onProgress` reports that step.
  */
-export async function uploadApplicationFile(file: File): Promise<string> {
-  const problem = validateFile('applications', file)
-  if (problem) throw new AppError(problem, { kind: 'validation', code: 'INVALID_FILE' })
-  const path = `${uuid()}.${fileExtension(file.name) || 'bin'}`
-  const uploaded = await uploadFile('applications', path, file)
+export async function uploadApplicationFile(
+  file: File,
+  opts: { onProgress?: (fraction: number) => void; signal?: AbortSignal } = {},
+): Promise<string> {
+  const prepared = await prepareUpload('applications', file, opts)
+  const path = `${uuid()}.${fileExtension(prepared.file.name) || 'bin'}`
+  const uploaded = await uploadFile('applications', path, prepared.file)
   return uploaded.path
 }
 

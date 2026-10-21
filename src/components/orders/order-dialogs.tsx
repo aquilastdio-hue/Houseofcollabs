@@ -186,6 +186,10 @@ export function DeliverDialog({
   const [note, setNote] = React.useState('')
   const [error, setError] = React.useState<string | null>(null)
   const [uploaderKey, setUploaderKey] = React.useState(0)
+  // Held by the uploader rather than read from `files`, which only ever gets
+  // finished uploads — so a file still compressing or uploading kept Submit
+  // enabled, and submitting then left it out of the delivery.
+  const [uploading, setUploading] = React.useState(false)
 
   React.useEffect(() => {
     if (!open) {
@@ -193,11 +197,10 @@ export function DeliverDialog({
       setLinks([''])
       setNote('')
       setError(null)
+      setUploading(false)
       setUploaderKey((k) => k + 1)
     }
   }, [open])
-
-  const uploading = files.some((f) => f.status === 'uploading')
   const submit = () => {
     const cleanLinks = links.map((l) => l.trim()).filter(Boolean)
     if (cleanLinks.some((l) => !/^https?:\/\/\S+$/i.test(l))) return setError('Links must start with https://')
@@ -238,7 +241,8 @@ export function DeliverDialog({
           upload={(file) => uploadOrderFile(orderId, file)}
           onUploaded={(result, file) => setFiles((prev) => [...prev, { id: result.path, file, status: 'done', result }])}
           onRemove={(item) => setFiles((prev) => prev.filter((f) => f.result?.path !== item.result?.path))}
-          hint="Videos, images, PDFs or ZIPs up to 50 MB each."
+          onBusyChange={setUploading}
+          hint="Videos, images, PDFs or ZIPs up to 50 MB each. Bigger videos are compressed to fit."
         />
         <div>
           <p className="mb-2 text-sm font-medium">Links (Google Drive, WeTransfer, published post…)</p>
@@ -302,12 +306,14 @@ export function RevisionDialog({
   const [instructions, setInstructions] = React.useState('')
   const [attachments, setAttachments] = React.useState<Attachment[]>([])
   const [error, setError] = React.useState<string | null>(null)
+  const [uploading, setUploading] = React.useState(false)
   React.useEffect(() => {
     if (!open) {
       setReason('')
       setInstructions('')
       setAttachments([])
       setError(null)
+      setUploading(false)
     }
   }, [open])
   return (
@@ -324,6 +330,7 @@ export function RevisionDialog({
           </Button>
           <Button
             loading={loading}
+            disabled={uploading}
             onClick={() => {
               if (reason.trim().length < 3) return setError('Tell the creator what needs to change.')
               onSubmit(reason.trim(), instructions.trim(), attachments)
@@ -349,6 +356,7 @@ export function RevisionDialog({
           upload={(file) => uploadOrderFile(orderId, file, 'revisions')}
           onUploaded={(a) => setAttachments((prev) => [...prev, a])}
           onRemove={(item) => setAttachments((prev) => prev.filter((a) => a.path !== item.result?.path))}
+          onBusyChange={setUploading}
         />
       </div>
     </Modal>

@@ -83,14 +83,22 @@ export function baseMime(type: string) {
   return type.split(';')[0]!.trim().toLowerCase()
 }
 
-/** Returns a user-facing error, or null when the file is acceptable. */
-export function validateFile(bucket: Bucket, file: File, opts: { maxBytes?: number; kinds?: ('image' | 'video' | 'audio' | 'doc')[] } = {}) {
+/**
+ * Returns a user-facing error, or null when the file is acceptable.
+ * `ignoreSize` checks everything but the size limit — for a video that is
+ * about to be compressed, whose final size is only known afterwards.
+ */
+export function validateFile(
+  bucket: Bucket,
+  file: File,
+  opts: { maxBytes?: number; kinds?: ('image' | 'video' | 'audio' | 'doc')[]; ignoreSize?: boolean } = {},
+) {
   const rules = BUCKET_RULES[bucket]
   const max = Math.min(opts.maxBytes ?? rules.maxBytes, rules.maxBytes)
   const ext = fileExtension(file.name)
   const mime = baseMime(file.type || '')
   if (file.size === 0) return `${file.name} is empty.`
-  if (file.size > max) return `${file.name} is larger than ${formatBytes(max)}.`
+  if (!opts.ignoreSize && file.size > max) return `${file.name} is larger than ${formatBytes(max)}.`
   if (!rules.ext.includes(ext)) return `.${ext || '?'} files aren’t supported here.`
   if (mime && !rules.mime.includes(mime)) return `${file.name} has an unsupported file type.`
   if (opts.kinds?.length) {

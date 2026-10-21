@@ -21,7 +21,7 @@ const ACCEPT = {
 } as const
 
 const DESCRIBE = {
-  video: 'MP4, MOV or WebM',
+  video: 'MP4, MOV or WebM — big videos are compressed automatically',
   image: 'JPG, PNG or WebP',
   document: 'PDF, JPG or PNG',
 } as const
@@ -132,26 +132,40 @@ export function MultiFileDrop({
   const [errors, setErrors] = React.useState<string[]>([])
   const [names, setNames] = React.useState<Record<string, string>>({})
   const [busy, setBusy] = React.useState(0)
+  /** Compression progress of the file being worked on, 0–1; null while uploading. */
+  const [compressing, setCompressing] = React.useState<number | null>(null)
   const room = maxFiles - value.length
 
   const add = async (files: File[]) => {
     const taking = files.slice(0, room)
     const skipped = files.length - taking.length
     setErrors(skipped > 0 ? [`Only ${maxFiles} allowed — ${skipped} not added.`] : [])
-    setBusy((n) => n + taking.length)
+    setBusy(taking.length)
 
-    const results = await Promise.allSettled(taking.map((f) => uploadApplicationFile(f)))
+    // One at a time: each video is compressed on the device's video encoder
+    // before it uploads, and phones usually have just the one.
     const added: string[] = []
     const failed: string[] = []
-    results.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        added.push(r.value)
-        setNames((prev) => ({ ...prev, [r.value]: taking[i].name }))
-      } else {
-        failed.push(`${taking[i].name}: ${toAppError(r.reason).message}`)
+    for (const [i, file] of taking.entries()) {
+      try {
+        let shown = -1
+        const path = await uploadApplicationFile(file, {
+          onProgress: (fraction) => {
+            const pct = Math.floor(fraction * 100)
+            if (pct !== shown) {
+              shown = pct
+              setCompressing(fraction)
+            }
+          },
+        })
+        added.push(path)
+        setNames((prev) => ({ ...prev, [path]: file.name }))
+      } catch (e) {
+        failed.push(`${file.name}: ${toAppError(e).message}`)
       }
-    })
-    setBusy((n) => n - taking.length)
+      setCompressing(null)
+      setBusy(taking.length - i - 1)
+    }
     if (added.length) onChange([...value, ...added])
     if (failed.length) setErrors((prev) => [...prev, ...failed])
   }
@@ -188,7 +202,13 @@ export function MultiFileDrop({
       />
       <Button type="button" variant="secondary" block disabled={busy > 0 || room <= 0} onClick={() => inputRef.current?.click()}>
         {busy > 0 ? <Loader2 className="animate-spin" /> : kind === 'video' ? <Video /> : <ImageIcon />}
-        {busy > 0 ? `Uploading ${busy}…` : room <= 0 ? `${maxFiles} added` : label}
+        {busy > 0
+          ? compressing !== null
+            ? `Compressing… ${Math.floor(compressing * 100)}%${busy > 1 ? ` · ${busy} left` : ''}`
+            : `Uploading${busy > 1 ? ` · ${busy} left` : '…'}`
+          : room <= 0
+            ? `${maxFiles} added`
+            : label}
       </Button>
 
       <p className={cn('text-xs', errors.length ? 'text-danger' : 'text-muted')}>

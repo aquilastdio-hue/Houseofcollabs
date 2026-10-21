@@ -4,6 +4,7 @@ import { Loader2, Trash2, Upload, Video } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toAppError } from '@/lib/errors'
 import { BUCKET_RULES } from '@/lib/validation/files'
+import { prepareUpload } from '@/lib/video-compression'
 import { useAuth } from '@/contexts/auth-context'
 import { uploadPortfolioMedia } from '@/services/portfolio.service'
 import { updateMyCreator, type CreatorProfile } from '@/services/creators.service'
@@ -28,10 +29,23 @@ export function IntroVideoForm({ creator, className }: { creator: CreatorProfile
   const inputRef = React.useRef<HTMLInputElement>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [confirmRemove, setConfirmRemove] = React.useState(false)
+  /** Compression progress, 0–1, before the upload starts; null otherwise. */
+  const [compressing, setCompressing] = React.useState<number | null>(null)
 
   const save = useMutation({
     mutationFn: async (file: File) => {
-      const media = await uploadPortfolioMedia(user!.id, file)
+      let shown = -1
+      const prepared = await prepareUpload('creator-portfolio', file, {
+        kinds: ['video'],
+        onProgress: (fraction) => {
+          const pct = Math.floor(fraction * 100)
+          if (pct !== shown) {
+            shown = pct
+            setCompressing(fraction)
+          }
+        },
+      }).finally(() => setCompressing(null))
+      const media = await uploadPortfolioMedia(user!.id, prepared.file)
       if (media.type !== 'video') throw new Error('Choose a video file.')
       await updateMyCreator(creator.id, { intro_video_url: media.media_url })
       await sync()
@@ -76,7 +90,7 @@ export function IntroVideoForm({ creator, className }: { creator: CreatorProfile
           <video src={url} controls playsInline preload="metadata" className="max-h-80 w-full rounded-control bg-night" />
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="secondary" size="sm" loading={save.isPending} onClick={() => inputRef.current?.click()}>
-              <Upload /> Replace video
+              <Upload /> {compressing !== null ? `Compressing… ${Math.floor(compressing * 100)}%` : 'Replace video'}
             </Button>
             <Button type="button" variant="danger-ghost" size="sm" onClick={() => setConfirmRemove(true)}>
               <Trash2 /> Remove
@@ -96,8 +110,10 @@ export function IntroVideoForm({ creator, className }: { creator: CreatorProfile
           <span className="flex size-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink [&_svg]:size-5" aria-hidden>
             {save.isPending ? <Loader2 className="animate-spin" /> : <Video />}
           </span>
-          <span className="text-sm font-medium">{save.isPending ? 'Uploading…' : 'Upload an intro video'}</span>
-          <span className="text-xs text-muted">MP4, WebM or MOV, up to {max} MB. 30–60 seconds is plenty.</span>
+          <span className="text-sm font-medium">
+            {compressing !== null ? `Compressing… ${Math.floor(compressing * 100)}%` : save.isPending ? 'Uploading…' : 'Upload an intro video'}
+          </span>
+          <span className="text-xs text-muted">MP4, WebM or MOV, up to {max} MB — bigger videos are compressed to fit. 30–60 seconds is plenty.</span>
         </button>
       )}
 

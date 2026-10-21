@@ -151,7 +151,7 @@ export function BriefAttachmentsManager({ brief, userId }: { brief: BriefDetail;
           remove.mutate(att, { onError: () => setSessionIds((ids) => ids.filter((id) => id !== att.id)) })
         }}
         label="Drag files here or browse"
-        hint="Mood boards, product sheets, guidelines or sample videos · up to 25 MB each"
+        hint="Mood boards, product sheets, guidelines or sample videos · up to 25 MB each (bigger videos are compressed to fit)"
       />
       <ConfirmDialog
         open={!!confirm}

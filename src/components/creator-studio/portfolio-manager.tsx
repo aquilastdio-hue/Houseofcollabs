@@ -388,7 +388,7 @@ export function PortfolioManager({
             })
           }
           label="Drag photos or videos here"
-          hint="JPG, PNG, WebP, GIF, MP4, WebM or MOV · up to 50 MB each · up to 10 at a time"
+          hint="JPG, PNG, WebP, GIF, MP4, WebM or MOV · up to 50 MB each (bigger videos are compressed to fit) · up to 10 at a time"
           compact={items.length > 0}
         />
       </div>
