@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { Link } from 'react-router'
-import { BadgeCheck, CalendarDays, Cake, Images, Languages, MapPin, Package, Timer, TrendingUp, UserRound, type LucideIcon } from 'lucide-react'
+import { BadgeCheck, CalendarDays, Cake, Handshake, Images, Languages, MapPin, Package, Plane, Timer, TrendingUp, UserRound, type LucideIcon } from 'lucide-react'
 import { cn, isDefined } from '@/lib/utils'
 import { formatDate, formatINR, formatLocation, formatPercent } from '@/lib/format'
 import { CONTENT_TYPES, GENDERS, RESPONSE_TIMES, labelFor } from '@/lib/constants'
+import { BARTER_STANCES, TRAVEL_SCOPES } from '@/schemas/creator-application'
 import { isVideoUrl } from '@/utils/media'
 import type { CreatorProfile, CreatorProfileService } from '@/services/creators.service'
 import { Badge } from '@/components/ui/badge'
@@ -156,6 +157,72 @@ function HireServiceAction({ creator, service }: { creator: CreatorProfile; serv
   )
 }
 
+/**
+ * The barter answer as a brand should read it. `barter_available` decides
+ * yes-or-no, because the marketplace's "Open to barter" filter uses it; the
+ * sign-up answer only says how (fully or selectively). Older creators with no
+ * recorded answer fall back to the flag.
+ */
+function barterAnswer(creator: CreatorProfile): 'yes' | 'selectively' | 'no' {
+  if (!creator.barter_available) return 'no'
+  return creator.barter_stance === 'selectively' ? 'selectively' : 'yes'
+}
+
+const BARTER_COPY: Record<ReturnType<typeof barterAnswer>, string> = {
+  yes: 'Open to collaborating in exchange for your product or service instead of a fee.',
+  selectively: 'Open to barter for the right brand or product — message to check it’s a fit.',
+  no: 'Paid collaborations only.',
+}
+
+function travelCopy(scope: string | null, city: string | null, name: string) {
+  if (scope === 'within_city') return city ? `Shoots in and around ${city}.` : 'Shoots within their own city.'
+  if (scope === 'within_country') return 'Will travel anywhere in the country for a shoot.'
+  if (scope === 'out_of_country') return 'Will travel within the country and abroad for a shoot.'
+  // Signed up before the form asked.
+  return `Message ${name} to check whether they can travel for your shoot.`
+}
+
+/** A card the same shape as a service card, for an answer rather than a package. */
+function TermCard({ badge, title, value, icon: Icon, children }: { badge: string; title: string; value: string; icon: LucideIcon; children: React.ReactNode }) {
+  return (
+    <article className="flex flex-col rounded-card border border-line bg-surface p-5 shadow-card transition-[box-shadow,border-color] duration-300 hover:border-line-strong">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Badge tone="neutral" size="sm" className="mb-2">
+            {badge}
+          </Badge>
+          <h3 className="font-display text-lg font-semibold tracking-tight">{title}</h3>
+        </div>
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-ink [&_svg]:size-5" aria-hidden>
+          <Icon />
+        </span>
+      </div>
+      <p className="mt-3 font-display text-2xl font-semibold">{value}</p>
+      <p className="mt-1 text-sm leading-relaxed text-muted">{children}</p>
+    </article>
+  )
+}
+
+/**
+ * Barter and travel, as the creator answered them when they signed up. Both
+ * cards are always shown; a creator who signed up before the travel question
+ * existed reads "On request" rather than losing the card.
+ */
+function CollaborationTermCards({ creator }: { creator: CreatorProfile }) {
+  const barter = barterAnswer(creator)
+  const travel = creator.travel_scope ?? null
+  return (
+    <>
+      <TermCard badge="Barter" title="Barter collaboration" value={labelFor(BARTER_STANCES, barter)} icon={Handshake}>
+        {BARTER_COPY[barter]}
+      </TermCard>
+      <TermCard badge="Travel" title="Open to travel" value={travel ? labelFor(TRAVEL_SCOPES, travel) : 'On request'} icon={Plane}>
+        {travelCopy(travel, creator.city, firstName(creator.display_name))}
+      </TermCard>
+    </>
+  )
+}
+
 export function ServicesSection({ creator }: { creator: CreatorProfile }) {
   const access = useCreatorAccess(creator)
   const services = visibleServices(creator, access.isOwner)
@@ -165,18 +232,7 @@ export function ServicesSection({ creator }: { creator: CreatorProfile }) {
       title="Services"
       description="Fixed prices, delivery times and revisions. Your payment is held securely until you approve the work."
     >
-      {services.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {services.map((service) => (
-            <ServiceCard
-              key={service.id}
-              service={service}
-              addons={service.service_addons}
-              action={<HireServiceAction creator={creator} service={service} />}
-            />
-          ))}
-        </div>
-      ) : (
+      {services.length === 0 && (
         <EmptyState
           compact
           icon={<Package />}
@@ -184,6 +240,17 @@ export function ServicesSection({ creator }: { creator: CreatorProfile }) {
           description={`${firstName(creator.display_name)} hasn’t published a package yet. Send a message to discuss what you need.`}
         />
       )}
+      <div className={cn('grid grid-cols-1 gap-4 md:grid-cols-2', services.length === 0 && 'mt-4')}>
+        {services.map((service) => (
+          <ServiceCard
+            key={service.id}
+            service={service}
+            addons={service.service_addons}
+            action={<HireServiceAction creator={creator} service={service} />}
+          />
+        ))}
+        <CollaborationTermCards creator={creator} />
+      </div>
     </ProfileSection>
   )
 }

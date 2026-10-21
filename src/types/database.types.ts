@@ -986,6 +986,7 @@ export type Database = {
           approved_at: string | null
           available: boolean
           barter_available: boolean
+          barter_stance: string | null
           bio: string | null
           city: string | null
           completed_orders: number
@@ -1019,6 +1020,7 @@ export type Database = {
           starting_price: number | null
           state: string | null
           status: Database["public"]["Enums"]["creator_status"]
+          travel_scope: string | null
           updated_at: string
           verified: boolean
           wishlist_count: number
@@ -1028,6 +1030,7 @@ export type Database = {
           approved_at?: string | null
           available?: boolean
           barter_available?: boolean
+          barter_stance?: string | null
           bio?: string | null
           city?: string | null
           completed_orders?: number
@@ -1061,6 +1064,7 @@ export type Database = {
           starting_price?: number | null
           state?: string | null
           status?: Database["public"]["Enums"]["creator_status"]
+          travel_scope?: string | null
           updated_at?: string
           verified?: boolean
           wishlist_count?: number
@@ -1070,6 +1074,7 @@ export type Database = {
           approved_at?: string | null
           available?: boolean
           barter_available?: boolean
+          barter_stance?: string | null
           bio?: string | null
           city?: string | null
           completed_orders?: number
@@ -1103,6 +1108,7 @@ export type Database = {
           starting_price?: number | null
           state?: string | null
           status?: Database["public"]["Enums"]["creator_status"]
+          travel_scope?: string | null
           updated_at?: string
           verified?: boolean
           wishlist_count?: number
@@ -2841,6 +2847,7 @@ export type Database = {
           approved_at: string | null
           available: boolean
           barter_available: boolean
+          barter_stance: string | null
           bio: string | null
           city: string | null
           completed_orders: number
@@ -2874,6 +2881,7 @@ export type Database = {
           starting_price: number | null
           state: string | null
           status: Database["public"]["Enums"]["creator_status"]
+          travel_scope: string | null
           updated_at: string
           verified: boolean
           wishlist_count: number
@@ -3011,6 +3019,7 @@ export type Database = {
           approved_at: string | null
           available: boolean
           barter_available: boolean
+          barter_stance: string | null
           bio: string | null
           city: string | null
           completed_orders: number
@@ -3044,6 +3053,7 @@ export type Database = {
           starting_price: number | null
           state: string | null
           status: Database["public"]["Enums"]["creator_status"]
+          travel_scope: string | null
           updated_at: string
           verified: boolean
           wishlist_count: number
@@ -3070,6 +3080,7 @@ export type Database = {
           approved_at: string | null
           available: boolean
           barter_available: boolean
+          barter_stance: string | null
           bio: string | null
           city: string | null
           completed_orders: number
@@ -3103,6 +3114,7 @@ export type Database = {
           starting_price: number | null
           state: string | null
           status: Database["public"]["Enums"]["creator_status"]
+          travel_scope: string | null
           updated_at: string
           verified: boolean
           wishlist_count: number
@@ -3154,6 +3166,7 @@ export type Database = {
           approved_at: string | null
           available: boolean
           barter_available: boolean
+          barter_stance: string | null
           bio: string | null
           city: string | null
           completed_orders: number
@@ -3187,6 +3200,7 @@ export type Database = {
           starting_price: number | null
           state: string | null
           status: Database["public"]["Enums"]["creator_status"]
+          travel_scope: string | null
           updated_at: string
           verified: boolean
           wishlist_count: number
@@ -3301,6 +3315,7 @@ export type Database = {
           approved_at: string | null
           available: boolean
           barter_available: boolean
+          barter_stance: string | null
           bio: string | null
           city: string | null
           completed_orders: number
@@ -3334,6 +3349,7 @@ export type Database = {
           starting_price: number | null
           state: string | null
           status: Database["public"]["Enums"]["creator_status"]
+          travel_scope: string | null
           updated_at: string
           verified: boolean
           wishlist_count: number
@@ -4005,6 +4021,7 @@ export type Database = {
           approved_at: string | null
           available: boolean
           barter_available: boolean
+          barter_stance: string | null
           bio: string | null
           city: string | null
           completed_orders: number
@@ -4038,6 +4055,7 @@ export type Database = {
           starting_price: number | null
           state: string | null
           status: Database["public"]["Enums"]["creator_status"]
+          travel_scope: string | null
           updated_at: string
           verified: boolean
           wishlist_count: number
