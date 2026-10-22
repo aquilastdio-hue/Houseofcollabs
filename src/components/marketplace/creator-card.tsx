@@ -161,13 +161,19 @@ export function CreatorCard({
             <p className="text-xs text-muted">Starting at</p>
             <p className="font-display text-xl font-semibold tabular-nums">{creator.starting_price != null ? formatINR(creator.starting_price) : '—'}</p>
           </div>
-          <Link
-            to={href}
-            className="focus-ring rounded-pill bg-ink px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-ink-soft"
-          >
-            View
-          </Link>
+          {creator.barter_stance && (
+            <div className="flex items-center gap-1.5 text-sm text-muted">
+              <span>Barter</span>
+              <span className="font-medium text-ink capitalize">{creator.barter_stance}</span>
+            </div>
+          )}
         </div>
+        <Link
+          to={href}
+          className="focus-ring mt-3 rounded-pill bg-ink px-4 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-ink-soft"
+        >
+          View
+        </Link>
       </div>
     </article>
   )

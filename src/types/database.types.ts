@@ -10,32 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -3560,6 +3535,11 @@ export type Database = {
         Args: { p_email?: string; p_instagram?: string; p_phone?: string }
         Returns: Json
       }
+      check_email_before_application: {
+        Args: { p_email: string }
+        Returns: Json
+      }
+      check_phone_before_otp: { Args: { p_phone: string }; Returns: Json }
       claim_pending_emails: {
         Args: { p_limit?: number }
         Returns: {
@@ -4380,6 +4360,7 @@ export type Database = {
         Returns: {
           age: number
           available: boolean
+          barter_stance: string
           categories: Json
           city: string
           completed_orders: number
@@ -4832,9 +4813,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       account_status: ["active", "suspended", "deleted"],
