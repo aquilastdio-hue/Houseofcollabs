@@ -40,14 +40,11 @@ export function destinationAfterLogin({
 /**
  * Where an account belongs when nothing more specific was asked for.
  *
- * Neither side is open to new accounts yet, so someone who signed up but never
- * finished setting up lands on their coming-soon screen rather than an
- * onboarding form — logging in should never reopen it. Anyone who already
- * finished onboarding keeps their dashboard, so nothing regresses.
+ * - No role yet → pick Brands / Collabs on onboarding
+ * - Has a role but unfinished setup → finish onboarding
+ * - Fully set up → that side's dashboard
  */
 export function homeFor(role: UserRole | null | undefined, onboarded = true): string {
-  if (!onboarded && role === 'brand') return '/collabs'
-  if (!onboarded && role === 'creator') return '/creators'
   if (!role || !onboarded) return '/onboarding'
   if (role === 'admin') return '/admin'
   return role === 'brand' ? '/brand' : '/creator'

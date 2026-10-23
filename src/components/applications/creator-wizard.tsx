@@ -466,12 +466,12 @@ export function CreatorApplicationWizard() {
       const onEmail = err.code === 'DUPLICATE_APPLICATION'
       const onPhone = err.code === DUPLICATE_CODES.phone || err.code === DUPLICATE_CODES.both
       const onInstagram = err.code === DUPLICATE_CODES.instagram || err.code === DUPLICATE_CODES.both
-      if (onEmail) form.setError('email', { type: 'duplicate', message: 'This email has an active application. If you were previously rejected, you can re-apply with this email.' })
+      if (onEmail) form.setError('email', { type: 'duplicate', message: 'This email already has an application in progress. Please wait for a decision on your current application, or contact support if you need to update it.' })
       if (onPhone) form.setError('whatsapp', { type: 'duplicate', message: DUPLICATE_MESSAGES.phone })
       if (onInstagram) form.setError('instagram.handle', { type: 'duplicate', message: DUPLICATE_MESSAGES.instagram })
       if (onEmail || onPhone || onInstagram) {
         form.setError('root', {
-          message: onEmail ? 'This email has an active application. If you were previously rejected, you can re-apply with this email.'
+          message: onEmail ? 'This email already has an application in progress. Please wait for a decision on your current application, or contact support if you need to update it.'
             : onPhone && onInstagram ? DUPLICATE_MESSAGES.both : onPhone ? DUPLICATE_MESSAGES.phone : DUPLICATE_MESSAGES.instagram,
         })
         go(onEmail ? PHONE_STEP : onPhone ? PHONE_STEP : INSTAGRAM_STEP)

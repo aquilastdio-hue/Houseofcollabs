@@ -49,9 +49,9 @@ describe('where a sign-in lands', () => {
     it('takes an admin to the admin area', () => {
       expect(destinationAfterLogin({ redirect: null, role: 'admin', onboarded: true })).toBe('/admin')
     })
-    it('holds an unfinished account on its coming-soon page rather than reopening onboarding', () => {
-      expect(destinationAfterLogin({ redirect: null, role: 'creator', onboarded: false })).toBe('/creators')
-      expect(destinationAfterLogin({ redirect: null, role: 'brand', onboarded: false })).toBe('/collabs')
+    it('sends an unfinished account to onboarding to finish setup', () => {
+      expect(destinationAfterLogin({ redirect: null, role: 'creator', onboarded: false })).toBe('/onboarding')
+      expect(destinationAfterLogin({ redirect: null, role: 'brand', onboarded: false })).toBe('/onboarding')
     })
     it('sends an account with no role at all to onboarding', () => {
       expect(destinationAfterLogin({ redirect: null, role: null, onboarded: false })).toBe('/onboarding')

@@ -18,11 +18,15 @@
 // invite. `inviteUserByEmail` only works for an address with no account, so an
 // applicant who already has one (they signed in with Google first, or an admin
 // already approved them) gets a password-reset email instead.
+// @ts-ignore - Deno types are available in Supabase edge functions
 import { handler, HttpError, json, must, readJson } from '../_shared/http.ts'
 import { adminClient, requireAdmin, userClient } from '../_shared/supabase.ts'
 
+// @ts-ignore - Deno is available in Supabase edge functions
 const SITE_URL = (Deno.env.get('SITE_URL') ?? 'http://localhost:5173').replace(/\/$/, '')
+// @ts-ignore - Deno is available in Supabase edge functions
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+// @ts-ignore - Deno is available in Supabase edge functions
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
 /** Where both emails land. The invite and the reset share one destination. */
@@ -159,7 +163,7 @@ export const handle = handler(async (req) => {
       if (looksAlreadyRegistered(error.message)) {
         // A race, or an account with no profile row. Find the user and carry on.
         const { data: list } = await db.auth.admin.listUsers()
-        const found = list?.users?.find((u) => (u.email ?? '').toLowerCase() === email)
+        const found = list?.users?.find((u: { email?: string | null }) => (u.email ?? '').toLowerCase() === email)
         if (!found) throw new HttpError(422, 'That email already has an account we cannot read.', 'ACCOUNT_CONFLICT')
         profileId = found.id
       } else {
@@ -181,6 +185,20 @@ export const handle = handler(async (req) => {
   }
 
   if (!profileId) throw new HttpError(500, 'Could not resolve the account.', 'NO_PROFILE')
+
+  // Create the profile row if it doesn't exist (for users who signed in but have no profile)
+  const { data: profileCheck } = await db.from('profiles').select('id').eq('id', profileId).maybeSingle()
+  if (!profileCheck) {
+    const v_name = application.full_name
+    await db.from('profiles').insert({
+      id: profileId,
+      role: application.role,
+      full_name: v_name,
+      email: application.email,
+      avatar_url: null,
+      status: 'active',
+    })
+  }
 
   // Already had an account, so no invite was sent — offer a reset instead, so
   // they still get a way to set a password.

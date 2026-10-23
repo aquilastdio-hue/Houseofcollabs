@@ -3,57 +3,58 @@ import { Link, useNavigate } from 'react-router'
 import { AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { destinationAfterLogin } from '@/lib/auth-destination'
-import { setInitialRole } from '@/services/auth.service'
-import { recordAuthEvent } from '@/services/auth.service'
+import { establishSessionFromLink, readAuthLink } from '@/lib/auth-link'
 import { Button } from '@/components/ui/button'
 import { PageLoader } from '@/components/ui/spinner'
 import { Seo } from '@/components/shared/seo'
 
 /**
- * OAuth + email-confirmation landing. supabase-js exchanges the PKCE code
- * automatically; we then apply the role picked at signup (OAuth only) and
- * route the user to onboarding or their workspace.
+ * OAuth + email-confirmation landing.
+ *
+ * Exchanges the link (PKCE code, hash tokens, or OTP), waits for the profile,
+ * then sends existing accounts to their dashboard and new ones to onboarding.
  */
 export default function AuthCallback() {
-  const { initializing, session, profile, profileLoading, refresh } = useAuth()
+  const { initializing, session, profile, profileLoading } = useAuth()
   const navigate = useNavigate()
   const params = React.useMemo(() => new URLSearchParams(window.location.search), [])
   const hashParams = React.useMemo(() => new URLSearchParams(window.location.hash.replace(/^#/, '')), [])
-  const errorDescription = params.get('error_description') ?? hashParams.get('error_description')
+  const errorFromUrl = params.get('error_description') ?? hashParams.get('error_description')
+  const [linkError, setLinkError] = React.useState<string | null>(null)
   const [timedOut, setTimedOut] = React.useState(false)
   const handled = React.useRef(false)
+  const linkStarted = React.useRef(false)
 
   React.useEffect(() => {
-    const t = window.setTimeout(() => setTimedOut(true), 8000)
+    if (linkStarted.current) return
+    linkStarted.current = true
+    const link = readAuthLink()
+    if (!link) return
+    void establishSessionFromLink(link).then((result) => {
+      if (!result.ok) setLinkError(result.reason)
+    })
+  }, [])
+
+  React.useEffect(() => {
+    const t = window.setTimeout(() => setTimedOut(true), 10000)
     return () => window.clearTimeout(t)
   }, [])
 
   React.useEffect(() => {
-    if (handled.current || initializing || !session || profileLoading || !profile) return
+    if (handled.current || initializing || !session || profileLoading) return
     handled.current = true
-    void (async () => {
-      const requested = params.get('role')
-      if (!profile.role && (requested === 'brand' || requested === 'creator')) {
-        try {
-          await setInitialRole(requested)
-          await refresh()
-        } catch {
-          // role may already be set; onboarding will ask otherwise
-        }
-      }
-      void recordAuthEvent('login')
-      const role = profile.role ?? (requested === 'brand' || requested === 'creator' ? requested : null)
-      // `?redirect` wins over the account's own home, whether or not onboarding
-      // is finished. It used to be gated on `onboarding_completed`, which
-      // quietly dropped the destination for anyone mid-setup and dumped them in
-      // the onboarding form — so Collabs / Creators → Google never reached its
-      // coming-soon page.
-      navigate(
-        destinationAfterLogin({ redirect: params.get('redirect'), role, onboarded: profile.onboarding_completed }),
-        { replace: true },
-      )
-    })()
-  }, [initializing, session, profile, profileLoading, params, navigate, refresh])
+    const redirect = params.get('redirect')
+    navigate(
+      destinationAfterLogin({
+        redirect,
+        role: profile?.role,
+        onboarded: profile?.onboarding_completed ?? false,
+      }),
+      { replace: true },
+    )
+  }, [initializing, session, profile, profileLoading, navigate, params])
+
+  const errorDescription = errorFromUrl ?? linkError
 
   if (errorDescription || (timedOut && !session)) {
     return (
@@ -63,7 +64,9 @@ export default function AuthCallback() {
           <AlertTriangle className="size-6" />
         </span>
         <h1 className="mt-5 font-display text-display-md font-semibold">We couldn’t sign you in</h1>
-        <p className="mt-2 text-muted">{errorDescription ?? 'The link may have expired or was opened in a different browser. Please try again.'}</p>
+        <p className="mt-2 text-muted">
+          {errorDescription ?? 'The link may have expired or was opened in a different browser. Please try again.'}
+        </p>
         <Button asChild className="mt-6">
           <Link to="/login">Back to log in</Link>
         </Button>

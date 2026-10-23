@@ -16,13 +16,8 @@ import { DotGrid, Glow, stagger } from './primitives'
  * Deliberately identical for everyone — signed in or not — so the landing page
  * always reads as the front door rather than a workspace shortcut.
  *
- * Each button goes straight to that side's page, which sits behind
- * `RequireAuth`: a signed-out visitor is sent to /login?redirect=… and lands
- * back on their choice once they're in, while someone already signed in skips
- * the login step entirely. Both currently show a coming-soon screen.
- *
- * New members without an account start at /get-started instead, which takes an
- * application without needing one.
+ * Brands: self-serve signup at /onboarding?role=brand (instant account creation)
+ * Creators: application form at /get-started?role=creator (requires admin approval)
  */
 export function EntryHero() {
   return (
@@ -67,10 +62,10 @@ export function EntryHero() {
         </p>
 
         <div className="mt-9 flex w-full max-w-sm animate-fade-up flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:gap-4" style={stagger(2)}>
-          {/* Straight into the form for that side — no account needed to apply,
-              so there is nothing to sign up for first. */}
+          {/* Brands: self-serve signup (instant account creation)
+              Creators: application form (requires admin approval) */}
           <Button asChild size="xl" className="tracking-[0.08em] uppercase sm:min-w-56">
-            <Link to="/get-started?role=brand">Brands</Link>
+            <Link to="/onboarding?role=brand">Brands</Link>
           </Button>
           <Button asChild size="xl" variant="ink" className="tracking-[0.08em] uppercase sm:min-w-56">
             <Link to="/get-started?role=creator">Creators</Link>

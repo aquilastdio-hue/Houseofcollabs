@@ -277,14 +277,9 @@ export function Page3({ form }: { form: Form }) {
 // Wizard
 // ===========================================================================
 /**
- * Brands are self-serve, so this is the end of signing up rather than the start
- * of waiting. The account itself is created on first sign-in: the application
- * was written as approved, and the profile row that Google sign-in creates is
- * what triggers provisioning (migration 0068).
- *
- * Which is why the address is spelled out. Signing in with a different Google
- * account finds no application to claim and silently produces an account with
- * no brand attached — so the one address that works is on screen, not implied.
+ * NOTE: Brand signup is now self-serve through /onboarding?role=brand.
+ * This wizard is deprecated and kept only for admin use or if the flow changes.
+ * New brands should use BrandOnboarding component instead.
  */
 function Submitted({ email }: { email: string }) {
   const [busy, setBusy] = React.useState(false)
@@ -446,8 +441,8 @@ export function BrandApplicationWizard() {
       const err = toAppError(e)
       // Check for email duplicate
       if (err.code === 'DUPLICATE_APPLICATION') {
-        form.setError('business_email', { type: 'duplicate', message: 'This email has an active application. If you were previously rejected, you can re-apply with this email.' })
-        form.setError('root', { message: 'This email has an active application. If you were previously rejected, you can re-apply with this email.' })
+        form.setError('business_email', { type: 'duplicate', message: 'This email already has an application in progress. Please wait for a decision on your current application, or contact support if you need to update it.' })
+        form.setError('root', { message: 'This email already has an application in progress. Please wait for a decision on your current application, or contact support if you need to update it.' })
         go(PHONE_STEP)
         scrollToFirstError(formRef.current)
         return

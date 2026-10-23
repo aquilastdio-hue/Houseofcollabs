@@ -39,8 +39,8 @@ const routes: RouteObject[] = [
           {
             element: <RequireAuth />,
             children: [
-              { path: 'collabs', ...page(() => import('@/pages/public/ComingSoon'), { side: 'brand' }) },
-              { path: 'creators', ...page(() => import('@/pages/public/ComingSoon'), { side: 'creator' }) },
+              { path: 'collabs', element: <Navigate to="/brand" replace /> },
+              { path: 'creators', element: <Navigate to="/creator" replace /> },
             ],
           },
           { path: 'ugc', ...page(() => import('@/pages/public/UgcPage')) },
@@ -79,11 +79,8 @@ const routes: RouteObject[] = [
           { path: 'auth/callback', ...page(() => import('@/pages/auth/AuthCallback')) },
         ],
       },
-      {
-        path: 'onboarding',
-        element: <RequireAuth />,
-        children: [{ index: true, ...page(() => import('@/pages/auth/Onboarding')) }],
-      },
+      // Onboarding can be accessed without auth for self-serve brand signup
+      { path: 'onboarding', ...page(() => import('@/pages/auth/Onboarding')) },
 
       // ------------------------------------------------------------------- brand
       {

@@ -1,4 +1,5 @@
-import { Link } from 'react-router'
+import * as React from 'react'
+import { Link, Navigate, useNavigate, useLocation } from 'react-router'
 import { ArrowRight, BadgeIndianRupee, Clock3, ShieldCheck } from 'lucide-react'
 import { site } from '@/config/site'
 import { Seo } from '@/components/shared/seo'
@@ -18,6 +19,9 @@ import { OrderJourneySection } from '@/components/marketing/order-journey'
 import { usePlatformTerms } from '@/components/marketing/platform-terms'
 import { Accent, DotGrid, TextLink, stagger } from '@/components/marketing/primitives'
 import { WorkflowCompareSection } from '@/components/marketing/workflow-compare'
+import { useAuth } from '@/contexts/auth-context'
+import { destinationAfterLogin } from '@/lib/auth-destination'
+import { FullPageLoader } from '@/components/ui/spinner'
 
 const TRUST_POINTS = [
   { icon: ShieldCheck, label: 'Payments secured by Razorpay' },
@@ -25,8 +29,47 @@ const TRUST_POINTS = [
   { icon: Clock3, label: 'Delivery dates upfront' },
 ]
 
+// Redirect component that handles OAuth callback immediately
+function OAuthCallbackRedirect() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  React.useEffect(() => {
+    navigate(`/auth/callback${location.search}${location.hash}`, { replace: true })
+  }, [navigate, location.search, location.hash])
+
+  return null
+}
+
 export default function Home() {
   const { terms } = usePlatformTerms()
+  const { initializing, session, profile, profileLoading } = useAuth()
+  const location = useLocation()
+
+  // Auth emails sometimes redirect to Site URL (/) with ?code= instead of
+  // /auth/callback — forward before painting the marketing page.
+  const params = new URLSearchParams(location.search)
+  const hash = location.hash.replace(/^#/, '')
+  const hashParams = new URLSearchParams(hash)
+  if (params.get('code') || hashParams.get('access_token') || params.get('token_hash')) {
+    return <OAuthCallbackRedirect />
+  }
+
+  // After verify / login, signed-in users belong in their dashboard or onboarding —
+  // not stuck on the public entry hero with a session already established.
+  if (initializing || (session && profileLoading)) return <FullPageLoader />
+  if (session) {
+    return (
+      <Navigate
+        to={destinationAfterLogin({
+          redirect: null,
+          role: profile?.role,
+          onboarded: profile?.onboarding_completed ?? false,
+        })}
+        replace
+      />
+    )
+  }
 
   return (
     <>

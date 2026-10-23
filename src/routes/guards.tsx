@@ -49,7 +49,8 @@ export function RequireRole({ role, children }: { role: UserRole; children?: Rea
   const location = useLocation()
   if (initializing || (session && (profileLoading || accountLoading))) return <FullPageLoader />
   if (!session) return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />
-  if (!profile) return <FullPageLoader />
+  // Signed in but no profile yet — pick Brands / Collabs on onboarding.
+  if (!profile) return <Navigate to="/onboarding" replace />
   if (profile.status !== 'active') return <Suspended />
   if (!profile.role || (profile.role !== 'admin' && !profile.onboarding_completed)) return <Navigate to="/onboarding" replace />
   if (profile.role !== role) return <Navigate to={homeFor(profile.role, profile.onboarding_completed)} replace />
@@ -61,11 +62,15 @@ export function GuestOnly({ children }: { children?: React.ReactNode }) {
   const { initializing, session, profile, profileLoading } = useAuth()
   const location = useLocation()
   if (initializing || (session && profileLoading)) return <FullPageLoader />
-  if (session && profile) {
+  if (session) {
     const redirect = new URLSearchParams(location.search).get('redirect')
     return (
       <Navigate
-        to={destinationAfterLogin({ redirect, role: profile.role, onboarded: profile.onboarding_completed })}
+        to={destinationAfterLogin({
+          redirect,
+          role: profile?.role,
+          onboarded: profile?.onboarding_completed ?? false,
+        })}
         replace
       />
     )
