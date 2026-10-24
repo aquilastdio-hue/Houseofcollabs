@@ -79,6 +79,8 @@ export function CreatorInfoForm({
       engagement_rate: creator.engagement_rate != null ? String(creator.engagement_rate) : '',
       response_time: creator.response_time ?? '',
       available: creator.available,
+      barter_stance: (creator.barter_stance as 'yes' | 'selectively' | 'no' | null) ?? null,
+      travel_scope: (creator.travel_scope as 'within_city' | 'within_country' | 'out_of_country' | null) ?? null,
     },
   })
   const { errors, isSubmitting, isDirty } = form.formState
@@ -101,6 +103,8 @@ export function CreatorInfoForm({
           engagement_rate: values.engagement_rate,
           response_time: values.response_time || null,
           available: values.available,
+          barter_stance: values.barter_stance,
+          travel_scope: values.travel_scope,
         })
       } finally {
         await sync()
@@ -290,6 +294,49 @@ export function CreatorInfoForm({
         </div>
       </StudioSection>
       )}
+
+      <StudioSection title="Collaboration preferences" description="Let brands know if you're open to barter or travel.">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <Field label="Barter" htmlFor="barter_stance" optional error={errors.barter_stance?.message}>
+            <Controller
+              control={form.control}
+              name="barter_stance"
+              render={({ field }) => (
+                <Select
+                  id="barter_stance"
+                  value={field.value ?? ''}
+                  onValueChange={field.onChange}
+                  options={[
+                    { value: 'yes', label: 'Yes, I barter' },
+                    { value: 'selectively', label: 'Selectively' },
+                    { value: 'no', label: 'No' },
+                  ]}
+                  placeholder="Select"
+                />
+              )}
+            />
+          </Field>
+          <Field label="Open to travel" htmlFor="travel_scope" optional error={errors.travel_scope?.message}>
+            <Controller
+              control={form.control}
+              name="travel_scope"
+              render={({ field }) => (
+                <Select
+                  id="travel_scope"
+                  value={field.value ?? ''}
+                  onValueChange={field.onChange}
+                  options={[
+                    { value: 'within_city', label: 'Within city' },
+                    { value: 'within_country', label: 'Within country' },
+                    { value: 'out_of_country', label: 'Out of country' },
+                  ]}
+                  placeholder="Select"
+                />
+              )}
+            />
+          </Field>
+        </div>
+      </StudioSection>
 
       <FormActions submitLabel={submitLabel} submitting={isSubmitting} dirty={isDirty} secondary={secondaryAction} />
     </form>

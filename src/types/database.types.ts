@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.17"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       admin_users: {
@@ -4355,6 +4380,7 @@ export type Database = {
           p_query?: string
           p_sort?: string
           p_state?: string
+          p_travel?: string
           p_verified_only?: boolean
         }
         Returns: {
@@ -4390,6 +4416,7 @@ export type Database = {
           starting_price: number
           state: string
           total_count: number
+          travel_scope: string
           verified: boolean
         }[]
       }
@@ -4437,35 +4464,6 @@ export type Database = {
       set_creator_languages: {
         Args: { p_languages: string[] }
         Returns: undefined
-      }
-      set_initial_role: {
-        Args: { p_role: Database["public"]["Enums"]["user_role"] }
-        Returns: {
-          auth_user_id: string | null
-          avatar_url: string | null
-          created_at: string
-          email: string | null
-          email_account: boolean
-          email_campaigns: boolean
-          email_marketing: boolean
-          email_notifications: boolean
-          email_orders: boolean
-          email_payments: boolean
-          full_name: string | null
-          id: string
-          last_seen_at: string | null
-          onboarding_completed: boolean
-          phone: string | null
-          role: Database["public"]["Enums"]["user_role"] | null
-          status: Database["public"]["Enums"]["account_status"]
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "profiles"
-          isOneToOne: true
-          isSetofReturn: false
-        }
       }
       start_order_work: {
         Args: { p_order_id: string }
@@ -4813,6 +4811,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       account_status: ["active", "suspended", "deleted"],

@@ -172,6 +172,8 @@ export const creatorInfoSchema = z
       .refine((v) => v === null || v <= 100, 'Must be between 0 and 100'),
     response_time: z.string(),
     available: z.boolean(),
+    barter_stance: z.enum(['yes', 'selectively', 'no']).nullable(),
+    travel_scope: z.enum(['within_city', 'within_country', 'out_of_country']).nullable(),
   })
   .refine((v) => v.categories.includes(v.primary_category), { path: ['primary_category'], message: 'Pick your primary category' })
 export type CreatorInfoInput = z.input<typeof creatorInfoSchema>

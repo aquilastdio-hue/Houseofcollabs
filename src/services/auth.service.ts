@@ -81,10 +81,6 @@ export async function resendVerification(email: string) {
   if (error) throw toAppError(error)
 }
 
-export async function setInitialRole(role: Exclude<UserRole, 'admin'>) {
-  return unwrap(await supabase.rpc('set_initial_role', { p_role: role }))
-}
-
 export async function completeOnboarding() {
   return unwrap(await supabase.rpc('complete_onboarding'))
 }

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link } from 'react-router'
-import { BadgeCheck, Clock3, GitCompareArrows, MapPin, Sparkles, Star, Users } from 'lucide-react'
+import { BadgeCheck, Clock3, GitCompareArrows, MapPin, Plane, Sparkles, Star, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCompact, formatDays, formatINR, formatLocation } from '@/lib/format'
 import { isVideoUrl } from '@/utils/media'
@@ -12,7 +12,7 @@ import { useCompare } from '@/contexts/compare-context'
 import type { CategoryRef, CreatorCard as CreatorCardData, PortfolioPreview } from '@/types'
 import { SaveButton } from './save-button'
 
-export function isOnline(lastSeen?: string | null) {
+function isOnline(lastSeen?: string | null) {
   return !!lastSeen && Date.now() - new Date(lastSeen).getTime() < 5 * 60_000
 }
 
@@ -156,17 +156,27 @@ export function CreatorCard({
             </span>
           )}
         </div>
-        <div className="mt-auto flex items-end justify-between border-t border-line pt-3">
-          <div>
-            <p className="text-xs text-muted">Starting at</p>
-            <p className="font-display text-xl font-semibold tabular-nums">{creator.starting_price != null ? formatINR(creator.starting_price) : '—'}</p>
-          </div>
-          {creator.barter_stance && (
-            <div className="flex items-center gap-1.5 text-sm text-muted">
-              <span>Barter</span>
-              <span className="font-medium text-ink capitalize">{creator.barter_stance}</span>
+        <div className="mt-auto flex flex-col gap-2 border-t border-line pt-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted">Starting at</p>
+              <p className="font-display text-xl font-semibold tabular-nums">{creator.starting_price != null ? formatINR(creator.starting_price) : '—'}</p>
             </div>
-          )}
+            <div className="flex flex-col items-end gap-1">
+              {creator.barter_stance && (
+                <div className="flex items-center gap-1.5 text-sm text-muted">
+                  <span>Barter</span>
+                  <span className="font-medium text-ink capitalize">{creator.barter_stance}</span>
+                </div>
+              )}
+              {creator.travel_scope && (
+                <div className="flex items-center gap-1.5 text-sm text-muted">
+                  <Plane className="size-3.5 shrink-0" />
+                  <span className="font-medium text-ink capitalize">{creator.travel_scope.replace(/_/g, ' ')}</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         <Link
           to={href}

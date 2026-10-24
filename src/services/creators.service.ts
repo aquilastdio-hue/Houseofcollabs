@@ -41,6 +41,8 @@ export type CreatorSearchParams = {
   platform?: string
   /** Only creators who accept barter collaborations. */
   barter?: boolean
+  /** Filter by travel scope: within_city, within_country, out_of_country */
+  travel?: string
   verified?: boolean
   available?: boolean
   minRating?: number
@@ -73,6 +75,7 @@ export async function searchCreators(p: CreatorSearchParams): Promise<{ items: C
       p_verified_only: p.verified || undefined,
       p_available_only: p.available || undefined,
       p_barter: p.barter || undefined,
+      p_travel: p.travel || undefined,
       p_min_rating: p.minRating,
       p_sort: p.sort || 'relevance',
       p_limit: pageSize,
@@ -210,7 +213,7 @@ export type CreatorEditable = Pick<
   TablesUpdate<'creators'>,
   | 'display_name' | 'slug' | 'headline' | 'bio' | 'profile_image_url' | 'cover_image_url' | 'intro_video_url'
   | 'gender' | 'age' | 'city' | 'state' | 'country' | 'creator_type' | 'engagement_rate' | 'available'
-  | 'response_time' | 'onboarding_step'
+  | 'response_time' | 'onboarding_step' | 'barter_stance' | 'travel_scope'
 >
 
 export async function createMyCreator(userId: string, values: CreatorEditable & { display_name: string }): Promise<Creator> {
