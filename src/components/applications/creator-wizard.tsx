@@ -144,7 +144,7 @@ export function Page1({ form }: { form: Form }) {
                 kind="image"
                 path={field.value}
                 label="Upload photo"
-                hint="Face should be clearly visible"
+                hint="Image should be clear and of your Face only"
                 onUploaded={(p) => field.onChange(p)}
                 onClear={() => field.onChange('')}
               />
@@ -234,6 +234,7 @@ export function Page3({ control }: { control: Control<CreatorApplicationValues> 
             hint={`If you can, include a brand collaboration or a video promoting a brand — that's what brands look for first. Up to ${MAX_VIDEOS}.`}
           >
             <MultiFileDrop kind="video" value={field.value} onChange={field.onChange} max={MAX_VIDEOS} label="Add videos" />
+            <p className="mt-2 text-xs text-muted">Please upload clear videos; vertical videos are preferred.</p>
           </Field>
         )}
       />
@@ -244,6 +245,7 @@ export function Page3({ control }: { control: Control<CreatorApplicationValues> 
         render={({ field, fieldState }) => (
           <Field label="Photos" required error={fieldState.error?.message} hint={`Up to ${MAX_PHOTOS}.`}>
             <MultiFileDrop kind="image" value={field.value} onChange={field.onChange} max={MAX_PHOTOS} label="Add photos" />
+            <p className="mt-2 text-xs text-muted">Please upload clear photos; vertical photos are preferred.</p>
           </Field>
         )}
       />
@@ -323,6 +325,17 @@ export function Page5({ control }: { control: Control<CreatorApplicationValues> 
         render={({ field }) => (
           <Field label="Open to" optional>
             <Chips name="Open to" options={OPEN_TO} value={field.value} onChange={field.onChange} />
+            <p className="mt-3 text-sm text-muted">
+              Please join our WhatsApp community -{' '}
+              <a
+                href="https://chat.whatsapp.com/CMcu8orqbdG3HpE1SPOJEj"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand underline hover:text-brand-soft"
+              >
+                https://chat.whatsapp.com/CMcu8orqbdG3HpE1SPOJEj
+              </a>
+            </p>
           </Field>
         )}
       />

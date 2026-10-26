@@ -207,6 +207,11 @@ function CollaborationTermCards({ creator }: { creator: CreatorProfile }) {
     <>
       <TermCard badge="Barter" title="Barter collaboration" value={BARTER_LABELS[barter]} icon={Handshake} />
       <TermCard badge="Travel" title="Open to travel" value={travel ? labelFor(TRAVEL_SCOPES, travel) : 'On request'} icon={Plane} />
+      <div className="col-span-full mt-4 rounded-card border border-line bg-surface p-4 text-center">
+        <p className="text-sm text-muted">
+          Please join our WhatsApp community - <a href="https://chat.whatsapp.com/CMcu8orqbdG3HpE1SPOJEj" target="_blank" rel="noopener noreferrer" className="text-brand underline hover:text-brand-soft">https://chat.whatsapp.com/CMcu8orqbdG3HpE1SPOJEj</a>
+        </p>
+      </div>
     </>
   )
 }

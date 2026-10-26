@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Clock3, GitCompareArrows, Timer } from 'lucide-react'
+import { Clock3, GitCompareArrows, Plane, Timer } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDays, formatINR } from '@/lib/format'
 import { RESPONSE_TIMES, labelFor } from '@/lib/constants'
@@ -176,10 +176,22 @@ export function CreatorMobileBar({ creator, mode }: { creator: CreatorProfile; m
 
   return (
     <div className={cn('sticky z-20 -mx-gutter mt-12 border-t border-line bg-surface/95 px-gutter py-3 backdrop-blur-md lg:hidden', offset)}>
-      <div className="flex items-center gap-2">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           <p className="text-xs text-muted">Starting at</p>
           <StartingPrice creator={creator} className="truncate text-lg" />
+          {creator.barter_stance && (
+            <div className="flex items-center gap-1.5 text-sm text-muted">
+              <span>Barter</span>
+              <span className="font-medium text-ink capitalize">{creator.barter_stance}</span>
+            </div>
+          )}
+          {creator.travel_scope && (
+            <div className="flex items-center gap-1.5 text-sm text-muted">
+              <Plane className="size-3.5 shrink-0" />
+              <span className="font-medium text-ink capitalize">{creator.travel_scope.replace(/_/g, ' ')}</span>
+            </div>
+          )}
         </div>
         <HireButton creator={creator} />
       </div>

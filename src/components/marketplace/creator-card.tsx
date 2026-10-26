@@ -157,12 +157,12 @@ export function CreatorCard({
           )}
         </div>
         <div className="mt-auto flex flex-col gap-2 border-t border-line pt-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs text-muted">Starting at</p>
               <p className="font-display text-xl font-semibold tabular-nums">{creator.starting_price != null ? formatINR(creator.starting_price) : '—'}</p>
             </div>
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-col items-start gap-1 sm:items-end">
               {creator.barter_stance && (
                 <div className="flex items-center gap-1.5 text-sm text-muted">
                   <span>Barter</span>

@@ -61,8 +61,8 @@ export function BrandDetailsCard({ brand: b }: { brand: AdminBrandDetail }) {
             </span>
           ) : null}
         </DetailItem>
-        <DetailItem label="Contact person">{prefs?.contact_person as string || null}</DetailItem>
-        <DetailItem label="Designation">{prefs?.designation as string || null}</DetailItem>
+        <DetailItem label="Contact person">{prefs?.contact_person ? String(prefs.contact_person) : null}</DetailItem>
+        <DetailItem label="Designation">{prefs?.designation ? String(prefs.designation) : null}</DetailItem>
         <DetailItem label="Contact email">
           {b.contact_email ? (
             <a href={`mailto:${b.contact_email}`} className="focus-ring rounded-sm underline decoration-ink/25 underline-offset-2 hover:decoration-ink">
@@ -71,8 +71,8 @@ export function BrandDetailsCard({ brand: b }: { brand: AdminBrandDetail }) {
           ) : null}
         </DetailItem>
         <DetailItem label="Contact phone">{b.contact_phone ? <a href={`tel:${b.contact_phone.replace(/[^+\d]/g, '')}`} className="focus-ring rounded-sm hover:underline">{b.contact_phone}</a> : null}</DetailItem>
-        <DetailItem label="WhatsApp">{prefs?.whatsapp as string || null}</DetailItem>
-        <DetailItem label="LinkedIn">{prefs?.linkedin_url as string ? <ExternalAnchor href={prefs.linkedin_url as string}>{(prefs.linkedin_url as string).replace(/^https?:\/\/(www\.)?/, '')}</ExternalAnchor> : null}</DetailItem>
+        <DetailItem label="WhatsApp">{prefs?.whatsapp ? String(prefs.whatsapp) : null}</DetailItem>
+        <DetailItem label="LinkedIn">{prefs?.linkedin_url ? <ExternalAnchor href={String(prefs.linkedin_url)}>{String(prefs.linkedin_url).replace(/^https?:\/\/(www\.)?/, '')}</ExternalAnchor> : null}</DetailItem>
         <DetailItem label="Slug" mono>
           {b.brand_slug}
         </DetailItem>

@@ -158,7 +158,7 @@ export function BasicInfoForm({
             profile-photo column claimed the row's full width and squeezed the cover
             column until its hint wrapped one word per line. */}
         <div className={cn('grid grid-cols-1 gap-6 lg:items-start', !essentials && 'lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]')}>
-          <Field label="Profile photo" hint="Required to publish. Face should be clearly visible">
+          <Field label="Profile photo" hint="Required to publish. Image should be clear and of your Face only">
             <Controller
               control={form.control}
               name="profile_image_url"
