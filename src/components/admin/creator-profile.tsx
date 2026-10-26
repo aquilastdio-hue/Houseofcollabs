@@ -107,11 +107,10 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
 
 export function CreatorOverview({ creator: c }: { creator: AdminCreatorDetail }) {
   const contentTypes = (c.content_types ?? []).map((t) => labelFor(CONTENT_TYPES, t))
-  const prefs = c.profile?.applications?.[0]?.profile as Record<string, unknown> | null
   
   // Get application data if available
   const application = (c.profile?.applications ?? []).find((a) => a.role === 'creator')
-  const appProfile = application?.profile as Record<string, unknown> | null
+  const appProfile = (application as any)?.profile as Record<string, unknown> | null
   
   return (
     <DetailCard title="Profile" description="What brands see on the storefront, plus internal review data.">
@@ -240,7 +239,7 @@ export function CreatorStorefront({ creator: c }: { creator: AdminCreatorDetail 
   
   // Get application portfolio data
   const application = (c.profile?.applications ?? []).find((a) => a.role === 'creator')
-  const appProfile = application?.profile as Record<string, unknown> | null
+  const appProfile = (application as any)?.profile as Record<string, unknown> | null
   const appVideos = appProfile?.videos as string[] | null
   const appPhotos = appProfile?.photos as string[] | null
 

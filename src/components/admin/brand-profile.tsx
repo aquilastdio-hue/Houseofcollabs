@@ -32,7 +32,7 @@ export function BrandIdentity({ brand: b }: { brand: AdminBrandDetail }) {
 }
 
 export function BrandDetailsCard({ brand: b }: { brand: AdminBrandDetail }) {
-  const prefs = b.preferences as Record<string, unknown> | null
+  const prefs = (b as any).preferences as Record<string, unknown> | null
   
   return (
     <DetailCard title="Brand profile" description="What creators see when they work with this brand.">
@@ -151,7 +151,7 @@ export function BrandAccountCard({ brand: b }: { brand: AdminBrandDetail }) {
 }
 
 export function BrandPreferencesCard({ brand: b }: { brand: AdminBrandDetail }) {
-  const prefs = b.preferences as Record<string, unknown> | null
+  const prefs = (b as any).preferences as Record<string, unknown> | null
   const creatorCategories = prefs?.creator_categories as string[] | null
   const collaborationTypes = prefs?.collaboration_types as string[] | null
   const creatorLocation = prefs?.creator_location as string | null
