@@ -10,7 +10,7 @@ import { EmptyState, ErrorState } from '@/components/shared/states'
 import { AccountActionsPanel } from '@/components/admin/account-actions'
 import { Button } from '@/components/ui/button'
 import { DetailPageSkeleton } from '@/components/admin/detail'
-import { BrandAccountCard, BrandDetailsCard, BrandIdentity, BrandRecentOrders } from '@/components/admin/brand-profile'
+import { BrandAccountCard, BrandDetailsCard, BrandIdentity, BrandPreferencesCard, BrandRecentOrders } from '@/components/admin/brand-profile'
 import { BrandEditDialog } from '@/components/admin/brand-edit-dialog'
 import { ordersHref } from '@/components/admin/order-presets'
 
@@ -78,6 +78,7 @@ export default function BrandDetail() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-6">
           <BrandDetailsCard brand={b} />
+          <BrandPreferencesCard brand={b} />
           <BrandRecentOrders brandId={b.id} />
         </div>
         <aside className="space-y-6">

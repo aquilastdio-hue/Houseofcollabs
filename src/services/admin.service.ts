@@ -77,7 +77,7 @@ const ADMIN_CREATOR_SELECT = `
   *,
   profile:profiles (
     id, email, full_name, status, created_at, last_seen_at, phone,
-    applications!applications_profile_id_fkey ( role, status, phone, created_at, whatsapp:profile->>whatsapp )
+    applications!applications_profile_id_fkey ( role, status, phone, created_at, whatsapp, profile )
   ),
   creator_type_info:creator_types ( slug, name ),
   creator_categories ( is_primary, category:categories ( id, name, slug ) ),
@@ -162,7 +162,7 @@ export async function listBrands(p: { search?: string; status?: AccountStatus | 
   return { items, total: Number(items[0]?.total_count ?? 0), page, pageSize }
 }
 
-const ADMIN_BRAND_SELECT = `*, profile:profiles ( id, email, full_name, status, created_at, last_seen_at, phone )`
+const ADMIN_BRAND_SELECT = `*, profile:profiles ( id, email, full_name, status, created_at, last_seen_at, phone, applications ( * ) )`
 const adminBrandQuery = () => supabase.from('brands').select(ADMIN_BRAND_SELECT)
 export type AdminBrandDetail = QueryData<ReturnType<typeof adminBrandQuery>>[number]
 

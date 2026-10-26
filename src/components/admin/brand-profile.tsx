@@ -32,8 +32,16 @@ export function BrandIdentity({ brand: b }: { brand: AdminBrandDetail }) {
 }
 
 export function BrandDetailsCard({ brand: b }: { brand: AdminBrandDetail }) {
+  const prefs = b.preferences as Record<string, unknown> | null
+  
   return (
     <DetailCard title="Brand profile" description="What creators see when they work with this brand.">
+      {b.brand_logo_url && (
+        <div className="mb-6">
+          <p className="mb-2 text-xs font-medium text-faint">Brand logo</p>
+          <img src={b.brand_logo_url} alt={`${b.brand_name} logo`} className="h-16 w-auto rounded border border-line" />
+        </div>
+      )}
       {b.description && <p className="mb-6 max-w-prose text-sm leading-relaxed whitespace-pre-line text-ink-soft">{b.description}</p>}
       <DetailList>
         <DetailItem label="Industry">{b.industry}</DetailItem>
@@ -53,6 +61,8 @@ export function BrandDetailsCard({ brand: b }: { brand: AdminBrandDetail }) {
             </span>
           ) : null}
         </DetailItem>
+        <DetailItem label="Contact person">{prefs?.contact_person as string || null}</DetailItem>
+        <DetailItem label="Designation">{prefs?.designation as string || null}</DetailItem>
         <DetailItem label="Contact email">
           {b.contact_email ? (
             <a href={`mailto:${b.contact_email}`} className="focus-ring rounded-sm underline decoration-ink/25 underline-offset-2 hover:decoration-ink">
@@ -61,6 +71,8 @@ export function BrandDetailsCard({ brand: b }: { brand: AdminBrandDetail }) {
           ) : null}
         </DetailItem>
         <DetailItem label="Contact phone">{b.contact_phone ? <a href={`tel:${b.contact_phone.replace(/[^+\d]/g, '')}`} className="focus-ring rounded-sm hover:underline">{b.contact_phone}</a> : null}</DetailItem>
+        <DetailItem label="WhatsApp">{prefs?.whatsapp as string || null}</DetailItem>
+        <DetailItem label="LinkedIn">{prefs?.linkedin_url as string ? <ExternalAnchor href={prefs.linkedin_url as string}>{(prefs.linkedin_url as string).replace(/^https?:\/\/(www\.)?/, '')}</ExternalAnchor> : null}</DetailItem>
         <DetailItem label="Slug" mono>
           {b.brand_slug}
         </DetailItem>
@@ -134,6 +146,74 @@ export function BrandAccountCard({ brand: b }: { brand: AdminBrandDetail }) {
           if (pending) change.mutate({ next: pending === 'suspend' ? 'suspended' : 'active', reason })
         }}
       />
+    </DetailCard>
+  )
+}
+
+export function BrandPreferencesCard({ brand: b }: { brand: AdminBrandDetail }) {
+  const prefs = b.preferences as Record<string, unknown> | null
+  const creatorCategories = prefs?.creator_categories as string[] | null
+  const collaborationTypes = prefs?.collaboration_types as string[] | null
+  const creatorLocation = prefs?.creator_location as string | null
+  const specificCities = prefs?.specific_cities as string[] | null
+  const budgetRange = prefs?.budget_range as string | null
+  
+  const budgetLabels: Record<string, string> = {
+    under_25k: 'Under ₹25K',
+    '25k_50k': '₹25K – ₹50K',
+    '50k_100k': '₹50K – ₹1L',
+    '100k_500k': '₹1L – ₹5L',
+    over_500k: '₹5L+',
+  }
+  
+  const locationLabels: Record<string, string> = {
+    pan_india: 'Pan India',
+    specific: 'Specific cities',
+  }
+  
+  return (
+    <DetailCard title="Preferences" description="What the brand is looking for in creators, from onboarding.">
+      <DetailList>
+        <DetailItem label="Creator categories" className="sm:col-span-2">
+          {creatorCategories && creatorCategories.length > 0 ? (
+            <span className="flex flex-wrap gap-1.5">
+              {creatorCategories.map((cat) => (
+                <span key={cat} className="rounded-pill bg-subtle px-2.5 py-0.5 text-xs font-medium">
+                  {cat}
+                </span>
+              ))}
+            </span>
+          ) : null}
+        </DetailItem>
+        <DetailItem label="Collaboration types" className="sm:col-span-2">
+          {collaborationTypes && collaborationTypes.length > 0 ? (
+            <span className="flex flex-wrap gap-1.5">
+              {collaborationTypes.map((type) => (
+                <span key={type} className="rounded-pill bg-subtle px-2.5 py-0.5 text-xs font-medium">
+                  {type}
+                </span>
+              ))}
+            </span>
+          ) : null}
+        </DetailItem>
+        <DetailItem label="Creator location preference">
+          {creatorLocation ? locationLabels[creatorLocation] || creatorLocation : null}
+        </DetailItem>
+        <DetailItem label="Specific cities" className="sm:col-span-2">
+          {creatorLocation === 'specific' && specificCities && specificCities.length > 0 ? (
+            <span className="flex flex-wrap gap-1.5">
+              {specificCities.map((city) => (
+                <span key={city} className="rounded-pill bg-subtle px-2.5 py-0.5 text-xs font-medium">
+                  {city}
+                </span>
+              ))}
+            </span>
+          ) : null}
+        </DetailItem>
+        <DetailItem label="Budget range">
+          {budgetRange ? budgetLabels[budgetRange] || budgetRange : null}
+        </DetailItem>
+      </DetailList>
     </DetailCard>
   )
 }

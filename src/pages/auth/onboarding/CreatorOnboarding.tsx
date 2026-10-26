@@ -298,7 +298,9 @@ function OnboardingFlow({ initialStep }: { initialStep: number }) {
       <Seo title="Create your creator profile" noindex />
       <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-md">
         <div className="container-page flex h-(--header-height) items-center justify-between gap-3">
-          <Logo />
+          <Link to="/" className="focus-ring">
+            <Logo />
+          </Link>
           <div className="flex items-center gap-2 sm:gap-4">
             {creator && (
               <div className="hidden w-44 sm:block" aria-live="polite">

@@ -75,16 +75,9 @@ export default function Onboarding() {
     return (
       <>
         <Seo title="Create your brand account" noindex />
-        <div className="min-h-dvh bg-canvas">
-          <header className="border-b border-line bg-canvas/85 backdrop-blur-md">
-            <div className="container-page flex h-(--header-height) items-center justify-between">
-              <Logo />
-            </div>
-          </header>
-          <main id="main" className="container-page flex justify-center py-10 sm:py-16">
-            <BrandOnboarding />
-          </main>
-        </div>
+        <React.Suspense fallback={<FullPageLoader />}>
+          <BrandOnboarding />
+        </React.Suspense>
       </>
     )
   }
@@ -115,11 +108,10 @@ export default function Onboarding() {
             <RoleSelect />
           </Frame>
         ) : profile.role === 'brand' ? (
-          <Frame>
-            <React.Suspense fallback={<PageLoader />}>
-              <BrandOnboarding />
-            </React.Suspense>
-          </Frame>
+          // Brand onboarding now handles its own header (sticky) like creator onboarding
+          <React.Suspense fallback={<FullPageLoader />}>
+            <BrandOnboarding />
+          </React.Suspense>
         ) : (
           // No <Frame> here: CreatorOnboarding renders its own sticky header with
           // the step progress and Save & exit. Wrapping it would stack a second

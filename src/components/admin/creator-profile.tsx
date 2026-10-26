@@ -107,6 +107,12 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
 
 export function CreatorOverview({ creator: c }: { creator: AdminCreatorDetail }) {
   const contentTypes = (c.content_types ?? []).map((t) => labelFor(CONTENT_TYPES, t))
+  const prefs = c.profile?.applications?.[0]?.profile as Record<string, unknown> | null
+  
+  // Get application data if available
+  const application = (c.profile?.applications ?? []).find((a) => a.role === 'creator')
+  const appProfile = application?.profile as Record<string, unknown> | null
+  
   return (
     <DetailCard title="Profile" description="What brands see on the storefront, plus internal review data.">
       <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
@@ -171,6 +177,28 @@ export function CreatorOverview({ creator: c }: { creator: AdminCreatorDetail })
             <span className="text-faint">Not uploaded</span>
           )}
         </DetailItem>
+        {/* Onboarding application data */}
+        {appProfile && (
+          <>
+            <DetailItem label="Open to" className="sm:col-span-2">
+              {appProfile.open_to && Array.isArray(appProfile.open_to) && appProfile.open_to.length > 0 ? (
+                <span className="flex flex-wrap gap-1.5">
+                  {(appProfile.open_to as string[]).map((item) => (
+                    <span key={item} className="rounded-pill bg-subtle px-2.5 py-0.5 text-xs font-medium">
+                      {item}
+                    </span>
+                  ))}
+                </span>
+              ) : null}
+            </DetailItem>
+            <DetailItem label="Barter stance">
+              {appProfile.barter_stance as string || null}
+            </DetailItem>
+            <DetailItem label="Travel scope">
+              {appProfile.travel_scope as string || null}
+            </DetailItem>
+          </>
+        )}
       </DetailList>
     </DetailCard>
   )
@@ -209,6 +237,12 @@ export function CreatorStorefront({ creator: c }: { creator: AdminCreatorDetail 
   const socials = c.creator_social_accounts ?? []
   const languages = c.creator_languages ?? []
   const services = [...(c.creator_services ?? [])].sort((a, b) => a.sort_order - b.sort_order)
+  
+  // Get application portfolio data
+  const application = (c.profile?.applications ?? []).find((a) => a.role === 'creator')
+  const appProfile = application?.profile as Record<string, unknown> | null
+  const appVideos = appProfile?.videos as string[] | null
+  const appPhotos = appProfile?.photos as string[] | null
 
   return (
     <>
@@ -251,6 +285,39 @@ export function CreatorStorefront({ creator: c }: { creator: AdminCreatorDetail 
               </li>
             ))}
           </ul>
+        )}
+      </DetailCard>
+
+      <DetailCard title="Onboarding portfolio" description="Content uploaded during sign-up for review.">
+        {(!appVideos || appVideos.length === 0) && (!appPhotos || appPhotos.length === 0) ? (
+          <p className="text-sm text-muted">No portfolio uploaded during onboarding.</p>
+        ) : (
+          <div className="space-y-6">
+            {appVideos && appVideos.length > 0 && (
+              <div>
+                <h3 className="mb-3 text-sm font-semibold">Videos ({appVideos.length})</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {appVideos.map((video, idx) => (
+                    <div key={idx} className="rounded-control border border-line overflow-hidden">
+                      <video src={video} controls playsInline preload="metadata" className="w-full max-h-48 bg-night" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {appPhotos && appPhotos.length > 0 && (
+              <div>
+                <h3 className="mb-3 text-sm font-semibold">Photos ({appPhotos.length})</h3>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                  {appPhotos.map((photo, idx) => (
+                    <div key={idx} className="rounded-control border border-line overflow-hidden">
+                      <img src={photo} alt={`Portfolio photo ${idx + 1}`} className="w-full h-32 object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </DetailCard>
 
