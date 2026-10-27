@@ -68,6 +68,9 @@ export function Footer() {
             © {new Date().getFullYear()} {site.name}. All rights reserved.
           </p>
           <p>Made for creators and brands across India · Payments secured by Razorpay</p>
+          <p>
+            Powered by <span className="font-medium text-white/80">Aquila Studio</span>
+          </p>
         </div>
       </div>
     </footer>
