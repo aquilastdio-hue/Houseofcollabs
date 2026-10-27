@@ -2,7 +2,7 @@ import type { CreatorProfile } from '@/services/creators.service'
 
 export type ProfileMode = 'brand' | 'public'
 
-export const PROFILE_SECTIONS = ['portfolio', 'instagram', 'services', 'about', 'reviews'] as const
+export const PROFILE_SECTIONS = ['portfolio', 'stats', 'services', 'about', 'reviews'] as const
 export type ProfileSectionId = (typeof PROFILE_SECTIONS)[number]
 
 /** Categories with the primary one first. */

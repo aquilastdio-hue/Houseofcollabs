@@ -15,8 +15,7 @@ import { CreatorActionCard, CreatorMobileBar, CreatorQuickActions, useCreatorAcc
 import { CreatorProfileHero } from './creator-profile-hero'
 import { AboutSection, PortfolioSection, ProfileSectionNav, ServicesSection } from './creator-profile-sections'
 import { ReviewsSection } from './creator-reviews'
-import { InstagramSection, hasInstagramStats } from './creator-instagram-section'
-import { useInstagramStats } from '@/hooks/use-creators'
+import { StatsSection } from './creator-instagram-section'
 import {
   PROFILE_SECTIONS,
   firstName,
@@ -156,7 +155,6 @@ export function CreatorProfileView({ mode, creator }: { mode: ProfileMode; creat
   const access = useCreatorAccess(creator)
   const { hash } = useLocation()
   const primary = profileCategories(creator)[0]
-  const instagram = useInstagramStats(creator.id)
 
   React.useEffect(() => {
     recordProfileView(creator.id).catch(() => undefined)
@@ -181,7 +179,7 @@ export function CreatorProfileView({ mode, creator }: { mode: ProfileMode; creat
 
   const sections = [
     { id: 'portfolio' as const, label: 'Portfolio', count: visiblePortfolio(creator).length },
-    ...(hasInstagramStats(instagram.data) ? [{ id: 'instagram' as const, label: 'Instagram' }] : []),
+    { id: 'stats' as const, label: 'Stats' },
     { id: 'services' as const, label: 'Services', count: visibleServices(creator, access.isOwner).length },
     { id: 'about' as const, label: 'About' },
     { id: 'reviews' as const, label: 'Reviews', count: creator.review_count },
@@ -217,7 +215,7 @@ export function CreatorProfileView({ mode, creator }: { mode: ProfileMode; creat
           <ProfileSectionNav items={sections} />
           <div className="space-y-16">
             <PortfolioSection creator={creator} />
-            <InstagramSection creator={creator} />
+            <StatsSection creator={creator} />
             <ServicesSection creator={creator} />
             <AboutSection creator={creator} />
             <ReviewsSection creator={creator} />

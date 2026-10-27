@@ -1,18 +1,20 @@
-import { Clapperboard, ExternalLink, Eye, Heart, Instagram, Lock, MessageCircle } from 'lucide-react'
+import { BarChart3, Clapperboard, ExternalLink, Eye, Heart, Instagram, Lock, MessageCircle } from 'lucide-react'
 import { formatCompact, formatPercent, formatRelative } from '@/lib/format'
 import { useInstagramStats } from '@/hooks/use-creators'
 import type { InstagramPost, InstagramStats } from '@/services/instagram-stats.service'
 import type { CreatorProfile } from '@/services/creators.service'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/shared/states'
 import { ProfileSection } from './creator-profile-sections'
 
 /**
- * The creator's public Instagram numbers, refreshed every Sunday on the server.
- * Shown only once there is something to show: a creator with no Instagram, or
- * one Apify couldn't find, simply has no section.
+ * The "Stats" tab: the creator's public Instagram numbers, refreshed every
+ * Sunday on the server. The tab is always there; until the first fetch (or
+ * when Instagram couldn't be read) it says so rather than disappearing.
  */
 
-/** Whether the profile should list the section at all (and in its nav). */
+/** Whether there are numbers to show, rather than the placeholder. */
 export function hasInstagramStats(stats: InstagramStats | null | undefined): stats is InstagramStats {
   return !!stats && (stats.status === 'ok' || stats.status === 'private') && stats.followers_count !== null
 }
@@ -75,21 +77,39 @@ function PostTile({ post }: { post: InstagramPost }) {
   )
 }
 
-export function InstagramSection({ creator }: { creator: CreatorProfile }) {
-  // Nothing while loading: most of the page is above, and a skeleton for a
-  // section that may not exist would only jump away again.
-  const { data: stats } = useInstagramStats(creator.id)
-  if (!hasInstagramStats(stats)) return null
+export function StatsSection({ creator }: { creator: CreatorProfile }) {
+  const { data: stats, isPending } = useInstagramStats(creator.id)
+
+  if (!hasInstagramStats(stats)) {
+    return (
+      <ProfileSection id="stats" title="Stats" description="Public Instagram numbers, updated every week.">
+        {isPending ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-hidden>
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-20 rounded-card" />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            compact
+            icon={<BarChart3 />}
+            title="Stats are on their way"
+            description="Instagram numbers appear here after the next weekly update."
+          />
+        )}
+      </ProfileSection>
+    )
+  }
 
   const profileUrl = `https://www.instagram.com/${stats.username}/`
   const sample = stats.posts_sampled
   return (
     <ProfileSection
-      id="instagram"
-      title="Instagram"
+      id="stats"
+      title="Stats"
       description={
         <>
-          Public numbers from{' '}
+          Public Instagram numbers from{' '}
           <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
             @{stats.username}
           </a>

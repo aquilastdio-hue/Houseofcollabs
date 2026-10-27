@@ -11,11 +11,31 @@ import { Button } from '@/components/ui/button'
  * Instagram account. Admins compare it with the profile by eye while reviewing;
  * it stays in the private applications bucket and is never published.
  *
- * The front camera opens in the page so the photo is taken now rather than
- * picked from the gallery. Where there is no camera, or access is refused, the
- * fallback is a file input with `capture="user"` — on phones that still opens
- * the front camera.
+ * Camera only, on purpose: there is no file picker, so the photo has to be
+ * taken now rather than chosen from a gallery. When the camera can't open,
+ * the message says why and how to fix it instead of offering a way round.
+ *
+ * The site's Permissions-Policy header (vercel.json) must allow `camera=(self)`,
+ * or every browser refuses before asking.
  */
+
+function cameraProblem(e: unknown): string {
+  const name = e instanceof DOMException ? e.name : ''
+  if (name === 'NotAllowedError' || name === 'SecurityError') {
+    return 'Camera access is blocked. Allow the camera for this site in your browser settings, then tap Try again.'
+  }
+  if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+    return 'We couldn’t find a camera on this device. Please continue on your phone.'
+  }
+  if (name === 'NotReadableError' || name === 'AbortError') {
+    return 'Your camera is busy in another app. Close it and tap Try again.'
+  }
+  return 'We couldn’t open your camera. Tap Try again, or continue on your phone.'
+}
+
+const NO_CAMERA_API =
+  'This browser can’t open the camera. Open this page in Chrome or Safari — in-app browsers such as Instagram’s don’t allow it.'
+
 export function SelfieCapture({
   path,
   onUploaded,
@@ -28,20 +48,26 @@ export function SelfieCapture({
   invalid?: boolean
 }) {
   const videoRef = React.useRef<HTMLVideoElement>(null)
-  const inputRef = React.useRef<HTMLInputElement>(null)
-  const streamRef = React.useRef<MediaStream | null>(null)
-  const [live, setLive] = React.useState(false)
+  const [stream, setStream] = React.useState<MediaStream | null>(null)
+  const [starting, setStarting] = React.useState(false)
   const [preview, setPreview] = React.useState<string | null>(null)
-  const [message, setMessage] = React.useState<string | null>(null)
-  const [fallback, setFallback] = React.useState(false)
+  const [problem, setProblem] = React.useState<string | null>(null)
 
   const stop = React.useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop())
-    streamRef.current = null
-    setLive(false)
+    setStream((s) => {
+      s?.getTracks().forEach((t) => t.stop())
+      return null
+    })
   }, [])
 
-  React.useEffect(() => stop, [stop])
+  // Attach once the <video> exists; stop the camera when leaving the page.
+  React.useEffect(() => {
+    const video = videoRef.current
+    if (!video || !stream) return
+    video.srcObject = stream
+    void video.play().catch(() => undefined)
+  }, [stream])
+  React.useEffect(() => () => stream?.getTracks().forEach((t) => t.stop()), [stream])
   React.useEffect(() => () => {
     if (preview) URL.revokeObjectURL(preview)
   }, [preview])
@@ -49,37 +75,31 @@ export function SelfieCapture({
   const upload = useMutation({
     mutationFn: (file: File) => uploadApplicationFile(file),
     onSuccess: (p, file) => {
-      setMessage(null)
+      setProblem(null)
       setPreview(URL.createObjectURL(file))
       onUploaded(p)
     },
-    onError: (e) => setMessage(toAppError(e).message),
+    onError: (e) => setProblem(toAppError(e).message),
   })
 
   async function open() {
-    setMessage(null)
+    setProblem(null)
     if (!navigator.mediaDevices?.getUserMedia) {
-      setFallback(true)
-      inputRef.current?.click()
+      setProblem(NO_CAMERA_API)
       return
     }
+    setStarting(true)
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 1280 } },
-        audio: false,
-      })
-      streamRef.current = stream
-      setLive(true)
-      // The <video> mounts with `live`; attach once it exists.
-      requestAnimationFrame(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          void videoRef.current.play().catch(() => undefined)
-        }
-      })
-    } catch {
-      setFallback(true)
-      setMessage('We couldn’t open your camera. Allow camera access and try again, or take a photo with the button below.')
+      setStream(
+        await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 1280 } },
+          audio: false,
+        }),
+      )
+    } catch (e) {
+      setProblem(cameraProblem(e))
+    } finally {
+      setStarting(false)
     }
   }
 
@@ -111,24 +131,7 @@ export function SelfieCapture({
     void open()
   }
 
-  const fileInput = (
-    <input
-      ref={inputRef}
-      type="file"
-      accept="image/jpeg,image/png,image/webp"
-      capture="user"
-      className="sr-only"
-      tabIndex={-1}
-      aria-hidden
-      onChange={(e) => {
-        const file = e.target.files?.[0]
-        e.target.value = ''
-        if (file) upload.mutate(file)
-      }}
-    />
-  )
-
-  if (live) {
+  if (stream) {
     return (
       <div className="space-y-3">
         <div className="relative mx-auto aspect-square w-full max-w-xs overflow-hidden rounded-card bg-ink">
@@ -176,22 +179,22 @@ export function SelfieCapture({
     )
   }
 
+  const busy = starting || upload.isPending
   return (
     <div>
-      {fileInput}
       <Button
         type="button"
         variant="secondary"
         block
-        disabled={upload.isPending}
+        disabled={busy}
         aria-invalid={invalid || undefined}
-        onClick={() => (fallback ? inputRef.current?.click() : void open())}
+        onClick={() => void open()}
       >
-        {upload.isPending ? <Loader2 className="animate-spin" /> : <Camera />}
-        {upload.isPending ? 'Uploading…' : fallback ? 'Take a photo' : 'Open camera'}
+        {busy ? <Loader2 className="animate-spin" /> : <Camera />}
+        {upload.isPending ? 'Uploading…' : starting ? 'Opening camera…' : problem ? 'Try again' : 'Open camera'}
       </Button>
-      <p className={cn('mt-1.5 text-xs', message ? 'text-danger' : 'text-muted')}>
-        {message ?? 'Face the camera in good light, no sunglasses. Only our team sees this — it never appears on your profile.'}
+      <p className={cn('mt-1.5 text-xs', problem ? 'text-danger' : 'text-muted')}>
+        {problem ?? 'Take a live selfie: face the camera in good light, no sunglasses. Only our team sees this — it never appears on your profile.'}
       </p>
     </div>
   )
