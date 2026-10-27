@@ -19,6 +19,7 @@ const complete = {
   city: 'Delhi',
   photo_path: 'photo.jpg',
   instagram: { handle: '@aisha', url: 'https://instagram.com/aisha', followers: '25000' },
+  selfie_path: 'selfie.jpg',
   categories: ['Beauty', 'Fashion'],
   videos: ['v1.mp4'],
   photos: ['p1.jpg'],
@@ -53,6 +54,11 @@ describe('creator sign-up schema', () => {
     expect(issues({ ...complete, instagram: { ...complete.instagram, url: '' } })).toContain('instagram.url')
     expect(issues({ ...complete, instagram: { ...complete.instagram, followers: '' } })).toContain('instagram.followers')
     expect(issues({ ...complete, youtube: { url: '', subscribers: '' } })).toEqual([])
+  })
+
+  it('requires a selfie on the Instagram page', () => {
+    expect(issues({ ...complete, selfie_path: '' })).toEqual(['selfie_path'])
+    expect(STEP_FIELDS[1]).toContain('selfie_path')
   })
 
   it('needs at least one category', () => {

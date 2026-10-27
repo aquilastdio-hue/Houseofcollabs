@@ -15,6 +15,7 @@ import { AccountActionsPanel } from '@/components/admin/account-actions'
 import { CreatorEditDialog } from '@/components/admin/creator-edit-dialog'
 import { PortfolioModerationGrid } from '@/components/admin/portfolio-moderation'
 import { CreatorSetupCard, CreatorVerificationsCard } from '@/components/admin/creator-setup'
+import { CreatorInstagramCard } from '@/components/admin/creator-instagram'
 import { ordersHref } from '@/components/admin/order-presets'
 
 export default function CreatorDetail() {
@@ -99,6 +100,7 @@ export default function CreatorDetail() {
           <CreatorOverview creator={c} />
           <CreatorVerificationsCard creatorId={c.id} />
           <CreatorStorefront creator={c} />
+          <CreatorInstagramCard creatorId={c.id} />
           <DetailCard
             title="Portfolio"
             description={`${portfolio.length} item${portfolio.length === 1 ? '' : 's'}${hiddenCount ? ` · ${hiddenCount} hidden by moderation` : ''}.`}

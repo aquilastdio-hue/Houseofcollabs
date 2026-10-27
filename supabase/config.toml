@@ -498,3 +498,6 @@ verify_jwt = false
 # Anonymous self-serve brand signup — authenticates via anon key only.
 [functions.create-brand-account]
 verify_jwt = false
+
+[functions.instagram-stats]
+verify_jwt = false

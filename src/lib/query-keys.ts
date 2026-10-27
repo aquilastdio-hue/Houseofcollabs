@@ -20,6 +20,7 @@ export const qk = {
     completion: ['creators', 'completion'] as const,
     requirements: ['creators', 'requirements'] as const,
     verifications: ['creators', 'verifications'] as const,
+    instagram: (id: string) => ['creators', 'instagram', id] as const,
   },
   services: { mine: ['services', 'mine'] as const },
   portfolio: { mine: ['portfolio', 'mine'] as const },

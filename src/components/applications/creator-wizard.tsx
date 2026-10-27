@@ -29,6 +29,7 @@ import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { CheckboxRow } from '@/components/ui/checkbox'
 import { Chips, FileDrop, Money, MultiFileDrop, RadioRow } from './creator-wizard-parts'
+import { SelfieCapture } from './selfie-capture'
 
 type Form = UseFormReturn<CreatorApplicationValues>
 
@@ -184,6 +185,23 @@ export function Page2({ form }: { form: Form }) {
         <Field label="Followers" htmlFor="ig_followers" required error={errors.instagram?.followers?.message}>
           <Input id="ig_followers" inputMode="numeric" placeholder="25,000" {...register('instagram.followers')} />
         </Field>
+        <Controller
+          control={control}
+          name="selfie_path"
+          render={({ field, fieldState }) => (
+            <Field label="Selfie verification" required error={fieldState.error?.message}>
+              <SelfieCapture
+                path={field.value}
+                invalid={!!fieldState.error}
+                onUploaded={(p) => {
+                  field.onChange(p)
+                  form.clearErrors('selfie_path')
+                }}
+                onClear={() => field.onChange('')}
+              />
+            </Field>
+          )}
+        />
       </section>
 
       <section className="space-y-5 border-t border-line pt-6">

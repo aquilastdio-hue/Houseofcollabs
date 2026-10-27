@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { ExternalLink, FileText, Image as ImageIcon, Video } from 'lucide-react'
 import { formatINR, formatNumber } from '@/lib/format'
 import { applicationFileUrl, type ApplicationRow } from '@/services/applications.service'
@@ -103,6 +104,27 @@ export function FileLink({ path, label: text, kind = 'file' }: { path: string; l
   )
 }
 
+/**
+ * The applicant's live selfie, shown inline so it can be held up against the
+ * Instagram profile without opening tabs. The signed URL lasts five minutes,
+ * so it is refetched well before then while the dialog stays open.
+ */
+function Selfie({ path }: { path: string }) {
+  const { data: url, isError } = useQuery({
+    queryKey: ['application-file', path],
+    queryFn: () => applicationFileUrl(path),
+    staleTime: 4 * 60_000,
+    refetchInterval: 4 * 60_000,
+  })
+  if (isError) return <FileLink path={path} kind="image" label="Open selfie" />
+  if (!url) return <div className="size-28 animate-pulse rounded-control bg-subtle" />
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="inline-block">
+      <img src={url} alt="Applicant's selfie" className="size-28 rounded-control border border-line object-cover" />
+    </a>
+  )
+}
+
 function Files({ paths, label: text, kind }: { paths: string[]; label: string; kind: 'video' | 'image' }) {
   if (paths.length === 0) return null
   return (
@@ -149,6 +171,18 @@ function CreatorSubmission({ row }: { row: ApplicationRow }) {
           </Line>
         )}
         {str(ig.followers) && <Line label="Followers">{formatNumber(Number(str(ig.followers)))}</Line>}
+        {str(ig.handle) && (
+          <Line label="Selfie check">
+            {str(p.selfie_path) ? (
+              <div className="space-y-1.5">
+                <Selfie path={str(p.selfie_path)} />
+                <p className="text-xs text-muted">Compare with the photos on their Instagram before approving.</p>
+              </div>
+            ) : (
+              <span className="text-muted">No selfie — applied before selfie checks</span>
+            )}
+          </Line>
+        )}
         {str(yt.url) && (
           <Line label="YouTube">
             <Link_ href={str(yt.url)} />

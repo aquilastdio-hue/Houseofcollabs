@@ -13,6 +13,7 @@ import {
   type CreatorSearchParams,
 } from '@/services/creators.service'
 import { recordSearchEvent } from '@/services/analytics.service'
+import { getInstagramStats } from '@/services/instagram-stats.service'
 import { useAuth } from '@/contexts/auth-context'
 
 export function useCreatorSearch(params: CreatorSearchParams, opts: { track?: boolean } = {}) {
@@ -46,6 +47,16 @@ export function useCreatorById(id?: string) {
 
 export function useCreatorsByIds(ids: string[]) {
   return useQuery({ queryKey: qk.creators.compare(ids), queryFn: () => getCreatorsByIds(ids), enabled: ids.length > 0 })
+}
+
+/** Public Instagram stats; refreshed weekly on the server, so no need to refetch often. */
+export function useInstagramStats(creatorId?: string) {
+  return useQuery({
+    queryKey: qk.creators.instagram(creatorId ?? ''),
+    queryFn: () => getInstagramStats(creatorId!),
+    enabled: !!creatorId,
+    staleTime: 10 * 60_000,
+  })
 }
 
 export function useCreatorReviews(creatorId?: string, page = 1) {

@@ -137,6 +137,9 @@ export const creatorApplicationSchema = z
       url: link,
       followers: amount,
     }),
+    // A live selfie, kept private in the applications bucket. Admins compare it
+    // with the Instagram profile by eye; it is never published.
+    selfie_path: z.string(),
     youtube: z.object({
       url: link,
       subscribers: amount,
@@ -175,6 +178,7 @@ export const creatorApplicationSchema = z
     if (!v.instagram.handle) need(['instagram', 'handle'], 'Enter your Instagram account')
     if (!v.instagram.url) need(['instagram', 'url'], 'Add a link to your profile')
     if (!v.instagram.followers) need(['instagram', 'followers'], 'Enter your follower count')
+    if (!v.selfie_path) need(['selfie_path'], 'Take a selfie so we can confirm the account is yours')
     if (v.categories.length < 1) need(['categories'], 'Choose at least one')
 
     // page 3 — "show us your work" means at least one of each
@@ -197,7 +201,7 @@ export type CreatorApplicationValues = z.infer<typeof creatorApplicationSchema>
 /** Which paths belong to which page, so one page validates at a time. */
 export const STEP_FIELDS = [
   ['full_name', 'creator_name', 'whatsapp', 'email', 'referral_code', 'city', 'photo_path'],
-  ['instagram', 'youtube', 'categories'],
+  ['instagram', 'selfie_path', 'youtube', 'categories'],
   ['videos', 'photos'],
   ['rates', 'barter_available', 'barter_stance', 'travel_scope'],
   ['open_to', 'confirmed'],
@@ -227,6 +231,7 @@ export const CREATOR_APPLICATION_DEFAULTS: CreatorApplicationValues = {
   city: '',
   photo_path: '',
   instagram: { handle: '', url: '', followers: '' },
+  selfie_path: '',
   youtube: { url: '', subscribers: '' },
   categories: [],
   videos: [],
