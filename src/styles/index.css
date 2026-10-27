@@ -162,6 +162,53 @@
     50% { box-shadow: 0 0 0 5px rgb(29 134 86 / 0); }
   }
 
+  /* Opening-screen motion. Everything here moves `transform` or
+     `background-position` on a handful of layers, so it stays on the
+     compositor; the global reduced-motion rule below stills all of it. */
+  --animate-drift-a: drift-a 26s ease-in-out infinite;
+  --animate-drift-b: drift-b 32s ease-in-out infinite;
+  --animate-drift-c: drift-c 29s ease-in-out infinite;
+  --animate-drift-d: drift-d 35s ease-in-out infinite;
+  --animate-aurora: aurora 30s linear infinite;
+  --animate-gradient-flow: gradient-flow 7s ease-in-out infinite;
+  --animate-ring-spin: aurora 4s linear infinite;
+  --animate-glow-breathe: glow-breathe 3.6s ease-in-out infinite;
+  --animate-sheen: sheen 3.8s var(--ease-soft) infinite;
+
+  @keyframes drift-a {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    33% { transform: translate3d(9vw, 7vh, 0) scale(1.12); }
+    66% { transform: translate3d(-4vw, 12vh, 0) scale(0.94); }
+  }
+  @keyframes drift-b {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    40% { transform: translate3d(-10vw, 9vh, 0) scale(0.9); }
+    70% { transform: translate3d(-3vw, -4vh, 0) scale(1.1); }
+  }
+  @keyframes drift-c {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+    50% { transform: translate3d(12vw, -10vh, 0) scale(0.92); }
+  }
+  @keyframes drift-d {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(0.95); }
+    45% { transform: translate3d(-8vw, -9vh, 0) scale(1.15); }
+  }
+  @keyframes aurora {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes gradient-flow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  @keyframes glow-breathe {
+    0%, 100% { opacity: 0.55; transform: scale(0.96); }
+    50% { opacity: 0.9; transform: scale(1.04); }
+  }
+  @keyframes sheen {
+    0% { transform: translateX(-160%) skewX(-20deg); }
+    55%, 100% { transform: translateX(260%) skewX(-20deg); }
+  }
+
   /* ---- Layout ------------------------------------------------------------- */
   --container-page: 82rem;
   --container-prose: 44rem;
