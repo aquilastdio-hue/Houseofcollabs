@@ -18,13 +18,7 @@ const complete = {
   email: 'aisha@example.com',
   city: 'Delhi',
   photo_path: 'photo.jpg',
-  instagram: {
-    handle: '@aisha',
-    url: 'https://instagram.com/aisha',
-    followers: '25000',
-    connection_id: '11111111-2222-3333-4444-555555555555',
-    connected_username: 'aisha',
-  },
+  instagram: { handle: '@aisha', url: 'https://instagram.com/aisha', followers: '25000' },
   categories: ['Beauty', 'Fashion'],
   videos: ['v1.mp4'],
   photos: ['p1.jpg'],
@@ -59,13 +53,6 @@ describe('creator sign-up schema', () => {
     expect(issues({ ...complete, instagram: { ...complete.instagram, url: '' } })).toContain('instagram.url')
     expect(issues({ ...complete, instagram: { ...complete.instagram, followers: '' } })).toContain('instagram.followers')
     expect(issues({ ...complete, youtube: { url: '', subscribers: '' } })).toEqual([])
-  })
-
-  it('leaves the Instagram connection to the wizard, which follows the instagram_connect setting', () => {
-    expect(issues({ ...complete, instagram: { ...complete.instagram, connection_id: '' } })).toEqual([])
-    // A draft saved before the button existed has no connection fields at all.
-    const { connection_id: _id, connected_username: _name, ...typedOnly } = complete.instagram
-    expect(issues({ ...complete, instagram: typedOnly })).toEqual([])
   })
 
   it('needs at least one category', () => {

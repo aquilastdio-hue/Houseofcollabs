@@ -26,8 +26,6 @@ export type PublicSettings = {
   cancellation_rules: string
   refund_rules: string
   support_email: string
-  /** "Connect Instagram" on the creator sign-up: hidden until Meta approves App Review. */
-  instagram_connect: 'hidden' | 'optional' | 'required'
 }
 
 export async function getPublicSettings(): Promise<Partial<PublicSettings>> {

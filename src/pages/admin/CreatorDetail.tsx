@@ -13,7 +13,6 @@ import { CreatorAccountCard, CreatorIdentity, CreatorOverview, CreatorStorefront
 import { CreatorActionsPanel } from '@/components/admin/creator-actions'
 import { AccountActionsPanel } from '@/components/admin/account-actions'
 import { CreatorEditDialog } from '@/components/admin/creator-edit-dialog'
-import { InstagramVerified } from '@/components/admin/instagram-verified'
 import { PortfolioModerationGrid } from '@/components/admin/portfolio-moderation'
 import { CreatorSetupCard, CreatorVerificationsCard } from '@/components/admin/creator-setup'
 import { ordersHref } from '@/components/admin/order-presets'
@@ -117,7 +116,6 @@ export default function CreatorDetail() {
           />
           <CreatorSetupCard creatorId={c.id} />
           <CreatorAccountCard creator={c} />
-          <InstagramVerified creatorId={c.id} />
         </aside>
       </div>
 

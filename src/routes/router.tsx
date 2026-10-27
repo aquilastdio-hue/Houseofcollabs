@@ -33,8 +33,6 @@ const routes: RouteObject[] = [
         children: [
           { index: true, ...page(() => import('@/pages/public/Home')) },
           { path: 'get-started', ...page(() => import('@/pages/public/GetStarted')) },
-          // OAuth redirect URI for "Connect Instagram" — must match the Meta App Dashboard exactly.
-          { path: 'instagram/callback', ...page(() => import('@/pages/public/InstagramCallback')) },
           // Collabs / Creators are gated: the landing buttons point straight
           // here, RequireAuth bounces a signed-out visitor to /login?redirect=…
           // and GuestOnly brings them back after they sign in.

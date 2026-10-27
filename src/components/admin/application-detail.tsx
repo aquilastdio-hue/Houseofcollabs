@@ -2,7 +2,6 @@ import * as React from 'react'
 import { ExternalLink, FileText, Image as ImageIcon, Video } from 'lucide-react'
 import { formatINR, formatNumber } from '@/lib/format'
 import { applicationFileUrl, type ApplicationRow } from '@/services/applications.service'
-import { InstagramVerified } from './instagram-verified'
 import { Button } from '@/components/ui/button'
 
 /**
@@ -150,11 +149,6 @@ function CreatorSubmission({ row }: { row: ApplicationRow }) {
           </Line>
         )}
         {str(ig.followers) && <Line label="Followers">{formatNumber(Number(str(ig.followers)))}</Line>}
-        {str(ig.connection_id) && (
-          <Line label="Instagram data">
-            <InstagramVerified applicationId={row.id} typedHandle={str(ig.handle)} />
-          </Line>
-        )}
         {str(yt.url) && (
           <Line label="YouTube">
             <Link_ href={str(yt.url)} />
