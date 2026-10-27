@@ -136,6 +136,12 @@ export const creatorApplicationSchema = z
       handle: z.string().trim().max(100, 'Use 100 characters or fewer'),
       url: link,
       followers: amount,
+      // Set by "Connect Instagram": the server-side connection this application
+      // claims on submit, and the account it belongs to. Whether it's required
+      // depends on the `instagram_connect` setting, so the wizard enforces it,
+      // not this schema.
+      connection_id: z.string().max(64).optional(),
+      connected_username: z.string().max(100).optional(),
     }),
     youtube: z.object({
       url: link,
@@ -226,7 +232,7 @@ export const CREATOR_APPLICATION_DEFAULTS: CreatorApplicationValues = {
   verified_phone: '',
   city: '',
   photo_path: '',
-  instagram: { handle: '', url: '', followers: '' },
+  instagram: { handle: '', url: '', followers: '', connection_id: '', connected_username: '' },
   youtube: { url: '', subscribers: '' },
   categories: [],
   videos: [],

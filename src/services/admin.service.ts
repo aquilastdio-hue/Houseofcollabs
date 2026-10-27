@@ -421,6 +421,68 @@ export async function deleteEmployee(id: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Instagram (admin_instagram_connection, instagram-connect sync)
+// ---------------------------------------------------------------------------
+export type AdminInstagramMedia = {
+  id: string
+  permalink?: string
+  media_type?: string
+  media_product_type?: string
+  thumbnail_url?: string
+  timestamp?: string
+  views?: number
+  likes?: number
+  comments?: number
+}
+
+/** What Instagram returned for a connected account. The token is never included. */
+export type AdminInstagramConnection = {
+  id: string
+  ig_user_id: string
+  username: string
+  name: string | null
+  account_type: string | null
+  profile_picture_url: string | null
+  followers_count: number | null
+  follows_count: number | null
+  media_count: number | null
+  permissions: string[]
+  status: 'connected' | 'token_expired' | 'revoked' | 'error'
+  stats: {
+    media_analysed?: number
+    avg_views?: number | null
+    views_sample?: number
+    avg_reels_views?: number | null
+    reels_sample?: number
+    avg_reach?: number | null
+    reach_sample?: number
+    avg_likes?: number | null
+    avg_comments?: number | null
+    engagement_rate?: number | null
+    engagement_sample?: number
+    top_media?: AdminInstagramMedia[]
+    computed_at?: string
+  }
+  last_error: string | null
+  token_expires_at: string | null
+  connected_at: string
+  last_synced_at: string | null
+}
+
+export async function getInstagramConnection(p: { applicationId?: string; creatorId?: string }) {
+  const data = unwrap(await supabase.rpc('admin_instagram_connection', { p_application_id: p.applicationId, p_creator_id: p.creatorId }))
+  return (data ?? null) as AdminInstagramConnection | null
+}
+
+/** Re-reads the account from Instagram with the stored token (refreshing it when it's close to expiry). */
+export async function syncInstagramConnection(connectionId: string) {
+  return invokeFunction<{ connection_id: string; username: string; followers_count: number | null; synced: boolean }>('instagram-connect', {
+    action: 'sync',
+    connection_id: connectionId,
+  })
+}
+
+// ---------------------------------------------------------------------------
 // Taxonomies & settings
 // ---------------------------------------------------------------------------
 export async function listAllCategories() {

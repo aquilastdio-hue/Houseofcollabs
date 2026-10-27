@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { Controller, useForm, type Control, type UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
@@ -10,6 +10,7 @@ import { toAppError } from '@/lib/errors'
 import { scrollToFirstError } from '@/lib/scroll-to-error'
 import { toE164 } from '@/lib/phone-otp'
 import { usePhoneVerification } from './phone-verify'
+import { INSTAGRAM_REQUIRED_MESSAGE, InstagramConnect, useInstagramConnectMode } from './instagram-connect'
 import {
   DUPLICATE_CODES,
   DUPLICATE_MESSAGES,
@@ -169,6 +170,9 @@ export function Page1({ form }: { form: Form }) {
 /** Exported so Admin → Forms can render the same UI applicants see. */
 export function Page2({ form }: { form: Form }) {
   const { control, register, formState: { errors } } = form
+  // Hidden until Meta approves App Review (platform setting `instagram_connect`);
+  // Followers then takes the whole row, exactly as before the button existed.
+  const igMode = useInstagramConnectMode()
   return (
     <div className="space-y-7">
       <section className="space-y-5">
@@ -180,10 +184,17 @@ export function Page2({ form }: { form: Form }) {
           <Field label="Instagram profile link" htmlFor="ig_url" required error={errors.instagram?.url?.message}>
             <Input id="ig_url" placeholder="https://instagram.com/username" {...register('instagram.url')} />
           </Field>
+          <Field
+            label="Followers"
+            htmlFor="ig_followers"
+            required
+            error={errors.instagram?.followers?.message}
+            className={igMode === 'hidden' ? 'sm:col-span-2' : undefined}
+          >
+            <Input id="ig_followers" inputMode="numeric" placeholder="25,000" {...register('instagram.followers')} />
+          </Field>
+          {igMode !== 'hidden' && <InstagramConnect form={form} required={igMode === 'required'} />}
         </div>
-        <Field label="Followers" htmlFor="ig_followers" required error={errors.instagram?.followers?.message}>
-          <Input id="ig_followers" inputMode="numeric" placeholder="25,000" {...register('instagram.followers')} />
-        </Field>
       </section>
 
       <section className="space-y-5 border-t border-line pt-6">
@@ -387,7 +398,16 @@ export function CreatorApplicationStep({ step, form }: { step: number; form: For
 }
 
 export function CreatorApplicationWizard() {
-  const [step, setStep] = React.useState(0)
+  // Back from "Connect Instagram" (`?instagram=1`): reopen the Instagram page,
+  // where the button applies the outcome. Earlier pages were already passed.
+  const [step, setStep] = React.useState(() => (new URLSearchParams(window.location.search).has('instagram') ? INSTAGRAM_STEP : 0))
+  const [searchParams, setSearchParams] = useSearchParams()
+  React.useEffect(() => {
+    if (!searchParams.has('instagram')) return
+    const next = new URLSearchParams(searchParams)
+    next.delete('instagram')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
   const [done, setDone] = React.useState(false)
   const [checking, setChecking] = React.useState(false)
   const topRef = React.useRef<HTMLDivElement>(null)
@@ -501,6 +521,15 @@ export function CreatorApplicationWizard() {
     topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  // Only when the setting says `required`. Checked here rather than in the
+  // schema because it depends on that setting; flags the field when missing.
+  const igMode = useInstagramConnectMode()
+  const missingInstagram = () => {
+    if (igMode !== 'required' || form.getValues('instagram.connection_id')) return false
+    form.setError('instagram.connection_id', { type: 'required', message: INSTAGRAM_REQUIRED_MESSAGE })
+    return true
+  }
+
   /**
    * Continue runs the page's own validation first, then — only on the two pages
    * that collect them — asks whether the number or the Instagram account is
@@ -514,6 +543,7 @@ export function CreatorApplicationWizard() {
   const next = async () => {
     const ok = await form.trigger(STEP_FIELDS[step] as never)
     if (!ok) return scrollToFirstError(formRef.current)
+    if (step === INSTAGRAM_STEP && missingInstagram()) return scrollToFirstError(formRef.current)
 
     const phone = step === PHONE_STEP ? form.getValues('whatsapp') : null
     const instagram = step === INSTAGRAM_STEP ? form.getValues('instagram.handle') : null
@@ -584,7 +614,16 @@ export function CreatorApplicationWizard() {
             ref={formRef}
             onSubmit={(e) => {
               e.preventDefault()
-              if (last) void form.handleSubmit((v) => submit.mutate(v), onInvalid)(e)
+              if (last) {
+                void form.handleSubmit((v) => {
+                  // Submit re-checks too, in case the setting turned on mid-application.
+                  if (missingInstagram()) {
+                    go(INSTAGRAM_STEP)
+                    return scrollToFirstError(formRef.current)
+                  }
+                  submit.mutate(v)
+                }, onInvalid)(e)
+              }
               else void next()
             }}
             noValidate

@@ -498,3 +498,9 @@ verify_jwt = false
 # Anonymous self-serve brand signup — authenticates via anon key only.
 [functions.create-brand-account]
 verify_jwt = false
+
+# Creators connect Instagram before they have an account; the one-time OAuth
+# state is the check, not a user JWT. The admin-only `sync` action verifies the
+# caller itself.
+[functions.instagram-connect]
+verify_jwt = false
