@@ -30,23 +30,13 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
 }
 
 function PostTile({ post }: { post: InstagramPost }) {
+  // Display only: the tiles don't link out to Instagram.
   const label = `${post.is_reel ? 'Reel' : 'Post'} on Instagram${post.caption ? `: ${post.caption}` : ''}`
   return (
     <li>
-      <a
-        href={post.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={label}
-        className="focus-ring group relative block aspect-square overflow-hidden rounded-control bg-subtle"
-      >
+      <div role="img" aria-label={label} className="relative aspect-square overflow-hidden rounded-control bg-subtle">
         {post.image ? (
-          <img
-            src={post.image}
-            alt=""
-            loading="lazy"
-            className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+          <img src={post.image} alt="" loading="lazy" draggable={false} className="size-full object-cover" />
         ) : (
           <span className="flex size-full items-center justify-center text-faint">
             <Instagram className="size-6" aria-hidden />
@@ -72,7 +62,7 @@ function PostTile({ post }: { post: InstagramPost }) {
             </span>
           )}
         </span>
-      </a>
+      </div>
     </li>
   )
 }
