@@ -15,6 +15,7 @@ import {
   Megaphone,
   MessageCircle,
   Package,
+  Rocket,
   Settings,
   Sparkles,
   TrendingUp,
@@ -43,6 +44,7 @@ const sections: NavSection[] = [
     title: 'Marketplace',
     items: [
       { label: 'Orders', href: '/admin/orders', icon: Package },
+      { label: 'Campaigns', href: '/admin/campaigns', icon: Rocket },
       { label: 'Briefs', href: '/admin/briefs', icon: Megaphone },
       { label: 'Content', href: '/admin/content', icon: Image },
       { label: 'Categories', href: '/admin/categories', icon: FolderTree },

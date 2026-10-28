@@ -26,6 +26,14 @@ export const qk = {
   portfolio: { mine: ['portfolio', 'mine'] as const },
   brand: { mine: ['brand', 'mine'] as const, byId: (id: string) => ['brand', 'id', id] as const },
 
+  campaigns: {
+    all: ['campaigns'] as const,
+    creator: ['campaigns', 'creator'] as const,
+    brand: ['campaigns', 'brand'] as const,
+    admin: (status: string) => ['campaigns', 'admin', status] as const,
+    detail: (id: string) => ['campaigns', 'detail', id] as const,
+    applicants: (id: string) => ['campaigns', 'applicants', id] as const,
+  },
   briefs: {
     all: ['briefs'] as const,
     list: (params: unknown) => ['briefs', 'list', params] as const,

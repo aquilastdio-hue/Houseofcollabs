@@ -59,6 +59,13 @@ export const TEMPLATES: Record<string, TemplateSpec> = {
 
   // ---- Campaigns (briefs) --------------------------------------------------
   brief_received: { subject: 'New campaign brief: {title}', preheader: 'A brand wants to work with you.', cta: 'View brief' },
+  campaign_invite: { subject: '{title}', preheader: 'A brand would like you on their campaign.', cta: 'View campaign' },
+  campaign_application: { subject: '{title}', preheader: 'A creator applied to your campaign.', cta: 'Review applicants' },
+  campaign_accepted: { subject: '{title}', preheader: 'The brand picked you for their campaign.', cta: 'View campaign' },
+  campaign_declined: { subject: '{title}', cta: 'See other campaigns' },
+  campaign_approved: { subject: 'Your campaign is live', preheader: 'Creators can now see it and apply.', cta: 'View campaign' },
+  campaign_rejected: { subject: 'Your campaign needs changes', preheader: 'A few things to fix before it goes live.', cta: 'Edit campaign' },
+  campaign_review: { subject: 'Campaign awaiting review', cta: 'Review campaign' },
 
   // ---- Platform ------------------------------------------------------------
   announcement: { subject: '{title}', cta: 'Open House of Collabs' },
