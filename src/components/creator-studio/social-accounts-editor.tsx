@@ -128,8 +128,9 @@ function SocialAccountForm({ creatorId, account, onDone }: { creatorId: string; 
 }
 
 /**
- * The creator's social accounts. Total followers on the profile are computed
- * by the database from these rows; verification is admin-controlled.
+ * The creator's social accounts. The follower count on the profile is computed
+ * by the database: the real Instagram count once the weekly fetch has it,
+ * these rows until then. Verification is admin-controlled.
  */
 export function SocialAccountsEditor({ creator, className }: { creator: CreatorOwnProfile; className?: string }) {
   const sync = useStudioSync()
@@ -149,7 +150,7 @@ export function SocialAccountsEditor({ creator, className }: { creator: CreatorO
     <StudioSection
       className={className}
       title="Social accounts"
-      description="Add the accounts you post on. Your total followers are calculated from these."
+      description="Add the accounts you post on. Your profile shows your real Instagram followers, updated every week. Until the first update, it uses the numbers you enter here."
       action={
         <Button type="button" variant="secondary" size="sm" onClick={() => setEditing({ account: null })}>
           <Plus /> Add account
@@ -158,7 +159,7 @@ export function SocialAccountsEditor({ creator, className }: { creator: CreatorO
     >
       <div className="flex items-center justify-between gap-4 rounded-card bg-night px-5 py-4 text-white">
         <div>
-          <p className="text-sm text-white/70">Total followers</p>
+          <p className="text-sm text-white/70">Followers on your profile</p>
           <p className="font-display text-2xl font-semibold tabular-nums" aria-live="polite">
             {formatNumber(creator.followers_count)}
           </p>

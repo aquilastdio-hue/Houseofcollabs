@@ -1,9 +1,8 @@
-import { BarChart3, Clapperboard, ExternalLink, Eye, Heart, Instagram, Lock, MessageCircle } from 'lucide-react'
+import { BarChart3, Clapperboard, Eye, Heart, Instagram, Lock, MessageCircle } from 'lucide-react'
 import { formatCompact, formatPercent, formatRelative } from '@/lib/format'
 import { useInstagramStats } from '@/hooks/use-creators'
 import type { InstagramPost, InstagramStats } from '@/services/instagram-stats.service'
 import type { CreatorProfile } from '@/services/creators.service'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/shared/states'
 import { ProfileSection } from './creator-profile-sections'
@@ -91,28 +90,14 @@ export function StatsSection({ creator }: { creator: CreatorProfile }) {
     )
   }
 
-  const profileUrl = `https://www.instagram.com/${stats.username}/`
+  // Numbers only: no handle and no link to the account, so brands book
+  // through House of Collabs rather than going around it.
   const sample = stats.posts_sampled
   return (
     <ProfileSection
       id="stats"
       title="Stats"
-      description={
-        <>
-          Public Instagram numbers from{' '}
-          <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
-            @{stats.username}
-          </a>
-          {stats.fetched_at ? ` · updated ${formatRelative(stats.fetched_at)}` : ''}
-        </>
-      }
-      action={
-        <Button asChild size="sm" variant="secondary">
-          <a href={profileUrl} target="_blank" rel="noopener noreferrer">
-            <Instagram /> View on Instagram <ExternalLink className="size-3.5" />
-          </a>
-        </Button>
-      }
+      description={`Public Instagram numbers${stats.fetched_at ? ` · updated ${formatRelative(stats.fetched_at)}` : ''}`}
     >
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Followers" value={formatCompact(stats.followers_count)} />

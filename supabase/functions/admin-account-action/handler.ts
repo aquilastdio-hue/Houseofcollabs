@@ -6,7 +6,9 @@
 // user was untouched. These actions reach into Auth as well, so a suspended
 // account genuinely cannot get through the door, and a deleted one is gone.
 //
-// Permanent deletion is deliberately allowed to fail. Orders, earnings and
+// Permanent deletion erases the person entirely -- login, profile, storefront,
+// applications, phone checks, email log, contact messages and every uploaded
+// file -- and is deliberately allowed to fail. Orders, earnings and
 // payout requests reference creators and brands with ON DELETE RESTRICT, so
 // Postgres refuses to delete anyone who has traded. That is the right
 // behaviour — financial records should outlive an account — and the caller gets
@@ -49,6 +51,10 @@ export const handle = handler(async (req) => {
   }
 
   if (action === 'delete') {
+    // Gather what to erase before the login goes: applications are only
+    // unlinked by the cascade, and files live in storage, not the database.
+    const leftovers = await collectLeftovers(profileId, target.email)
+
     const { error } = await db.auth.admin.deleteUser(profileId)
     if (error) {
       // Postgres raises 23503 when orders, earnings or payouts still point at
@@ -63,12 +69,24 @@ export const handle = handler(async (req) => {
       }
       throw new HttpError(502, 'That account could not be deleted. Please try again.', 'DELETE_FAILED')
     }
+    // The login is gone, so it's safe to erase the rest: applications, phone
+    // checks, email log, contact messages, and every uploaded file.
+    const { data: records, error: purgeError } = await db.rpc('purge_account_records', {
+      p_profile_id: profileId,
+      p_email: target.email ?? '',
+      p_application_ids: leftovers.applicationIds,
+    })
+    if (purgeError) console.error('purge_account_records failed', purgeError.message)
+    const files = await removeFiles(leftovers)
+
     // The profile row goes with the auth user (ON DELETE CASCADE), so this is
     // written against the id rather than a row that still exists.
     await audit(admin.id, 'account_deleted', 'profile', profileId, {
       email: target.email,
       full_name: target.full_name,
       reason,
+      records: records ?? null,
+      files,
     })
     return json({ ok: true, action, deleted: true })
   }
@@ -95,3 +113,67 @@ export const handle = handler(async (req) => {
 
   return json({ ok: true, action, status: banned ? 'suspended' : 'active' })
 })
+
+// ------------------------------------------------------- permanent delete --
+
+type Leftovers = {
+  applicationIds: string[]
+  /** Files in the private applications bucket (photos, videos, selfie, ID documents). */
+  applicationFiles: string[]
+  /** Per-person folders: bucket → folder name. */
+  folders: { bucket: string; folder: string }[]
+}
+
+/** Application uploads are stored as `<uuid>.<ext>` at the bucket root. */
+const APPLICATION_FILE = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[a-z0-9]{2,5}\b/gi
+
+async function collectLeftovers(profileId: string, email: string | null): Promise<Leftovers> {
+  const db = adminClient()
+  const filters = [`profile_id.eq.${profileId}`]
+  // Exact match (sign-up forms store emails lower-cased); never a pattern, so an
+  // underscore in an address can't match somebody else's application.
+  if (email) filters.push(`email.eq."${email.trim().toLowerCase().replace(/"/g, '')}"`)
+  const { data: apps } = await db.from('applications').select('id, video_path, image_path, profile').or(filters.join(','))
+  const applicationFiles = new Set<string>()
+  for (const a of apps ?? []) {
+    for (const match of JSON.stringify([a.video_path, a.image_path, a.profile]).matchAll(APPLICATION_FILE)) {
+      applicationFiles.add(match[0])
+    }
+  }
+
+  const { data: creator } = await db.from('creators').select('id').eq('profile_id', profileId).maybeSingle()
+  const folders = [
+    { bucket: 'avatars', folder: profileId },
+    { bucket: 'creator-portfolio', folder: profileId },
+    { bucket: 'brand-assets', folder: profileId },
+    ...(creator ? [{ bucket: 'instagram-media', folder: creator.id as string }] : []),
+  ]
+  return { applicationIds: (apps ?? []).map((a) => a.id as string), applicationFiles: [...applicationFiles], folders }
+}
+
+/** Best effort: a file that can't be removed is logged, never blocks the delete. */
+async function removeFiles(leftovers: Leftovers): Promise<number> {
+  const storage = adminClient().storage
+  let removed = 0
+  const remove = async (bucket: string, paths: string[]) => {
+    for (let i = 0; i < paths.length; i += 100) {
+      const { data, error } = await storage.from(bucket).remove(paths.slice(i, i + 100))
+      if (error) console.error('remove files failed', bucket, error.message)
+      removed += data?.length ?? 0
+    }
+  }
+  // One level of subfolders is as deep as any of these buckets go.
+  const listAll = async (bucket: string, folder: string): Promise<string[]> => {
+    const { data } = await storage.from(bucket).list(folder, { limit: 1000 })
+    const paths: string[] = []
+    for (const entry of data ?? []) {
+      if (entry.id) paths.push(`${folder}/${entry.name}`)
+      else paths.push(...(await listAll(bucket, `${folder}/${entry.name}`)))
+    }
+    return paths
+  }
+
+  await remove('applications', leftovers.applicationFiles)
+  for (const { bucket, folder } of leftovers.folders) await remove(bucket, await listAll(bucket, folder))
+  return removed
+}

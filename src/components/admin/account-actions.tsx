@@ -71,7 +71,7 @@ export function AccountActionsPanel({
     delete: {
       title: `Permanently delete ${name}?`,
       description:
-        'This cannot be undone. Their login, profile and storefront are erased. If they have ever had an order, earning or payout, the deletion will be refused — those records are part of the platform’s financial history, and you should suspend instead.',
+        'This cannot be undone. Everything about them is erased: login, profile, storefront, portfolio, sign-up application, selfie and documents, and every uploaded file. If they have ever had an order, earning or payout, the deletion will be refused — those records are part of the platform’s financial history, and you should suspend instead.',
       confirm: 'Delete permanently',
       destructive: true,
       reasonLabel: 'Reason (recorded in the audit log)',

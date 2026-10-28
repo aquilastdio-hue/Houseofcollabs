@@ -59,7 +59,7 @@ export async function listOrders(p: OrderListParams) {
 const ORDER_DETAIL_SELECT = `
   *,
   brand:brands ( id, profile_id, brand_name, brand_logo_url, brand_slug, brand_pronunciation, pronunciation_audio_url,
-                 website_url, instagram_url, contact_email, contact_phone, industry, location ),
+                 website_url, contact_email, contact_phone, industry, location ),
   creator:creators ( id, profile_id, display_name, slug, profile_image_url, verified, city, state, rating, review_count ),
   brief:briefs ( id, title, status, brief_attachments ( * ) ),
   order_items ( * ),

@@ -262,18 +262,11 @@ export default function OrderDetail({ perspective }: { perspective: 'brand' | 'c
                 {order.brand.pronunciation_audio_url && <audio controls src={order.brand.pronunciation_audio_url} className="mt-2 h-9 w-full" aria-label="Brand pronunciation" />}
               </div>
             )}
-            {perspective === 'creator' && order.brand && (order.brand.website_url || order.brand.instagram_url) && (
+            {perspective === 'creator' && order.brand?.website_url && (
               <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                {order.brand.website_url && (
-                  <a href={order.brand.website_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline underline-offset-2">
-                    Website <ExternalLink className="size-3" />
-                  </a>
-                )}
-                {order.brand.instagram_url && (
-                  <a href={order.brand.instagram_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline underline-offset-2">
-                    Instagram <ExternalLink className="size-3" />
-                  </a>
-                )}
+                <a href={order.brand.website_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline underline-offset-2">
+                  Website <ExternalLink className="size-3" />
+                </a>
               </div>
             )}
           </Card>

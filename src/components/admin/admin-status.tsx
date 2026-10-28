@@ -18,6 +18,19 @@ export const ACCOUNT_STATUS_META: Record<AccountStatus, StatusMeta> = {
   deleted: { label: 'Deleted', tone: 'neutral' },
 }
 
+/**
+ * Statuses on Admin → People. "Deleted" isn't one: deleting an account erases it
+ * outright. "Storefront removed" is a creator whose storefront an admin removed
+ * while the account itself stays active.
+ */
+export const PEOPLE_STATUS_META = {
+  active: { label: 'Active', tone: 'success' },
+  suspended: { label: 'Suspended', tone: 'danger' },
+  storefront_removed: { label: 'Storefront removed', tone: 'warning' },
+} as const satisfies Record<string, StatusMeta>
+
+export type PeopleStatus = keyof typeof PEOPLE_STATUS_META
+
 export const PAYMENT_STATUS_META: Record<PaymentStatus, StatusMeta> = {
   created: { label: 'Created', tone: 'neutral' },
   authorized: { label: 'Authorized', tone: 'info' },

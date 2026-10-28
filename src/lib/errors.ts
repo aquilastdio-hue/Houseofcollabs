@@ -22,7 +22,12 @@ type PostgrestLike = { code?: string; message?: string; details?: string | null;
 
 const GENERIC = 'Something went wrong. Please try again.'
 
+/** Shown when an admin has suspended the account at sign-in level (Supabase Auth ban). */
+export const SUSPENDED_SIGN_IN_MESSAGE =
+  'Your account has been suspended, so you can’t sign in right now. Please contact House of Collabs support if you think this is a mistake.'
+
 const AUTH_MESSAGES: Record<string, string> = {
+  user_banned: SUSPENDED_SIGN_IN_MESSAGE,
   invalid_credentials: 'That email and password don’t match. Try again or reset your password.',
   email_not_confirmed: 'Please confirm your email first — check your inbox for the verification link.',
   user_already_exists: 'An account with this email already exists. Try signing in instead.',

@@ -39,6 +39,7 @@ import { CompletionCard } from '@/components/creator-studio/completion-card'
 import { NextStepsCards } from '@/components/creator-studio/next-steps'
 import { CreatorSetupRequired, ListSkeleton } from '@/components/creator-studio/parts'
 import type { OrderStatus } from '@/types'
+import { WhatsAppCommunityCard } from '@/components/creator/whatsapp-community'
 
 const NEEDS_ACTION = needsActionStatuses('creator')
 /** Active orders where the next move is the brand's (no overlap with "needs your attention"). */
@@ -318,6 +319,7 @@ export default function Dashboard() {
       ) : (
         <div className="space-y-8">
           <NextStepsCards />
+          <WhatsAppCommunityCard />
           <CompletionCard hideWhenComplete title="Complete your storefront" />
           <StatsGrid />
           <DashboardColumns creatorId={creator.id} />

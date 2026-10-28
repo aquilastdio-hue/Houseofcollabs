@@ -17,10 +17,9 @@ import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { FilterBar, FilterField, SearchInput } from '@/components/admin/filter-bar'
-import { ACCOUNT_STATUS_META, StatusBadge, metaOptions } from '@/components/admin/admin-status'
+import { PEOPLE_STATUS_META, type PeopleStatus, StatusBadge, metaOptions } from '@/components/admin/admin-status'
 import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
-import type { AccountStatus } from '@/types'
 
 
 const ROLE_OPTIONS = [
@@ -31,7 +30,7 @@ const ROLE_OPTIONS = [
 ] as const
 const ROLE_VALUES = ROLE_OPTIONS.map((o) => o.value)
 
-const STATUS_OPTIONS = metaOptions(ACCOUNT_STATUS_META)
+const STATUS_OPTIONS = metaOptions(PEOPLE_STATUS_META)
 const STATUS_VALUES = STATUS_OPTIONS.map((o) => o.value)
 
 const SORT_OPTIONS = [
@@ -99,7 +98,7 @@ const COLUMNS: Column<PersonRow>[] = [
     key: 'status',
     header: 'Status',
     mobileLabel: 'Status',
-    cell: (r) => <StatusBadge meta={ACCOUNT_STATUS_META} value={r.status} size="sm" />,
+    cell: (r) => <StatusBadge meta={PEOPLE_STATUS_META} value={r.status} size="sm" />,
   },
   {
     key: 'orders',
@@ -153,7 +152,7 @@ export default function People() {
   const rawRole = url.get('role')
   const role: '' | 'brand' | 'creator' | 'admin' | 'unassigned' = isOneOf(ROLE_VALUES, rawRole) ? rawRole : ''
   const rawStatus = url.get('status')
-  const status: AccountStatus | '' = isOneOf(STATUS_VALUES, rawStatus) ? rawStatus : ''
+  const status: PeopleStatus | '' = isOneOf(STATUS_VALUES, rawStatus) ? rawStatus : ''
   const rawSort = url.get('sort')
   const sort = isOneOf(SORT_VALUES, rawSort) ? rawSort : 'recent'
 
@@ -181,7 +180,7 @@ export default function People() {
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatsCard label="Total accounts" value={formatNumber(s?.users_total)} icon={<Users />} loading={stats.isPending} tone="brand" hint={s ? `${formatNumber(s.new_30d)} joined in 30 days` : undefined} />
         <StatsCard label="Active today" value={formatNumber(s?.dau)} icon={<UserRound />} loading={stats.isPending} hint={s ? `${formatNumber(s.wau)} this week · ${formatNumber(s.mau)} this month` : undefined} />
-        <StatsCard label="Creators" value={formatNumber(s?.creators_total)} loading={stats.isPending} hint={s ? `${formatNumber(s.creators_published)} published · ${formatNumber(s.creators_verified)} verified` : undefined} />
+        <StatsCard label="Creators" value={formatNumber(s?.creators_total)} loading={stats.isPending} hint={s ? `${formatNumber(s.creators_published)} published · ${formatNumber(s.creators_verified)} verified${s.creators_removed ? ` · ${formatNumber(s.creators_removed)} storefront removed` : ''}` : undefined} />
         <StatsCard label="Brands" value={formatNumber(s?.brands_total)} loading={stats.isPending} hint={s ? `${formatNumber(s.brands_active)} active` : undefined} />
       </div>
 

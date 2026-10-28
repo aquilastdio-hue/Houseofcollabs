@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   Mail,
   Megaphone,
+  MessageCircle,
   Package,
   Settings,
   Sparkles,
@@ -65,6 +66,7 @@ const sections: NavSection[] = [
     title: 'Platform',
     items: [
       { label: 'Announcements', href: '/admin/notifications', icon: Bell, counter: 'notifications' },
+      { label: 'WhatsApp', href: '/admin/whatsapp', icon: MessageCircle },
       { label: 'Email log', href: '/admin/emails', icon: Mail },
       { label: 'Audit log', href: '/admin/audit-logs', icon: FileClock },
       {

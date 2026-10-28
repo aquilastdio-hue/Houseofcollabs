@@ -154,6 +154,7 @@ const routes: RouteObject[] = [
           { path: 'finance', ...page(() => import('@/pages/admin/Finance')) },
           { path: 'briefs', ...page(() => import('@/pages/admin/Briefs')) },
           { path: 'creators', ...page(() => import('@/pages/admin/Creators')) },
+          { path: 'whatsapp', ...page(() => import('@/pages/admin/WhatsApp')) },
           { path: 'creator-ranking', ...page(() => import('@/pages/admin/CreatorRanking')) },
           { path: 'employees', ...page(() => import('@/pages/admin/Employees')) },
           { path: 'employees/:id', ...page(() => import('@/pages/admin/EmployeeDetail')) },

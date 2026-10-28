@@ -90,7 +90,7 @@ export function CreatorProfileHero({ creator, mode, actions }: { creator: Creato
       )}
 
       <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Total followers">{formatCompact(creator.followers_count)}</Stat>
+        <Stat label="Followers">{formatCompact(creator.followers_count)}</Stat>
         <Stat label="Rating">
           {creator.review_count > 0 ? <RatingLabel rating={Number(creator.rating)} count={creator.review_count} className="text-xl" /> : 'New'}
         </Stat>

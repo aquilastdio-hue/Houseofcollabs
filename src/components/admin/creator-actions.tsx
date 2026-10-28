@@ -1,12 +1,12 @@
 import * as React from 'react'
-import { BadgeCheck, CheckCircle2, RotateCcw, ShieldOff, ShieldCheck, Sparkles, Trash2, UserX, XCircle } from 'lucide-react'
+import { BadgeCheck, CheckCircle2, RotateCcw, Sparkles, Trash2, XCircle } from 'lucide-react'
 import { qk } from '@/lib/query-keys'
 import { formatDate } from '@/lib/format'
-import { restoreCreator, setCreatorFlags, setCreatorStatus, setUserStatus, softDeleteCreator, type AdminCreatorDetail } from '@/services/admin.service'
+import { restoreCreator, setCreatorFlags, setCreatorStatus, softDeleteCreator, type AdminCreatorDetail } from '@/services/admin.service'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ACCOUNT_STATUS_META, CREATOR_STATUS_META, StatusBadge } from './admin-status'
+import { CREATOR_STATUS_META, StatusBadge } from './admin-status'
 import { adminLists } from './admin-keys'
 import { DetailCard } from './detail'
 import { useAdminMutation } from './use-admin-mutation'
@@ -14,7 +14,6 @@ import { useAdminMutation } from './use-admin-mutation'
 type CreatorAction =
   | 'approve'
   | 'reject'
-  | 'suspend'
   | 'reinstate'
   | 'verify'
   | 'unverify'
@@ -22,8 +21,6 @@ type CreatorAction =
   | 'unfeature'
   | 'remove'
   | 'restore'
-  | 'suspend_account'
-  | 'reactivate_account'
 
 type ActionConfig = {
   title: string
@@ -51,15 +48,6 @@ function configFor(action: CreatorAction, name: string): ActionConfig {
         success: 'Profile rejected',
         destructive: true,
         reason: { label: 'Reason (shared with the creator)', placeholder: 'e.g. Add at least three portfolio samples and a clear profile photo.', required: true },
-      }
-    case 'suspend':
-      return {
-        title: `Suspend ${name}’s storefront?`,
-        description: 'The profile is removed from search and can’t receive new orders. Existing orders continue.',
-        confirmLabel: 'Suspend storefront',
-        success: 'Storefront suspended',
-        destructive: true,
-        reason: { label: 'Reason (shared with the creator)', placeholder: 'What policy was broken?', required: true },
       }
     case 'reinstate':
       return {
@@ -93,31 +81,17 @@ function configFor(action: CreatorAction, name: string): ActionConfig {
         confirmLabel: 'Restore',
         success: 'Storefront restored — pending review',
       }
-    case 'suspend_account':
-      return {
-        title: `Suspend ${name}’s account?`,
-        description: 'The creator is signed out of every workspace action and can’t log in to work until reactivated.',
-        confirmLabel: 'Suspend account',
-        success: 'Account suspended',
-        destructive: true,
-        reason: { label: 'Reason (sent to the creator)', placeholder: 'e.g. Repeated off-platform payment requests.', required: true },
-      }
-    case 'reactivate_account':
-      return {
-        title: `Reactivate ${name}’s account?`,
-        description: 'The creator can sign in and use their workspace again.',
-        confirmLabel: 'Reactivate account',
-        success: 'Account reactivated',
-        reason: { label: 'Internal note', placeholder: 'Optional context for the audit log.', required: false },
-      }
   }
 }
 
-/** Moderation panel: review decision, badges, account status and removal. Every action is confirmed. */
+/**
+ * Moderation panel: review decision, badges and removal. Every action is
+ * confirmed. Account suspension lives in the "Account access" card
+ * (AccountActionsPanel), which also blocks sign-in at Supabase Auth.
+ */
 export function CreatorActionsPanel({ creator: c }: { creator: AdminCreatorDetail }) {
   const [pending, setPending] = React.useState<CreatorAction | null>(null)
   const removed = !!c.deleted_at
-  const accountStatus = c.profile?.status ?? 'active'
 
   const run = useAdminMutation(
     async ({ action, reason }: { action: CreatorAction; reason: string }): Promise<unknown> => {
@@ -128,8 +102,6 @@ export function CreatorActionsPanel({ creator: c }: { creator: AdminCreatorDetai
           return setCreatorStatus(c.id, 'published', note)
         case 'reject':
           return setCreatorStatus(c.id, 'rejected', reason)
-        case 'suspend':
-          return setCreatorStatus(c.id, 'suspended', reason)
         case 'verify':
           return setCreatorFlags(c.id, { verified: true })
         case 'unverify':
@@ -142,10 +114,6 @@ export function CreatorActionsPanel({ creator: c }: { creator: AdminCreatorDetai
           return softDeleteCreator(c.id, reason)
         case 'restore':
           return restoreCreator(c.id)
-        case 'suspend_account':
-          return setUserStatus(c.profile_id, 'suspended', reason)
-        case 'reactivate_account':
-          return setUserStatus(c.profile_id, 'active', note)
       }
     },
     {
@@ -181,14 +149,12 @@ export function CreatorActionsPanel({ creator: c }: { creator: AdminCreatorDetai
                   <XCircle /> Reject
                 </Button>
               )}
+              {/* Storefront-only suspension was retired: hide a storefront with
+                  "Remove storefront", lock someone out with "Suspend account".
+                  Creators suspended the old way can still be reinstated. */}
               {c.status === 'suspended' && (
                 <Button size="sm" onClick={() => setPending('reinstate')}>
                   <RotateCcw /> Reinstate
-                </Button>
-              )}
-              {c.status !== 'suspended' && (
-                <Button size="sm" variant="danger-ghost" onClick={() => setPending('suspend')}>
-                  <ShieldOff /> Suspend
                 </Button>
               )}
               {c.status === 'draft' && <p className="w-full text-xs text-muted">The creator hasn’t submitted this profile for review yet.</p>}
@@ -210,27 +176,6 @@ export function CreatorActionsPanel({ creator: c }: { creator: AdminCreatorDetai
               <Sparkles /> {c.featured ? 'Unfeature' : 'Feature'}
             </Button>
           </div>
-        </section>
-
-        <Separator />
-
-        <section aria-labelledby="mod-account">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <h3 id="mod-account" className="text-sm font-semibold">
-              Account access
-            </h3>
-            <StatusBadge meta={ACCOUNT_STATUS_META} value={accountStatus} size="sm" />
-          </div>
-          <p className="mb-3 text-xs text-muted">Suspending the account blocks sign-in to the creator workspace, not just the storefront.</p>
-          {accountStatus === 'active' ? (
-            <Button size="sm" variant="danger-ghost" onClick={() => setPending('suspend_account')}>
-              <UserX /> Suspend account
-            </Button>
-          ) : (
-            <Button size="sm" variant="secondary" onClick={() => setPending('reactivate_account')}>
-              <ShieldCheck /> Reactivate account
-            </Button>
-          )}
         </section>
 
         <Separator />

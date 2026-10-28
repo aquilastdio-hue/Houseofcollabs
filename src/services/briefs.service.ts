@@ -7,7 +7,7 @@ import type { BriefAttachment, BriefStatus, TablesInsert, TablesUpdate } from '@
 const BRIEF_SELECT = `
   *,
   category:categories ( id, name, slug ),
-  brand:brands ( id, brand_name, brand_slug, brand_logo_url, brand_pronunciation, pronunciation_audio_url, website_url, instagram_url ),
+  brand:brands ( id, brand_name, brand_slug, brand_logo_url, brand_pronunciation, pronunciation_audio_url, website_url ),
   creator:creators ( id, display_name, slug, profile_image_url, verified ),
   brief_attachments ( * )
 `

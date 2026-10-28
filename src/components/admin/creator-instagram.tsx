@@ -50,12 +50,7 @@ export function CreatorInstagramCard({ creatorId }: { creatorId: string }) {
         <p className="text-sm text-muted">Not fetched yet. Refresh now, or it’s picked up on Sunday once the creator is live.</p>
       ) : (
         <DetailList>
-          <DetailItem label="Account">
-            <span className="flex flex-wrap items-center gap-2">
-              @{stats.username}
-              {status && <Badge size="sm" tone={status.tone}>{status.label}</Badge>}
-            </span>
-          </DetailItem>
+          <DetailItem label="Account">{status && <Badge size="sm" tone={status.tone}>{status.label}</Badge>}</DetailItem>
           <DetailItem label="Updated">{stats.fetched_at ? formatDateTime(stats.fetched_at) : null}</DetailItem>
           <DetailItem label="Followers">{stats.followers_count !== null ? formatCompact(stats.followers_count) : null}</DetailItem>
           <DetailItem label="Engagement rate">

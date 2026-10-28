@@ -2,6 +2,7 @@ import { BadgeCheck, Package, Phone, Sparkles, Star, Truck } from 'lucide-react'
 import { formatCompact, formatDate, formatDateTime, formatDays, formatINR, formatLocation, formatNumber, formatRelative, titleCase } from '@/lib/format'
 import { ADDON_TYPES, CONTENT_TYPES, GENDERS, PLATFORMS, RESPONSE_TIMES, labelFor } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { whatsappHref } from '@/lib/whatsapp'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/shared/states'
@@ -43,13 +44,6 @@ function creatorWhatsapp(c: AdminCreatorDetail): string | null {
   // TODO: Add applications back to select when TypeScript types are updated
   // For now, use the profile phone only
   return c.profile?.phone?.trim() || null
-}
-
-/** wa.me wants the full international number; a bare 10-digit number is Indian. */
-function whatsappHref(number: string) {
-  const d = number.replace(/\D/g, '')
-  const intl = d.length === 10 ? `91${d}` : d.length === 11 && d.startsWith('0') ? `91${d.slice(1)}` : d
-  return `https://wa.me/${intl}`
 }
 
 /** The creator's WhatsApp number as a link that opens the chat. Admin-only. */

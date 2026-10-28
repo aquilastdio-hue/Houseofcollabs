@@ -11,7 +11,6 @@ import type { Tables } from '@/types/database.types'
 
 export type InstagramPost = {
   short_code: string
-  url: string
   /** Our own copy of the thumbnail; null when it couldn't be copied. */
   image: string | null
   is_reel: boolean
@@ -22,12 +21,18 @@ export type InstagramPost = {
   caption: string | null
 }
 
-export type InstagramStats = Omit<Tables<'creator_instagram_stats'>, 'recent_posts'> & { recent_posts: InstagramPost[] }
+/** Everything except the Instagram username: profiles show the numbers, never the handle. */
+const STATS_COLUMNS =
+  'creator_id, status, followers_count, follows_count, posts_count, is_verified, profile_pic_url, avg_likes, avg_comments, engagement_rate, avg_reel_views, posts_sampled, reels_sampled, recent_posts, last_error, fetched_at, updated_at'
+
+export type InstagramStats = Omit<Tables<'creator_instagram_stats'>, 'recent_posts' | 'username'> & { recent_posts: InstagramPost[] }
 
 export async function getInstagramStats(creatorId: string): Promise<InstagramStats | null> {
-  const row = unwrap(await supabase.from('creator_instagram_stats').select('*').eq('creator_id', creatorId).maybeSingle())
+  const row = unwrap(await supabase.from('creator_instagram_stats').select(STATS_COLUMNS).eq('creator_id', creatorId).maybeSingle())
   if (!row) return null
-  return { ...row, recent_posts: Array.isArray(row.recent_posts) ? (row.recent_posts as InstagramPost[]) : [] }
+  const posts = Array.isArray(row.recent_posts) ? (row.recent_posts as (InstagramPost & { url?: string })[]) : []
+  // Post links lead straight to the account, so they're dropped here too.
+  return { ...row, recent_posts: posts.map(({ url: _url, ...post }) => post) }
 }
 
 /** Admin: fetch one creator's numbers now (takes ~10–30 seconds). */

@@ -3,6 +3,8 @@ import { Link } from 'react-router'
 import { BadgeCheck, Clock3, GitCompareArrows, MapPin, Plane, Sparkles, Star, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCompact, formatDays, formatINR, formatLocation } from '@/lib/format'
+import { labelFor } from '@/lib/constants'
+import { TRAVEL_SCOPES } from '@/schemas/creator-application'
 import { isVideoUrl } from '@/utils/media'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -169,12 +171,12 @@ export function CreatorCard({
                   <span className="font-medium text-ink capitalize">{creator.barter_stance}</span>
                 </div>
               )}
-              {creator.travel_scope && (
-                <div className="flex items-center gap-1.5 text-sm text-muted">
-                  <Plane className="size-3.5 shrink-0" />
-                  <span className="font-medium text-ink capitalize">{creator.travel_scope.replace(/_/g, ' ')}</span>
-                </div>
-              )}
+              {/* Always shown, like the profile's travel card: creators who signed
+                  up before the travel question read "On request". */}
+              <div className="flex items-center gap-1.5 text-sm text-muted" title="Open to travel">
+                <Plane className="size-3.5 shrink-0" />
+                <span className="font-medium text-ink">{creator.travel_scope ? labelFor(TRAVEL_SCOPES, creator.travel_scope) : 'On request'}</span>
+              </div>
             </div>
           </div>
         </div>

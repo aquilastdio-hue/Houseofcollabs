@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Activity, CalendarDays, Users } from 'lucide-react'
+import { Activity, CalendarDays, MessageCircle, Users } from 'lucide-react'
 import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
@@ -77,6 +77,13 @@ export default function Creators() {
         eyebrow="Marketplace"
         title="Creators"
         description={query.data ? `${formatNumber(query.data.total)} ${filtered ? 'matching' : 'total'} creator profiles.` : 'Review, verify and manage creator profiles.'}
+        actions={
+          <Button asChild variant="secondary" size="sm">
+            <Link to="/admin/whatsapp">
+              <MessageCircle /> WhatsApp
+            </Link>
+          </Button>
+        }
       />
 
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -85,7 +92,7 @@ export default function Creators() {
           value={formatNumber(stats.data?.creators_total)}
           icon={<Users />}
           loading={stats.isPending}
-          hint={stats.data ? `${formatNumber(stats.data.creators_published)} published · ${formatNumber(stats.data.creators_verified)} verified` : undefined}
+          hint={stats.data ? `${formatNumber(stats.data.creators_published)} published · ${formatNumber(stats.data.creators_verified)} verified${stats.data.creators_removed ? ` · ${formatNumber(stats.data.creators_removed)} storefront removed` : ''}` : undefined}
         />
         <StatsCard
           label="Active today"

@@ -1,6 +1,7 @@
 import type { QueryData } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
 import { AppError, toAppError, unwrap } from '@/lib/errors'
+import { fetchAllPages } from '@/lib/fetch-all'
 import { invokeFunction } from '@/lib/supabase/functions'
 import { signedUrl } from '@/lib/supabase/storage'
 import type { CreatorRequirements } from './creators.service'
@@ -137,6 +138,39 @@ export async function listBrands(p: { search?: string; status?: AccountStatus | 
       }),
     ) ?? []
   return { items, total: Number(items[0]?.total_count ?? 0), page, pageSize }
+}
+
+/** Real names from accounts (the "Full name" given at sign-up), by profile id. Admin-only. */
+export async function getProfileNames(profileIds: string[]): Promise<Map<string, string>> {
+  const ids = [...new Set(profileIds.filter(Boolean))]
+  const chunks = Array.from({ length: Math.ceil(ids.length / 100) }, (_, i) => ids.slice(i * 100, i * 100 + 100))
+  const rows = await Promise.all(
+    chunks.map(async (chunk) => unwrap(await supabase.from('profiles').select('id, full_name').in('id', chunk)) ?? []),
+  )
+  return new Map(rows.flat().filter((r) => r.full_name?.trim()).map((r) => [r.id, r.full_name!.trim()]))
+}
+
+/**
+ * Every active brand with the number to WhatsApp them on: the WhatsApp they
+ * gave, else the contact phone, else the account phone. For Admin → WhatsApp.
+ */
+export async function listBrandContacts() {
+  return fetchAllPages(async (page, pageSize) => {
+    const from = (page - 1) * pageSize
+    const { data, error, count } = await supabase
+      .from('brands')
+      .select('id, brand_name, brand_logo_url, contact_phone, preferences, location, profile:profiles!inner ( full_name, phone, status )', { count: 'exact' })
+      .eq('profile.status', 'active')
+      .order('created_at', { ascending: false })
+      .range(from, from + pageSize - 1)
+    if (error) throw toAppError(error)
+    const items = (data ?? []).map((b) => {
+      const prefs = (b.preferences ?? {}) as Record<string, unknown>
+      const whatsapp = [prefs.whatsapp, b.contact_phone, b.profile?.phone].find((v): v is string => typeof v === 'string' && v.trim() !== '')
+      return { id: b.id, brand_name: b.brand_name, logo: b.brand_logo_url, contact_name: b.profile?.full_name ?? null, whatsapp: whatsapp?.trim() ?? null, location: b.location }
+    })
+    return { items, total: count ?? 0 }
+  })
 }
 
 const ADMIN_BRAND_SELECT = `*, profile:profiles ( id, email, full_name, status, created_at, last_seen_at, phone )`
@@ -487,6 +521,7 @@ export type AuditLogItem = Awaited<ReturnType<typeof listAuditLogs>>['items'][nu
 
 /** Account totals, DAU/WAU/MAU and the pending-work queues. */
 export type PeopleStats = {
+  /** Accounts on Admin → People (private.is_directory_account), same as the list. */
   users_total: number
   users_active: number
   users_suspended: number
@@ -496,7 +531,10 @@ export type PeopleStats = {
   wau: number
   mau: number
   by_role: Record<string, number>
+  /** Every creator account: live, suspended, or with the storefront removed. */
   creators_total: number
+  /** Creators whose storefront an admin removed (included in creators_total). Absent before migration 0016. */
+  creators_removed?: number
   creators_published: number
   creators_verified: number
   creators_pending: number
@@ -519,7 +557,7 @@ export async function getPeopleStats(): Promise<PeopleStats> {
 export type PeopleParams = {
   search?: string
   role?: '' | 'brand' | 'creator' | 'admin' | 'unassigned'
-  status?: AccountStatus | ''
+  status?: 'active' | 'suspended' | 'storefront_removed' | ''
   sort?: 'recent' | 'oldest' | 'name' | 'active' | 'value'
   page?: number
   pageSize?: number

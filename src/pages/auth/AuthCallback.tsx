@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { destinationAfterLogin } from '@/lib/auth-destination'
 import { establishSessionFromLink, readAuthLink } from '@/lib/auth-link'
+import { SUSPENDED_SIGN_IN_MESSAGE } from '@/lib/errors'
 import { Button } from '@/components/ui/button'
 import { PageLoader } from '@/components/ui/spinner'
 import { Seo } from '@/components/shared/seo'
@@ -19,7 +20,8 @@ export default function AuthCallback() {
   const navigate = useNavigate()
   const params = React.useMemo(() => new URLSearchParams(window.location.search), [])
   const hashParams = React.useMemo(() => new URLSearchParams(window.location.hash.replace(/^#/, '')), [])
-  const errorFromUrl = params.get('error_description') ?? hashParams.get('error_description')
+  const rawUrlError = params.get('error_description') ?? hashParams.get('error_description')
+  const errorFromUrl = rawUrlError && /banned/i.test(rawUrlError) ? SUSPENDED_SIGN_IN_MESSAGE : rawUrlError
   const [linkError, setLinkError] = React.useState<string | null>(null)
   const [timedOut, setTimedOut] = React.useState(false)
   const handled = React.useRef(false)

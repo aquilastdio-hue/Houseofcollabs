@@ -30,6 +30,7 @@ import { Progress } from '@/components/ui/progress'
 import { CheckboxRow } from '@/components/ui/checkbox'
 import { Chips, FileDrop, Money, MultiFileDrop, RadioRow } from './creator-wizard-parts'
 import { SelfieCapture } from './selfie-capture'
+import { WHATSAPP_COMMUNITY_URL } from '@/components/creator/whatsapp-community'
 
 type Form = UseFormReturn<CreatorApplicationValues>
 
@@ -97,7 +98,7 @@ export function Page1({ form }: { form: Form }) {
         <Field label="Full name" htmlFor="full_name" required error={errors.full_name?.message}>
           <Input id="full_name" autoComplete="name" {...register('full_name')} />
         </Field>
-        <Field label="Creator / Instagram name" htmlFor="creator_name" required error={errors.creator_name?.message} hint="What brands will see.">
+        <Field label="Creator / Instagram name" htmlFor="creator_name" required error={errors.creator_name?.message}>
           <Input id="creator_name" {...register('creator_name')} />
         </Field>
       </div>
@@ -346,12 +347,12 @@ export function Page5({ control }: { control: Control<CreatorApplicationValues> 
             <p className="mt-3 text-sm text-muted">
               Please join our WhatsApp community -{' '}
               <a
-                href="https://chat.whatsapp.com/CMcu8orqbdG3HpE1SPOJEj"
+                href={WHATSAPP_COMMUNITY_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-brand underline hover:text-brand-soft"
               >
-                https://chat.whatsapp.com/CMcu8orqbdG3HpE1SPOJEj
+                {WHATSAPP_COMMUNITY_URL}
               </a>
             </p>
           </Field>

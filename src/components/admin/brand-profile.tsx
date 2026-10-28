@@ -1,22 +1,18 @@
-import * as React from 'react'
 import { Link, useNavigate } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Package, ShieldCheck, UserX, Volume2 } from 'lucide-react'
+import { Package, Volume2 } from 'lucide-react'
 import { fetchAllPages } from '@/lib/fetch-all'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatDateTime, formatRelative } from '@/lib/format'
-import { listOrders, setUserStatus, type AdminBrandDetail } from '@/services/admin.service'
+import { listOrders, type AdminBrandDetail } from '@/services/admin.service'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { DataTable } from '@/components/shared/data-table'
 import { EmptyState } from '@/components/shared/states'
 import { ACCOUNT_STATUS_META, StatusBadge } from './admin-status'
-import { adminLists } from './admin-keys'
 import { DetailCard, DetailItem, DetailList, ExternalAnchor, IdText } from './detail'
 import { orderColumns } from './order-table'
 import { ordersHref } from './order-presets'
-import { useAdminMutation } from './use-admin-mutation'
 
 export function BrandIdentity({ brand: b }: { brand: AdminBrandDetail }) {
   return (
@@ -82,17 +78,13 @@ export function BrandDetailsCard({ brand: b }: { brand: AdminBrandDetail }) {
   )
 }
 
-/** Login identity + suspend / reactivate (confirmed, with a reason). */
+/**
+ * Login identity behind the brand. Suspending lives in the "Account access"
+ * card (AccountActionsPanel), which also blocks sign-in at Supabase Auth.
+ */
 export function BrandAccountCard({ brand: b }: { brand: AdminBrandDetail }) {
   const p = b.profile
-  const [pending, setPending] = React.useState<'suspend' | 'reactivate' | null>(null)
   const status = p?.status ?? 'active'
-
-  const change = useAdminMutation(({ next, reason }: { next: 'suspended' | 'active'; reason: string }) => setUserStatus(b.profile_id, next, reason || undefined), {
-    invalidate: [qk.admin.brand(b.id), adminLists.brands, qk.admin.stats],
-    success: (_d, v) => (v.next === 'suspended' ? 'Brand account suspended' : 'Brand account reactivated'),
-    onSuccess: () => setPending(null),
-  })
 
   return (
     <DetailCard title="Account" description="Login identity behind this brand.">
@@ -115,37 +107,6 @@ export function BrandAccountCard({ brand: b }: { brand: AdminBrandDetail }) {
           <IdText value={b.id} />
         </DetailItem>
       </DetailList>
-      <div className="mt-5 border-t border-line pt-4">
-        {status === 'active' ? (
-          <Button variant="danger-ghost" size="sm" onClick={() => setPending('suspend')}>
-            <UserX /> Suspend account
-          </Button>
-        ) : (
-          <Button variant="secondary" size="sm" onClick={() => setPending('reactivate')}>
-            <ShieldCheck /> Reactivate account
-          </Button>
-        )}
-      </div>
-
-      <ConfirmDialog
-        open={!!pending}
-        onOpenChange={(o) => !o && setPending(null)}
-        title={pending === 'suspend' ? `Suspend ${b.brand_name}?` : `Reactivate ${b.brand_name}?`}
-        description={
-          pending === 'suspend'
-            ? 'The brand can’t sign in to place orders, send briefs or pay. Existing orders stay as they are.'
-            : 'The brand can sign in and use their workspace again.'
-        }
-        confirmLabel={pending === 'suspend' ? 'Suspend account' : 'Reactivate account'}
-        destructive={pending === 'suspend'}
-        loading={change.isPending}
-        reasonLabel={pending === 'suspend' ? 'Reason (sent to the brand)' : 'Internal note'}
-        reasonPlaceholder={pending === 'suspend' ? 'e.g. Chargeback abuse on multiple orders.' : 'Optional context for the audit log.'}
-        reasonRequired={pending === 'suspend'}
-        onConfirm={(reason) => {
-          if (pending) change.mutate({ next: pending === 'suspend' ? 'suspended' : 'active', reason })
-        }}
-      />
     </DetailCard>
   )
 }
