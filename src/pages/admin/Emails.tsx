@@ -275,7 +275,7 @@ function ProviderBanner({ stats, loading }: { stats: EmailStats | undefined; loa
       ? {
           tone: 'warning' as const,
           title: 'No email provider configured',
-          body: 'Events are queued and dispatched correctly, but the function is in console mode — it logs each email instead of sending it, and records it as “Skipped”. Set EMAIL_PROVIDER=resend and RESEND_API_KEY in the Edge Function secrets to start sending.',
+          body: 'Events are queued and dispatched correctly, but the function is in console mode — it logs each email instead of sending it, and records it as “Skipped”. Set EMAIL_PROVIDER=brevo with BREVO_API_KEY (or resend with RESEND_API_KEY) and EMAIL_FROM in the Edge Function secrets to start sending.',
         }
       : {
           tone: 'ok' as const,
