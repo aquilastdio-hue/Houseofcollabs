@@ -14,6 +14,10 @@ const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
 const SET_PASSWORD_URL = `${SITE_URL}/set-password`
 
+/** Same words as the sign-up form and the database rule (migration 0024). */
+const ONE_KIND_PER_EMAIL =
+  'This email is already registered on House of Collabs. One email can be a creator or a brand, not both, so please use a different email, or sign in if it’s yours.'
+
 type BrandData = {
   full_name: string
   email: string
@@ -42,6 +46,59 @@ type BrandData = {
   representative_id_path?: string | null
   linkedin_url?: string | null
   authorized?: boolean | null
+}
+
+// The brands table only takes full links (and a phone in a fixed shape), while
+// the form accepts "yourbrand.com" or "@yourbrand". Same rules as the admin
+// approval flow, so both paths save the same thing.
+export function websiteUrl(raw: string | null | undefined): string | null {
+  const v = (raw ?? '').trim()
+  if (!v || /\s/.test(v)) return null
+  if (/^https?:\/\//i.test(v)) return v
+  // A handle, or a bare word, isn't a website.
+  return v.startsWith('@') || !v.includes('.') ? null : `https://${v}`
+}
+
+export function instagramUrl(raw: string | null | undefined): string | null {
+  const v = (raw ?? '').trim()
+  if (!v || /\s/.test(v)) return null
+  if (/^https?:\/\//i.test(v)) return v
+  if (/^(www\.)?instagram\.com\//i.test(v)) return `https://${v}`
+  const handle = v.replace(/^@/, '').replace(/\/+$/, '')
+  return /^[A-Za-z0-9._]{1,30}$/.test(handle) ? `https://instagram.com/${handle}` : null
+}
+
+export function phoneOrNull(raw: string | null | undefined): string | null {
+  const v = (raw ?? '').trim()
+  return /^\+?[0-9 ()-]{7,20}$/.test(v) ? v : null
+}
+
+/** The logo is uploaded to the private applications bucket; brands need a public copy. */
+async function publishLogo(db: ReturnType<typeof adminClient>, path: string | null | undefined, userId: string) {
+  const v = (path ?? '').trim()
+  if (!v) return null
+  if (/^https?:\/\//i.test(v)) return v
+  try {
+    const { data: file, error } = await db.storage.from('applications').download(v)
+    if (error || !file) {
+      console.error('create-brand: could not read logo', v, error?.message)
+      return null
+    }
+    const ext = (v.split('.').pop() ?? 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png'
+    const dest = `${userId}/logo.${ext}`
+    const { error: upErr } = await db.storage.from('brand-assets').upload(dest, file, {
+      contentType: file.type || 'application/octet-stream',
+      upsert: true,
+    })
+    if (upErr) {
+      console.error('create-brand: could not publish logo', dest, upErr.message)
+      return null
+    }
+    return db.storage.from('brand-assets').getPublicUrl(dest).data.publicUrl
+  } catch (e) {
+    console.error('create-brand: logo copy threw', e instanceof Error ? e.message : String(e))
+    return null
+  }
 }
 
 const looksAlreadyRegistered = (msg: string) =>
@@ -115,7 +172,22 @@ export const handle = handler(async (req) => {
     if (brand) {
       throw new HttpError(409, 'An account with this email already exists', 'EMAIL_EXISTS')
     }
+  } else if (existingProfile?.role) {
+    // A creator's or admin's email: signing up as a brand must not turn their
+    // account into a brand account. One email is a creator or a brand (0024).
+    throw new HttpError(409, ONE_KIND_PER_EMAIL, 'EMAIL_HAS_ACCOUNT')
   }
+
+  // Applied as a creator and still waiting? Same rule, before an account exists.
+  const { data: creatorApplication } = await db
+    .from('applications')
+    .select('id')
+    .eq('role', 'creator')
+    .neq('status', 'rejected')
+    .ilike('email', email.replace(/[\\%_]/g, '\\$&'))
+    .limit(1)
+    .maybeSingle()
+  if (creatorApplication) throw new HttpError(409, ONE_KIND_PER_EMAIL, 'EMAIL_HAS_ACCOUNT')
 
   let userId = existingProfile?.id ?? null
   let invited = false
@@ -147,6 +219,8 @@ export const handle = handler(async (req) => {
     await sendPasswordReset(email)
   }
 
+  const logoUrl = await publishLogo(db, data.logo_url, userId)
+
   // Upsert profile as brand
   const { error: profileError } = await db.from('profiles').upsert(
     {
@@ -154,8 +228,8 @@ export const handle = handler(async (req) => {
       role: 'brand',
       full_name: fullName,
       email,
-      phone: data.phone ?? null,
-      avatar_url: data.logo_url ?? null,
+      phone: phoneOrNull(data.phone),
+      avatar_url: logoUrl,
       status: 'active',
       onboarding_completed: true,
     },
@@ -172,15 +246,15 @@ export const handle = handler(async (req) => {
     must(
       await db.from('brands').insert({
         profile_id: userId,
-        brand_name: data.brand_name.trim(),
-        website_url: data.website ?? null,
+        brand_name: data.brand_name.trim().slice(0, 80),
+        website_url: websiteUrl(data.website),
         industry: data.industry ?? null,
         location: data.location ?? data.city ?? null,
         description: data.description ?? null,
         contact_email: data.contact_email || email,
-        contact_phone: data.contact_phone || data.phone || null,
-        instagram_url: data.instagram_url ?? null,
-        brand_logo_url: data.logo_url ?? null,
+        contact_phone: phoneOrNull(data.contact_phone || data.phone),
+        instagram_url: instagramUrl(data.instagram_url),
+        brand_logo_url: logoUrl,
         preferences: {
           contact_person: data.contact_person ?? null,
           designation: data.designation ?? null,

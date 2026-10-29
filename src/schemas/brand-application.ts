@@ -84,7 +84,7 @@ const link = z
 export const brandApplicationSchema = z
   .object({
     // ---- page 1 · brand details -------------------------------------------
-    brand_name: z.string().trim().min(2, 'Enter your brand name').max(120, 'Use 120 characters or fewer'),
+    brand_name: z.string().trim().min(2, 'Enter your brand name').max(80, 'Use 80 characters or fewer'),
     website_or_handle: z.string().trim().max(200, 'Use 200 characters or fewer'),
     logo_path: z.string(),
     industry: z.string(),
