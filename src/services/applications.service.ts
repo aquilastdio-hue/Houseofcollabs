@@ -88,6 +88,8 @@ export const DUPLICATE_MESSAGES = {
   phone: 'This mobile number is already registered. Please use a different mobile number.',
   instagram: 'This Instagram ID is already registered. Please use a different Instagram ID.',
   both: 'This mobile number and Instagram ID are already registered. Please use different details.',
+  /** One email is a creator or a brand, never both (migration 0024). */
+  account: 'This email is already registered on House of Collabs. One email can be a creator or a brand, not both, so please use a different email, or sign in if it’s yours.',
 } as const
 
 /** Hint codes `private.applications_before_insert` raises, via `AppError.code`. */
@@ -97,7 +99,13 @@ export const DUPLICATE_CODES = {
   both: 'DUPLICATE_PHONE_AND_INSTAGRAM',
 } as const
 
-export type DuplicateCheck = { email_taken: boolean; phone_taken: boolean; instagram_taken: boolean }
+export type DuplicateCheck = {
+  email_taken: boolean
+  /** The email already belongs to a creator, brand or admin account. */
+  email_registered?: boolean
+  phone_taken: boolean
+  instagram_taken: boolean
+}
 
 /**
  * Asks whether a mobile number or Instagram account is already registered.

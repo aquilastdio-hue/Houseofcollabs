@@ -143,7 +143,16 @@ export const handle = handler(async (req) => {
   // ----------------------------------------------------------------- account
   // An account for this address already? Then this is a re-approval, or they
   // signed in with Google before we got to them.
-  const { data: existing } = await db.from('profiles').select('id').eq('email', email).maybeSingle()
+  const { data: existing } = await db.from('profiles').select('id, role').eq('email', email).maybeSingle()
+  // One email is a creator or a brand, never both (migration 0024). Refused
+  // here, before any email goes out, rather than by the database halfway in.
+  if (existing?.role && existing.role !== application.role) {
+    throw new HttpError(
+      409,
+      `This email already has a ${existing.role} account, so it can't also be a ${application.role}. Ask them to apply with a different email.`,
+      'EMAIL_HAS_ACCOUNT',
+    )
+  }
   let profileId: string | null = existing?.id ?? null
   let created = false
   let invited = false

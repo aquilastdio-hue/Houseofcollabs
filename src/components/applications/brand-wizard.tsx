@@ -482,7 +482,10 @@ export function BrandApplicationWizard() {
     try {
       const taken = await checkApplicationDuplicates({ phone, email }) as DuplicateCheck
       let blocked = false
-      if (email && taken.email_taken) {
+      if (email && taken.email_registered) {
+        form.setError('business_email', { type: 'duplicate', message: DUPLICATE_MESSAGES.account })
+        blocked = true
+      } else if (email && taken.email_taken) {
         form.setError('business_email', { type: 'duplicate', message: 'This email has an active application. If you were previously rejected, you can re-apply with this email.' })
         blocked = true
       }

@@ -14,6 +14,7 @@ import {
   type BrandApplicationValues,
 } from '@/schemas/brand-application'
 import { invokeFunction } from '@/lib/supabase/functions'
+import { DUPLICATE_MESSAGES, checkApplicationDuplicates } from '@/services/applications.service'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
@@ -322,8 +323,31 @@ export default function BrandOnboarding() {
     return true
   }
 
+  const [checking, setChecking] = React.useState(false)
+
+  /**
+   * One email is a creator or a brand, never both. Page 1 asks for the email,
+   * so say so there instead of after all the uploads. Only a courtesy:
+   * create-brand-account and the database have the final say.
+   */
+  const emailIsFree = async () => {
+    setChecking(true)
+    try {
+      const taken = await checkApplicationDuplicates({ email: form.getValues('business_email') })
+      if (!taken.email_registered && !taken.email_taken) return true
+      form.setError('business_email', { type: 'duplicate', message: DUPLICATE_MESSAGES.account })
+      document.getElementById('business_email')?.focus()
+      return false
+    } catch {
+      return true
+    } finally {
+      setChecking(false)
+    }
+  }
+
   const handleNext = async () => {
     const isValid = await validateStep(step)
+    if (isValid && (STEP_FIELDS[step - 1] as readonly string[]).includes('business_email') && !(await emailIsFree())) return
     if (isValid && step < BRAND_TOTAL_STEPS) {
       setStep(step + 1)
       // Scroll to top when changing pages
@@ -446,7 +470,7 @@ export default function BrandOnboarding() {
               )}
 
               {step < BRAND_TOTAL_STEPS ? (
-                <Button type="button" onClick={handleNext}>
+                <Button type="button" onClick={handleNext} loading={checking}>
                   Next <ArrowRight />
                 </Button>
               ) : (

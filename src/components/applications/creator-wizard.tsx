@@ -543,7 +543,10 @@ export function CreatorApplicationWizard() {
     try {
       const taken = await checkApplicationDuplicates({ phone, instagram, email }) as DuplicateCheck
       let blocked = false
-      if (email && taken.email_taken) {
+      if (email && taken.email_registered) {
+        form.setError('email', { type: 'duplicate', message: DUPLICATE_MESSAGES.account })
+        blocked = true
+      } else if (email && taken.email_taken) {
         form.setError('email', { type: 'duplicate', message: 'This email has an active application. If you were previously rejected, you can re-apply with this email.' })
         blocked = true
       }
