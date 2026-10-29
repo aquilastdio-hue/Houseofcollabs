@@ -15,6 +15,9 @@ export const adminKeys = {
   emailStats: [...qk.admin.all, 'email-stats'] as const,
   emailPreview: (id: string) => [...qk.admin.all, 'email-preview', id] as const,
   employees: [...qk.admin.all, 'employees'] as const,
+  emailCampaigns: [...qk.admin.all, 'email-campaigns'] as const,
+  emailCampaignReach: (audience: string, ids: string[]) => [...qk.admin.all, 'email-campaign-reach', audience, ids] as const,
+  campaignPeople: [...qk.admin.all, 'email-campaign-people'] as const,
 }
 
 /** Prefixes of the paginated admin lists, used to invalidate every page/filter at once. */

@@ -16,6 +16,7 @@ import {
   MessageCircle,
   Package,
   Rocket,
+  Send,
   Settings,
   Sparkles,
   TrendingUp,
@@ -69,6 +70,7 @@ const sections: NavSection[] = [
     items: [
       { label: 'Announcements', href: '/admin/notifications', icon: Bell, counter: 'notifications' },
       { label: 'WhatsApp', href: '/admin/whatsapp', icon: MessageCircle },
+      { label: 'Email campaigns', href: '/admin/email-campaigns', icon: Send },
       { label: 'Email log', href: '/admin/emails', icon: Mail },
       { label: 'Audit log', href: '/admin/audit-logs', icon: FileClock },
       {

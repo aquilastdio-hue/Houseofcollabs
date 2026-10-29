@@ -16,6 +16,8 @@ export type TemplateSpec = {
   cta?: string
   /** In-app only — never emailed regardless of preferences. */
   inAppOnly?: boolean
+  /** Where the button goes when there's no notification link (email-only types). */
+  url?: string
 }
 
 export const TEMPLATES: Record<string, TemplateSpec> = {
@@ -69,6 +71,8 @@ export const TEMPLATES: Record<string, TemplateSpec> = {
 
   // ---- Platform ------------------------------------------------------------
   announcement: { subject: '{title}', cta: 'Open House of Collabs' },
+  // Email-only daily reminder (migration 0020); its text is in the delivery row.
+  creator_daily: { subject: '{title}', preheader: 'A few minutes on your profile can bring more brand collaborations.', cta: 'Update my profile', url: '/creator/profile' },
   dispute_opened: { subject: 'A dispute was opened', cta: 'View dispute' },
 
   // ---- In-app only: too chatty for email -----------------------------------

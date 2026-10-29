@@ -57,13 +57,17 @@ async function render(db: Db, row: Delivery) {
   const { data: profile } = row.user_id
     ? await db.from('profiles').select('full_name, role').eq('id', row.user_id).maybeSingle()
     : { data: null }
+  // Email-only deliveries (the daily creator email) carry their own text.
+  const { data: own } = row.notification_id
+    ? { data: null }
+    : await db.from('email_deliveries').select('body').eq('id', row.id).maybeSingle()
 
   const title = n?.title ?? row.subject ?? 'House of Collabs'
   return renderNotificationEmail({
     name: profile?.full_name ?? null,
     title,
-    message: n?.message ?? null,
-    actionUrl: n?.action_url ?? null,
+    message: n?.message ?? own?.body ?? null,
+    actionUrl: n?.action_url ?? spec.url ?? null,
     siteUrl: SITE_URL,
     cta: spec.cta ?? null,
     preheader: spec.preheader ?? null,
