@@ -49,9 +49,13 @@ export const handle = handler(async (req) => {
 
   let razorpayOrderId: string | null = null
   if (existing?.provider_order_id && Math.round(Number(existing.amount) * 100) === amountPaise) {
-    const remote = await razorpay.fetchOrder(existing.provider_order_id)
-    if (remote.status === 'paid') throw new HttpError(409, 'This order has already been paid. It will update in a moment.', 'ALREADY_PAID')
-    razorpayOrderId = remote.id
+    // An order opened with other keys (test mode, before going live) doesn't
+    // exist for these ones, so fetching it fails. Start a fresh one below
+    // rather than leaving the order unpayable. Wrong keys still surface: the
+    // create call fails with Razorpay's own message.
+    const remote = await razorpay.fetchOrder(existing.provider_order_id).catch(() => null)
+    if (remote?.status === 'paid') throw new HttpError(409, 'This order has already been paid. It will update in a moment.', 'ALREADY_PAID')
+    razorpayOrderId = remote?.id ?? null
   }
 
   if (!razorpayOrderId) {
