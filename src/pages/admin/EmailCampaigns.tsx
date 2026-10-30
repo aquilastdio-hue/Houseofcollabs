@@ -39,9 +39,9 @@ function CampaignRow({ c }: { c: EmailCampaign }) {
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <EmailStatusBadge status={c.status} />
-            {c.email_type === 'creator_daily' && (
+            {c.button_label && (
               <Badge size="sm" tone="outline">
-                Daily creator email
+                Button: {c.button_label}
               </Badge>
             )}
           </div>

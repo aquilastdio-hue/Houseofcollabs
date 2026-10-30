@@ -24,8 +24,11 @@ export type EmailCampaign = {
   send_at: string | null
   /** 'HH:MM:SS', India time. */
   daily_time: string | null
-  /** 'creator_daily' is the daily creator email: same as any campaign plus an "Update my profile" button. */
+  /** 'creator_daily' is the daily creator email; it reaches the same people as any campaign. */
   email_type: 'email_campaign' | 'creator_daily'
+  /** The button at the end of the email, if any (0025): its words and where it goes. */
+  button_label: string | null
+  button_url: string | null
   status: EmailCampaignStatus
   next_run_at: string | null
   last_run_at: string | null
@@ -56,6 +59,9 @@ export type EmailCampaignInput = {
   send_at: string | null
   /** 'HH:MM', India time, for 'daily'. */
   daily_time: string | null
+  /** Both or neither. The URL is a site path ("/creator/services") or https://. */
+  button_label: string | null
+  button_url: string | null
 }
 
 export type EmailCampaignAction = 'launch' | 'pause' | 'resume' | 'delete'

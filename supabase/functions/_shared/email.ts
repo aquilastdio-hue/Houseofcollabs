@@ -22,12 +22,20 @@ class ResendEmailProvider implements EmailProvider {
   constructor(
     private apiKey: string,
     private from: string,
+    private replyTo?: string,
   ) {}
   async send(message: EmailMessage) {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: this.from, to: [message.to], subject: message.subject, html: message.html, text: message.text }),
+      body: JSON.stringify({
+        from: this.from,
+        to: [message.to],
+        subject: message.subject,
+        html: message.html,
+        text: message.text,
+        ...(this.replyTo ? { reply_to: parseSender(this.replyTo).email } : {}),
+      }),
     })
     if (!res.ok) throw new Error(`Resend responded ${res.status}: ${await res.text()}`)
     const body = (await res.json()) as { id?: string }
@@ -46,13 +54,15 @@ export function parseSender(from: string): { name?: string; email: string } {
 /**
  * Brevo's transactional email API. The API key comes from Brevo → SMTP & API →
  * API keys (not the SMTP key Supabase Auth uses), and EMAIL_FROM must be a
- * sender verified in Brevo.
+ * sender verified in Brevo. EMAIL_REPLY_TO, when set, is where replies go —
+ * any inbox, a Gmail address included.
  */
 class BrevoEmailProvider implements EmailProvider {
   readonly name = 'brevo'
   constructor(
     private apiKey: string,
     private from: string,
+    private replyTo?: string,
   ) {}
   async send(message: EmailMessage) {
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -60,6 +70,7 @@ class BrevoEmailProvider implements EmailProvider {
       headers: { 'api-key': this.apiKey, 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
         sender: parseSender(this.from),
+        ...(this.replyTo ? { replyTo: parseSender(this.replyTo) } : {}),
         to: [{ email: message.to }],
         subject: message.subject,
         htmlContent: message.html,
@@ -73,17 +84,21 @@ class BrevoEmailProvider implements EmailProvider {
 }
 
 export function getEmailProvider(): EmailProvider {
-  const provider = (Deno.env.get('EMAIL_PROVIDER') ?? 'console').toLowerCase()
-  const from = Deno.env.get('EMAIL_FROM') ?? 'House of Collabs <notifications@houseofcollabs.example>'
+  // Secrets are typed into multi-line boxes in the dashboard; a stray newline
+  // must not quietly drop us back to console mode or break the auth header.
+  const env = (name: string) => Deno.env.get(name)?.trim() || undefined
+  const provider = (env('EMAIL_PROVIDER') ?? 'console').toLowerCase()
+  const from = env('EMAIL_FROM') ?? 'House of Collabs <notifications@houseofcollabs.example>'
+  const replyTo = env('EMAIL_REPLY_TO')
   if (provider === 'resend') {
-    const key = Deno.env.get('RESEND_API_KEY')
+    const key = env('RESEND_API_KEY')
     if (!key) throw new Error('EMAIL_PROVIDER=resend requires RESEND_API_KEY')
-    return new ResendEmailProvider(key, from)
+    return new ResendEmailProvider(key, from, replyTo)
   }
   if (provider === 'brevo') {
-    const key = Deno.env.get('BREVO_API_KEY')
+    const key = env('BREVO_API_KEY')
     if (!key) throw new Error('EMAIL_PROVIDER=brevo requires BREVO_API_KEY')
-    return new BrevoEmailProvider(key, from)
+    return new BrevoEmailProvider(key, from, replyTo)
   }
   return new ConsoleEmailProvider()
 }

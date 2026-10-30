@@ -57,19 +57,24 @@ async function render(db: Db, row: Delivery) {
   const { data: profile } = row.user_id
     ? await db.from('profiles').select('full_name, role').eq('id', row.user_id).maybeSingle()
     : { data: null }
-  // Email-only deliveries (the daily creator email) carry their own text.
+  // Email-only deliveries (campaigns) carry their own text and, when the admin
+  // added one, their own button (0025). `*` so this keeps working whichever of
+  // the function and the migration lands first.
   const { data: own } = row.notification_id
     ? { data: null }
-    : await db.from('email_deliveries').select('body').eq('id', row.id).maybeSingle()
+    : ((await db.from('email_deliveries').select('*').eq('id', row.id).maybeSingle()) as {
+        data: { body?: string | null; button_label?: string | null; button_url?: string | null } | null
+      })
+  const button = own?.button_label && own.button_url ? { cta: own.button_label, url: own.button_url } : null
 
   const title = n?.title ?? row.subject ?? 'House of Collabs'
   return renderNotificationEmail({
     name: profile?.full_name ?? null,
     title,
     message: n?.message ?? own?.body ?? null,
-    actionUrl: n?.action_url ?? spec.url ?? null,
+    actionUrl: n?.action_url ?? button?.url ?? spec.url ?? null,
     siteUrl: SITE_URL,
-    cta: spec.cta ?? null,
+    cta: button?.cta ?? spec.cta ?? null,
     preheader: spec.preheader ?? null,
     subject: (spec.subject || '{title}').replace('{title}', title),
     prefsPath: prefsPathFor(profile?.role),

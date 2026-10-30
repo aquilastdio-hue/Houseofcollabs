@@ -72,6 +72,21 @@ export function NoEmailProviderNotice() {
   )
 }
 
+/** Pages a campaign's button can open, each with words that suit it. */
+export const BUTTON_PAGES = [
+  { value: '/creator/profile', label: 'Creator · Edit profile', suggest: 'Update my profile' },
+  { value: '/creator/portfolio', label: 'Creator · Portfolio', suggest: 'Add my best work' },
+  { value: '/creator/services', label: 'Creator · Services & rates', suggest: 'Update my rates' },
+  { value: '/creator/campaigns', label: 'Creator · Open campaigns', suggest: 'See open campaigns' },
+  { value: '/creator/orders', label: 'Creator · Orders', suggest: 'View my orders' },
+  { value: '/creator/earnings', label: 'Creator · Earnings', suggest: 'See my earnings' },
+  { value: '/brand/creators', label: 'Brand · Browse creators', suggest: 'Find creators' },
+  { value: '/brand/campaigns/new', label: 'Brand · Post a campaign', suggest: 'Post a campaign' },
+  { value: '/brand/briefs/new', label: 'Brand · Write a brief', suggest: 'Write a brief' },
+  { value: '/brand/orders', label: 'Brand · Orders', suggest: 'View my orders' },
+  { value: '/', label: 'Home page', suggest: 'Open House of Collabs' },
+] as const
+
 /** "Every day at 10:00 am", "29 Oct, 6:30 pm", "Sent 28 Oct, 3:15 pm"… */
 export function scheduleLabel(c: Pick<EmailCampaign, 'schedule' | 'send_at' | 'daily_time' | 'status' | 'last_run_at'>) {
   if (c.status === 'sent') return `Sent ${istDateTime(c.last_run_at)}`

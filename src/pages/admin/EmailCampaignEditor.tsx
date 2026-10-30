@@ -19,10 +19,12 @@ import {
 } from '@/services/email-campaigns.service'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { CheckboxRow } from '@/components/ui/checkbox'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { RadioCard, RadioGroup } from '@/components/ui/radio-group'
+import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { Breadcrumb } from '@/components/shared/breadcrumb'
@@ -35,6 +37,7 @@ import { adminKeys } from '@/components/admin/admin-keys'
 import { useAdminMutation } from '@/components/admin/use-admin-mutation'
 import {
   AUDIENCE_LABEL,
+  BUTTON_PAGES,
   EmailPreview,
   EmailStatusBadge,
   NoEmailProviderNotice,
@@ -54,9 +57,29 @@ type Draft = {
   time: string
   /** 'daily': India time. */
   daily: string
+  /** The button at the end of the email: its words, and the page (from BUTTON_PAGES) it opens. */
+  button: boolean
+  buttonLabel: string
+  buttonPage: string
 }
 
-const EMPTY: Draft = { subject: '', body: '', audience: 'creators', ids: [], schedule: 'now', date: null, time: '10:00', daily: '10:00' }
+/** The site's pages, plus the campaign's own link if it was saved with one that isn't listed. */
+const pageOptions = (current: string) =>
+  !current || BUTTON_PAGES.some((p) => p.value === current) ? BUTTON_PAGES : [...BUTTON_PAGES, { value: current, label: current }]
+
+const EMPTY: Draft = {
+  subject: '',
+  body: '',
+  audience: 'creators',
+  ids: [],
+  schedule: 'now',
+  date: null,
+  time: '10:00',
+  daily: '10:00',
+  button: false,
+  buttonLabel: '',
+  buttonPage: '',
+}
 
 function fromCampaign(c: EmailCampaign): Draft {
   const at = c.send_at ? istParts(c.send_at) : null
@@ -69,8 +92,16 @@ function fromCampaign(c: EmailCampaign): Draft {
     date: at?.date ?? null,
     time: at?.time ?? '10:00',
     daily: c.daily_time?.slice(0, 5) ?? '10:00',
+    ...buttonFrom(c.button_label, c.button_url),
   }
 }
+
+function buttonFrom(label: string | null, url: string | null): Pick<Draft, 'button' | 'buttonLabel' | 'buttonPage'> {
+  return url ? { button: true, buttonLabel: label ?? '', buttonPage: url } : { button: false, buttonLabel: '', buttonPage: '' }
+}
+
+/** Where the button goes: the page picked under "Opens". */
+const buttonLink = (d: Draft) => d.buttonPage
 
 function toInput(d: Draft): EmailCampaignInput {
   return {
@@ -81,6 +112,8 @@ function toInput(d: Draft): EmailCampaignInput {
     schedule: d.schedule,
     send_at: d.schedule === 'once' && d.date && d.time ? istToIso(d.date, d.time) : null,
     daily_time: d.schedule === 'daily' ? d.daily : null,
+    button_label: d.button ? d.buttonLabel.trim() : null,
+    button_url: d.button ? buttonLink(d) : null,
   }
 }
 
@@ -88,7 +121,7 @@ const same = (a: Draft, b: Draft) => JSON.stringify(toInput(a)) === JSON.stringi
 
 /** What's wrong with the draft, field by field (empty when it can be saved). */
 function problems(d: Draft) {
-  const p: Partial<Record<'subject' | 'body' | 'ids' | 'when', string>> = {}
+  const p: Partial<Record<'subject' | 'body' | 'ids' | 'when' | 'buttonLabel' | 'buttonPage', string>> = {}
   const subject = d.subject.trim().length
   const body = d.body.trim().length
   if (subject < 3 || subject > 200) p.subject = 'Write a subject of 3 to 200 characters.'
@@ -96,6 +129,11 @@ function problems(d: Draft) {
   if (d.audience === 'specific' && d.ids.length === 0) p.ids = 'Pick at least one person.'
   if (d.schedule === 'once' && (!d.date || !d.time)) p.when = 'Pick a date and time.'
   if (d.schedule === 'daily' && !d.daily) p.when = 'Pick a time.'
+  if (d.button) {
+    const label = d.buttonLabel.trim().length
+    if (label < 2 || label > 40) p.buttonLabel = 'Write 2 to 40 characters for the button.'
+    if (!d.buttonPage) p.buttonPage = 'Pick the page the button opens.'
+  }
   return p
 }
 
@@ -236,7 +274,19 @@ export default function EmailCampaignEditor() {
   const peopleText = `${formatNumber(people)} ${people === 1 ? 'person' : 'people'}`
   // "all creators (233 today)"; picked people are just counted.
   const whoText = draft.audience === 'specific' ? peopleText : `${AUDIENCE_LABEL[draft.audience].toLowerCase()} (${peopleText} today)`
-  const button = campaign?.email_type === 'creator_daily' ? 'Update my profile' : null
+  const button = draft.button && draft.buttonLabel.trim() ? draft.buttonLabel.trim() : null
+  const link = draft.button ? buttonLink(draft) : ''
+  // A creator page in an email to brands (or the other way round) just bounces them home.
+  const wrongSide =
+    (draft.audience === 'brands' && link.startsWith('/creator')) || (draft.audience === 'creators' && link.startsWith('/brand'))
+  // Picking a page fills in words that suit it, unless the admin wrote their own.
+  const pickPage = (page: string) =>
+    setDraft((d) => {
+      if (!d) return d
+      const suggestFor = (v: string) => BUTTON_PAGES.find((p) => p.value === v)?.suggest
+      const own = d.buttonLabel.trim() !== '' && d.buttonLabel.trim() !== suggestFor(d.buttonPage)
+      return { ...d, buttonPage: page, buttonLabel: own ? d.buttonLabel : (suggestFor(page) ?? d.buttonLabel) }
+    })
   // A sent campaign can go out again, to a new audience or on a new schedule.
   const launchLabel =
     status === 'paused' && draft.schedule === 'daily' ? 'Start again' : sent && draft.schedule === 'now' ? 'Send again' : LAUNCH_LABEL[draft.schedule]
@@ -277,6 +327,41 @@ export default function EmailCampaignEditor() {
             >
               <Textarea id="ec-body" rows={14} maxLength={5000} value={draft.body} onChange={(e) => set('body', e.target.value)} />
             </Field>
+            <CheckboxRow
+              id="ec-button"
+              label="Add a button"
+              description="Ends the email with a button that opens the page you pick. People who aren’t signed in sign in first, then land there."
+              checked={draft.button}
+              onCheckedChange={(v) => set('button', v)}
+            />
+            {draft.button && (
+              <div className="grid gap-4 sm:pl-7 @lg:grid-cols-2">
+                <Field label="Button text" htmlFor="ec-button-label" required error={show('buttonLabel')} hint="What the button says.">
+                  <Input
+                    id="ec-button-label"
+                    maxLength={40}
+                    value={draft.buttonLabel}
+                    onChange={(e) => set('buttonLabel', e.target.value)}
+                    placeholder="e.g. Update my profile"
+                  />
+                </Field>
+                <Field
+                  label="Opens"
+                  htmlFor="ec-button-page"
+                  required
+                  error={show('buttonPage')}
+                  hint={wrongSide ? 'Heads up: the people getting this email can’t open that page.' : 'The page the button takes them to.'}
+                >
+                  <Select
+                    id="ec-button-page"
+                    value={draft.buttonPage || null}
+                    onValueChange={pickPage}
+                    options={pageOptions(draft.buttonPage)}
+                    placeholder="Pick a page"
+                  />
+                </Field>
+              </div>
+            )}
           </Card>
 
           <Card className="@container space-y-5 p-5 sm:p-6">
@@ -419,7 +504,7 @@ export default function EmailCampaignEditor() {
               </div>
             </SectionCard>
           )}
-          <SectionCard title="Preview" description={button ? 'This one ends with a button that opens the creator’s profile editor.' : undefined}>
+          <SectionCard title="Preview" description={button && link ? `The button opens ${link}` : undefined}>
             <EmailPreview subject={draft.subject} body={draft.body} button={button} />
           </SectionCard>
         </aside>

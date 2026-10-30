@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { messageHtml, parseSender, renderNotificationEmail } from './email'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { getEmailProvider, messageHtml, parseSender, renderNotificationEmail } from './email'
 
 describe('messageHtml', () => {
   it('turns blank lines into paragraphs and keeps single line breaks', () => {
@@ -45,5 +45,45 @@ describe('parseSender', () => {
   it('takes a bare address as is', () => {
     expect(parseSender(' hello@houseofcollabs.in ')).toEqual({ email: 'hello@houseofcollabs.in' })
     expect(parseSender('<hello@houseofcollabs.in>')).toEqual({ email: 'hello@houseofcollabs.in' })
+  })
+})
+
+describe('Brevo provider', () => {
+  const message = { to: 'riya@example.com', subject: 'Hi', html: '<p>Hi</p>', text: 'Hi' }
+
+  async function sentBody(env: Record<string, string>) {
+    vi.stubGlobal('Deno', { env: { get: (k: string) => env[k] } })
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ messageId: 'm1' }), { status: 201 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const provider = getEmailProvider()
+    expect(provider.name).toBe('brevo')
+    expect(await provider.send(message)).toEqual({ id: 'm1' })
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe('https://api.brevo.com/v3/smtp/email')
+    return JSON.parse(String(init.body))
+  }
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('sends from EMAIL_FROM and lets replies go to EMAIL_REPLY_TO', async () => {
+    const body = await sentBody({
+      EMAIL_PROVIDER: 'brevo',
+      BREVO_API_KEY: 'xkeysib-test',
+      EMAIL_FROM: 'House of Collabs <hello@houseofcollabs.com>',
+      EMAIL_REPLY_TO: 'infohouseofcollabs@gmail.com',
+    })
+    expect(body.sender).toEqual({ name: 'House of Collabs', email: 'hello@houseofcollabs.com' })
+    expect(body.replyTo).toEqual({ email: 'infohouseofcollabs@gmail.com' })
+    expect(body.to).toEqual([{ email: 'riya@example.com' }])
+  })
+
+  it('ignores stray spaces and line breaks in the secrets', async () => {
+    const body = await sentBody({ EMAIL_PROVIDER: ' Brevo\n', BREVO_API_KEY: 'xkeysib-test\n', EMAIL_FROM: 'House of Collabs <hello@houseofcollabs.com>\n' })
+    expect(body.sender).toEqual({ name: 'House of Collabs', email: 'hello@houseofcollabs.com' })
+  })
+
+  it('leaves reply-to out when EMAIL_REPLY_TO is not set', async () => {
+    const body = await sentBody({ EMAIL_PROVIDER: 'brevo', BREVO_API_KEY: 'xkeysib-test', EMAIL_FROM: 'hello@houseofcollabs.com' })
+    expect(body.replyTo).toBeUndefined()
   })
 })
