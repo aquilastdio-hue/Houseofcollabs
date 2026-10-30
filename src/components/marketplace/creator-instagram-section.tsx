@@ -71,7 +71,7 @@ export function StatsSection({ creator }: { creator: CreatorProfile }) {
 
   if (!hasInstagramStats(stats)) {
     return (
-      <ProfileSection id="stats" title="Stats" description="Public Instagram numbers, updated every week.">
+      <ProfileSection id="stats" title="Instagram stats" description="Public Instagram numbers, updated every week.">
         {isPending ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-hidden>
             {[0, 1, 2, 3].map((i) => (
@@ -82,7 +82,7 @@ export function StatsSection({ creator }: { creator: CreatorProfile }) {
           <EmptyState
             compact
             icon={<BarChart3 />}
-            title="Stats are on their way"
+            title="Instagram stats are on their way"
             description="Instagram numbers appear here after the next weekly update."
           />
         )}
@@ -96,7 +96,7 @@ export function StatsSection({ creator }: { creator: CreatorProfile }) {
   return (
     <ProfileSection
       id="stats"
-      title="Stats"
+      title="Instagram stats"
       description={`Public Instagram numbers${stats.fetched_at ? ` · updated ${formatRelative(stats.fetched_at)}` : ''}`}
     >
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">

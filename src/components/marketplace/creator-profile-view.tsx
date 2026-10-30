@@ -179,7 +179,7 @@ export function CreatorProfileView({ mode, creator }: { mode: ProfileMode; creat
 
   const sections = [
     { id: 'portfolio' as const, label: 'Portfolio', count: visiblePortfolio(creator).length },
-    { id: 'stats' as const, label: 'Stats' },
+    { id: 'stats' as const, label: 'Instagram stats' },
     { id: 'services' as const, label: 'Services', count: visibleServices(creator, access.isOwner).length },
     { id: 'about' as const, label: 'About' },
     { id: 'reviews' as const, label: 'Reviews', count: creator.review_count },
