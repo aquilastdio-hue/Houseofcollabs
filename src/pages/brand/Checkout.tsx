@@ -75,6 +75,8 @@ export default function Checkout() {
 
   const [addonIds, setAddonIds] = React.useState<string[]>(() => (params.get('addons') ?? '').split(',').filter(Boolean))
   const quote = useOrderQuote(serviceId, addonIds)
+  /** Platform fee on top of the creator's price (0 when none is set). */
+  const brandFee = Number(quote.data?.brand_fee ?? 0)
 
   const briefs = useQuery({
     queryKey: qk.briefs.list({ scope: 'brand', ownerId: brand?.id, status: 'all', page: 1, checkout: true }),
@@ -398,22 +400,7 @@ export default function Checkout() {
               </div>
             ) : (
               <div className={cn('mt-4 space-y-3 text-sm transition-opacity', quote.isFetching && 'opacity-60')} aria-live="polite">
-                <div className="flex justify-between">
-                  <span className="text-muted">{service.title}</span>
-                  <span className="tabular-nums">{formatINR(quote.data.subtotal)}</span>
-                </div>
-                {addonIds.length > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-muted">Add-ons ({addonIds.length})</span>
-                    <span className="tabular-nums">{formatINR(quote.data.addons_total)}</span>
-                  </div>
-                )}
-                {Number(quote.data.brand_fee ?? 0) > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-muted">Platform fee ({Number(quote.data.brand_fee_percent)}%)</span>
-                    <span className="tabular-nums">{formatINR(quote.data.brand_fee)}</span>
-                  </div>
-                )}
+                {/* What you get first, then every rupee of the total, line by line. */}
                 <div className="flex justify-between">
                   <span className="text-muted">Delivery</span>
                   <span>{formatDays(quote.data.delivery_days)}</span>
@@ -422,11 +409,37 @@ export default function Checkout() {
                   <span className="text-muted">Revisions</span>
                   <span>{quote.data.revisions}</span>
                 </div>
+                <div className="space-y-3 border-t border-line pt-3">
+                  <div className="flex justify-between gap-3">
+                    <span className="text-muted">{service.title}</span>
+                    <span className="tabular-nums">{formatINR(quote.data.subtotal)}</span>
+                  </div>
+                  {addonIds.length > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted">Add-ons ({addonIds.length})</span>
+                      <span className="tabular-nums">{formatINR(quote.data.addons_total)}</span>
+                    </div>
+                  )}
+                  {brandFee > 0 && addonIds.length > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted">Creator’s price</span>
+                      <span className="tabular-nums">{formatINR(Number(quote.data.subtotal) + Number(quote.data.addons_total))}</span>
+                    </div>
+                  )}
+                  {brandFee > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted">Platform fee ({Number(quote.data.brand_fee_percent)}%)</span>
+                      <span className="tabular-nums">{formatINR(brandFee)}</span>
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-end justify-between border-t border-line pt-3">
                   <span className="font-medium">Total</span>
                   <span className="font-display text-2xl font-semibold tabular-nums">{formatINR(quote.data.total)}</span>
                 </div>
-                <p className="text-xs text-muted">Price calculated securely on our servers. No hidden charges.</p>
+                <p className="text-xs text-muted">
+                  Price calculated securely on our servers. {brandFee > 0 ? 'Everything you pay is listed above.' : 'No hidden charges.'}
+                </p>
               </div>
             )}
 
