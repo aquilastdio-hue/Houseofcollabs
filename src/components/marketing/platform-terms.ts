@@ -8,7 +8,10 @@ import { formatINR } from '@/lib/format'
  * fall back to generic wording instead of showing a number that may be stale.
  */
 export type PlatformTerms = {
+  /** Creator commission, taken out of their earning. */
   feePercent: number | null
+  /** Platform fee brands pay on top of the price (0 = none). */
+  brandFeePercent: number | null
   minPayout: number | null
   holdDays: number | null
   responseHours: number | null
@@ -43,6 +46,7 @@ export function usePlatformTerms() {
     const s: Record<string, unknown> = data ?? {}
     return {
       feePercent: toNumber(s.platform_fee_percentage),
+      brandFeePercent: toNumber(s.brand_fee_percentage),
       minPayout: toNumber(s.minimum_payout_amount),
       holdDays: toNumber(s.earning_hold_days),
       responseHours: toNumber(s.creator_response_hours),
@@ -75,6 +79,18 @@ export function daysText(n: number) {
 /** "10%" or the fallback wording. */
 export function feeText(t: PlatformTerms, fallback = 'a small percentage') {
   return t.feePercent != null ? percentText(t.feePercent) : fallback
+}
+
+/**
+ * What brands pay on top of the price, as a sentence: the fee when there is
+ * one, "nothing" when it's 0, and wording that promises neither while the
+ * setting is still loading.
+ */
+export function brandFeeSentence(t: PlatformTerms) {
+  if (t.brandFeePercent == null) return 'Any platform fee is shown as its own line before you pay.'
+  return t.brandFeePercent > 0
+    ? `A ${percentText(t.brandFeePercent)} platform fee is added on top at checkout, shown as its own line before you pay.`
+    : 'No platform fee is added at checkout.'
 }
 
 /** "₹500" or the fallback wording. */

@@ -292,6 +292,15 @@ const ADMIN_PAYOUT_SELECT = `
   payout_transactions ( * ),
   creator_earnings ( id, order_id, net_amount )
 `
+/**
+ * What each creator is owed (migration 0027): ready to pay, already requested,
+ * on hold, still in progress on open orders, and paid so far. Admin only.
+ */
+export async function listCreatorBalances() {
+  return unwrap(await supabase.rpc('admin_creator_balances')) ?? []
+}
+export type CreatorBalance = Awaited<ReturnType<typeof listCreatorBalances>>[number]
+
 export async function listPayouts(p: { status?: PayoutStatus | ''; page?: number; pageSize?: number }) {
   const pageSize = p.pageSize ?? 25
   const page = Math.max(1, p.page ?? 1)

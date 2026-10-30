@@ -408,6 +408,12 @@ export default function Checkout() {
                     <span className="tabular-nums">{formatINR(quote.data.addons_total)}</span>
                   </div>
                 )}
+                {Number(quote.data.brand_fee ?? 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted">Platform fee ({Number(quote.data.brand_fee_percent)}%)</span>
+                    <span className="tabular-nums">{formatINR(quote.data.brand_fee)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted">Delivery</span>
                   <span>{formatDays(quote.data.delivery_days)}</span>

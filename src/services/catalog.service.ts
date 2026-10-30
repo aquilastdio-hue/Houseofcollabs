@@ -16,6 +16,7 @@ export async function listCreatorTypes(): Promise<CreatorTypeRow[]> {
 
 export type PublicSettings = {
   platform_fee_percentage: number
+  brand_fee_percentage: number
   minimum_payout_amount: number
   require_creator_approval: boolean
   max_revisions: number

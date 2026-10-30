@@ -15,12 +15,14 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PAYOUT_STATUS_META, StatusBadge } from '@/components/admin/admin-status'
 import { IdentityCell } from '@/components/admin/detail'
+import { CreatorBalances } from '@/components/admin/creator-balances'
 import { PayoutDialog } from '@/components/admin/payout-dialog'
 import { PayoutMethodSummary, latestReference, linkedEarnings, readPayoutSnapshot } from '@/components/admin/payout-parts'
 import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 
 const TABS = [
+  { value: 'owed', label: 'Owed to creators' },
   { value: 'pending', label: 'Pending' },
   { value: 'processing', label: 'Processing' },
   { value: 'paid', label: 'Paid' },
@@ -30,7 +32,9 @@ const TABS = [
 ] as const
 const TAB_VALUES = TABS.map((t) => t.value)
 
-const EMPTY_COPY: Record<(typeof TABS)[number]['value'], { title: string; description: string }> = {
+type RequestTab = Exclude<(typeof TABS)[number]['value'], 'owed'>
+
+const EMPTY_COPY: Record<RequestTab, { title: string; description: string }> = {
   pending: { title: 'No pending payouts', description: 'New creator payout requests land here. You’re all caught up.' },
   processing: { title: 'Nothing processing', description: 'Payouts you mark as processing (or send via RazorpayX) wait here until they’re confirmed.' },
   paid: { title: 'No paid payouts yet', description: 'Completed transfers are listed here with their references.' },
@@ -42,14 +46,17 @@ const EMPTY_COPY: Record<(typeof TABS)[number]['value'], { title: string; descri
 export default function Payouts() {
   const url = useUrlState()
   const rawTab = url.get('status')
-  const tab = isOneOf(TAB_VALUES, rawTab) ? rawTab : 'pending'
+  // "Owed to creators" is where the page opens; the rest list payout requests by status.
+  const tab = isOneOf(TAB_VALUES, rawTab) ? rawTab : 'owed'
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
-  const params = { status: tab === 'all' ? ('' as const) : tab }
+  const requestTab: RequestTab = tab === 'owed' ? 'pending' : tab
+  const params = { status: requestTab === 'all' ? ('' as const) : requestTab }
   const query = useQuery({
     queryKey: qk.admin.payouts(params),
     queryFn: () => fetchAllPages((page, pageSize) => listPayouts({ ...params, page, pageSize })),
     placeholderData: keepPreviousData,
+    enabled: tab !== 'owed',
   })
   const selected = query.data?.items.find((p) => p.id === selectedId) ?? null
 
@@ -135,10 +142,10 @@ export default function Payouts() {
       <PageHeader
         eyebrow="Money"
         title="Payouts"
-        description="Pay creators their available earnings. Manual transfers need a reference; RazorpayX sends automatically when configured."
+        description="What each creator is owed, and their payout requests. Manual transfers need a reference; RazorpayX sends automatically when configured."
       />
 
-      <Tabs value={tab} onValueChange={(v) => url.update({ status: v === 'pending' ? null : v })}>
+      <Tabs value={tab} onValueChange={(v) => url.update({ status: v === 'owed' ? null : v })}>
         <TabsList aria-label="Payout status" className="mb-5">
           {TABS.map((t) => (
             <TabsTrigger key={t.value} value={t.value}>
@@ -146,7 +153,16 @@ export default function Payouts() {
             </TabsTrigger>
           ))}
         </TabsList>
-        <TabsContent value={tab}>
+        <TabsContent value="owed">
+          <CreatorBalances
+            onProcess={(requestId, status) => {
+              // Open that request where it lives; the dialog appears once its tab has loaded.
+              url.update({ status })
+              setSelectedId(requestId)
+            }}
+          />
+        </TabsContent>
+        <TabsContent value={requestTab}>
           {query.data && query.data.total > 0 && (
             <p className="mb-3 text-sm text-muted">
               {formatNumber(query.data.total)} request{query.data.total === 1 ? '' : 's'}
@@ -166,10 +182,10 @@ export default function Payouts() {
             empty={
               <EmptyState
                 icon={<Wallet />}
-                title={EMPTY_COPY[tab].title}
-                description={EMPTY_COPY[tab].description}
+                title={EMPTY_COPY[requestTab].title}
+                description={EMPTY_COPY[requestTab].description}
                 action={
-                  tab !== 'all' ? (
+                  requestTab !== 'all' ? (
                     <Button variant="secondary" size="sm" onClick={() => url.update({ status: 'all' })}>
                       View all requests
                     </Button>

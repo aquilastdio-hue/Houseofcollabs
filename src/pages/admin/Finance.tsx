@@ -181,7 +181,7 @@ export default function Finance() {
               <Row label="Completed" value={formatINR(r!.payouts.paid_amount)} strong />
               <div className="pt-3">
                 <Button asChild variant="secondary" size="sm" block>
-                  <Link to="/admin/payouts">Process payouts</Link>
+                  <Link to="/admin/payouts?status=pending">Process payouts</Link>
                 </Button>
               </div>
             </div>

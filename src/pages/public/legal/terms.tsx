@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { site } from '@/config/site'
 import {
+  brandFeeSentence,
   autoApproveText,
   feeText,
   paymentWindowText,
@@ -111,8 +112,8 @@ export const termsOfService: LegalBuilder = (t) => ({
               {paymentWindowText(t)} and is then cancelled automatically.
             </li>
             <li>
-              {site.name} does not add a separate fee for brands at checkout. Creators pay a platform fee
-              {t.feePercent != null ? ` of ${feeText(t)}` : ''} on the order total, deducted when their earning is recorded. The percentage is shown in
+              {brandFeeSentence(t)} Creators pay a platform fee
+              {t.feePercent != null ? ` of ${feeText(t)}` : ''} on the creator’s price, deducted when their earning is recorded. The percentage is shown in
               the creator’s dashboard and is fixed on each order when the order is created.
             </li>
             <li>

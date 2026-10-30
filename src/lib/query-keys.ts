@@ -81,6 +81,7 @@ export const qk = {
     orders: (params: unknown) => ['admin', 'orders', params] as const,
     payments: (params: unknown) => ['admin', 'payments', params] as const,
     payouts: (params: unknown) => ['admin', 'payouts', params] as const,
+    creatorBalances: ['admin', 'creator-balances'] as const,
     reports: (params: unknown) => ['admin', 'reports', params] as const,
     auditLogs: (params: unknown) => ['admin', 'audit-logs', params] as const,
     settings: ['admin', 'settings'] as const,

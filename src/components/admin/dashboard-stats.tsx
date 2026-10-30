@@ -89,7 +89,7 @@ export function DashboardStats({ stats, loading }: { stats?: AdminDashboardStats
       <StatLink to={ordersHref({ statuses: ['completed'] })}>
         <StatsCard label="Completed orders" icon={<CheckCircle2 />} loading={loading} value={n(s?.completed_orders)} hint="Approved and closed" />
       </StatLink>
-      <StatLink to="/admin/payouts">
+      <StatLink to="/admin/payouts?status=pending">
         <StatsCard
           label="Pending payouts"
           icon={<Wallet />}

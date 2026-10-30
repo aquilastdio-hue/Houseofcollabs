@@ -82,6 +82,12 @@ export type OrderQuote = {
   service_id: string
   subtotal: number
   addons_total: number
+  /** The creator's price: subtotal + add-ons (migration 0027). */
+  price?: number
+  /** Platform fee the brand pays on top of the price; absent before 0027. */
+  brand_fee_percent?: number
+  brand_fee?: number
+  /** What the brand pays: price + brand fee. */
   total: number
   currency: string
   platform_fee_percent: number

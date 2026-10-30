@@ -87,7 +87,7 @@ export function QuickLinks({ stats, loading }: { stats?: AdminDashboardStats; lo
       urgent: true,
     },
     {
-      to: '/admin/payouts',
+      to: '/admin/payouts?status=pending',
       label: 'Payout requests',
       hint: `${formatINR(Number(s?.pending_payouts_amount ?? 0))} waiting`,
       count: Number(s?.pending_payouts_count ?? 0),

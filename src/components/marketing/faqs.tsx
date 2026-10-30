@@ -2,6 +2,7 @@ import { site } from '@/config/site'
 import type { FaqItem } from '@/components/shared/faq'
 import {
   autoApproveText,
+  brandFeeSentence,
   feeText,
   holdText,
   minPayoutText,
@@ -28,8 +29,8 @@ export function homeFaqs(t: PlatformTerms): FaqItem[] {
       q: `How much does ${site.name} cost?`,
       a: (
         <>
-          Browsing and creating an account are free. Brands pay the price listed on a creator’s service plus any add-ons they choose — no platform
-          fee is added at checkout. {creatorFeeSentence(t)}
+          Browsing and creating an account are free. Brands pay the price listed on a creator’s service plus any add-ons they choose.{' '}
+          {brandFeeSentence(t)} {creatorFeeSentence(t)}
         </>
       ),
     },
@@ -100,7 +101,7 @@ export function brandFaqs(t: PlatformTerms): FaqItem[] {
     },
     {
       q: 'What exactly is included in the price?',
-      a: `Whatever the service lists: the deliverables, the delivery time and the number of revisions. Add-ons such as raw footage, faster delivery, extra content or ad usage rights are priced separately and shown before you pay. ${site.name} doesn’t add a fee on top at checkout.`,
+      a: `Whatever the service lists: the deliverables, the delivery time and the number of revisions. Add-ons such as raw footage, faster delivery, extra content or ad usage rights are priced separately and shown before you pay. ${brandFeeSentence(t)}`,
     },
     {
       q: 'What if the creator doesn’t accept my order?',

@@ -278,13 +278,19 @@ export default function OrderDetail({ perspective }: { perspective: 'brand' | 'c
                 <Line key={a.id} label={`+ ${a.name}`} value={formatINR(a.total_price)} />
               ))}
               {perspective === 'brand' ? (
-                <div className="border-t border-line pt-2.5">
-                  <Line label="Total" value={formatINR(order.total_amount)} strong />
-                </div>
+                <>
+                  {Number(order.brand_fee_amount) > 0 && (
+                    <Line label={`Platform fee (${Number(order.brand_fee_percent)}%)`} value={formatINR(order.brand_fee_amount)} />
+                  )}
+                  <div className="border-t border-line pt-2.5">
+                    <Line label="Total" value={formatINR(order.total_amount)} strong />
+                  </div>
+                </>
               ) : (
+                // The creator's side starts from their price; the brand's fee isn't theirs.
                 <div className="space-y-2.5 border-t border-line pt-2.5">
-                  <Line label="Order total" value={formatINR(order.total_amount)} />
-                  <Line label={`Platform fee (${Number(order.platform_fee_percent)}%)`} value={`− ${formatINR(order.platform_fee_amount)}`} />
+                  <Line label="Order price" value={formatINR(Number(order.subtotal) + Number(order.addons_total))} />
+                  <Line label={`Commission (${Number(order.platform_fee_percent)}%)`} value={`− ${formatINR(order.platform_fee_amount)}`} />
                   <Line label="You earn" value={formatINR(order.creator_earning_amount)} strong />
                 </div>
               )}

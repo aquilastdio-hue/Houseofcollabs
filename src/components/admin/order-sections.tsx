@@ -119,11 +119,14 @@ export function OrderMoney({ order }: { order: OrderDetail }) {
         <div className="pb-2">
           <SummaryRow label="Service" value={formatINR(order.subtotal)} />
           <SummaryRow label="Add-ons" value={formatINR(order.addons_total)} />
-          <SummaryRow label="Order total" value={formatINR(order.total_amount)} strong />
+          <SummaryRow label={`Brand platform fee (${formatPercent(order.brand_fee_percent, 2)})`} value={formatINR(order.brand_fee_amount)} />
+          <SummaryRow label="Brand paid" value={formatINR(order.total_amount)} strong />
         </div>
         <div className="py-2">
-          <SummaryRow label={`Platform fee (${formatPercent(order.platform_fee_percent, 2)})`} value={`− ${formatINR(order.platform_fee_amount)}`} />
+          <SummaryRow label="Order price" value={formatINR(Number(order.subtotal) + Number(order.addons_total))} />
+          <SummaryRow label={`Creator commission (${formatPercent(order.platform_fee_percent, 2)})`} value={`− ${formatINR(order.platform_fee_amount)}`} />
           <SummaryRow label="Creator earning" value={formatINR(order.creator_earning_amount)} strong />
+          <SummaryRow label="Platform keeps" value={formatINR(Number(order.brand_fee_amount) + Number(order.platform_fee_amount))} />
         </div>
         <div className="pt-2">
           <SummaryRow label="Captured" value={formatINR(captured)} muted={captured === 0} />

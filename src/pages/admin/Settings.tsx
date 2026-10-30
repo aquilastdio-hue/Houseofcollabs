@@ -28,6 +28,7 @@ type NumberSpec = { kind: 'number'; min: number; max: number; integer: boolean; 
 type Spec = NumberSpec | { kind: 'boolean' } | { kind: 'text'; maxLength: number; rows?: number; email?: boolean }
 
 const SPECS: Record<string, Spec> = {
+  brand_fee_percentage: { kind: 'number', min: 0, max: 50, integer: false, unit: '%' },
   platform_fee_percentage: { kind: 'number', min: 0, max: 50, integer: false, unit: '%' },
   minimum_payout_amount: { kind: 'number', min: 0, max: 1_000_000, integer: false, money: true },
   max_revisions: { kind: 'number', min: 0, max: 10, integer: true, unit: 'revisions' },
@@ -43,9 +44,15 @@ const SPECS: Record<string, Spec> = {
 
 const GROUPS: { title: string; description: string; keys: string[] }[] = [
   {
-    title: 'Money',
-    description: 'Commission and payout thresholds. Changes apply to new orders and payout requests, never to money already moved.',
-    keys: ['platform_fee_percentage', 'minimum_payout_amount', 'earning_hold_days'],
+    title: 'Commission',
+    description:
+      'What the platform earns on each order: a fee the brand pays on top of the price, and a commission taken from the creator’s earnings. Each order keeps the percentages it was placed at, so a change only affects new orders.',
+    keys: ['brand_fee_percentage', 'platform_fee_percentage'],
+  },
+  {
+    title: 'Payouts',
+    description: 'When creators can be paid. Changes apply to new earnings and payout requests, never to money already moved.',
+    keys: ['minimum_payout_amount', 'earning_hold_days'],
   },
   {
     title: 'Order timings',
@@ -57,7 +64,8 @@ const GROUPS: { title: string; description: string; keys: string[] }[] = [
 ]
 
 const LABELS: Record<string, string> = {
-  platform_fee_percentage: 'Platform fee',
+  brand_fee_percentage: 'Brand platform fee',
+  platform_fee_percentage: 'Creator commission',
   minimum_payout_amount: 'Minimum payout',
   earning_hold_days: 'Earnings hold',
   creator_response_hours: 'Creator response window',
@@ -71,6 +79,35 @@ const LABELS: Record<string, string> = {
 }
 
 type SettingRow = Awaited<ReturnType<typeof listSettings>>[number]
+
+const EXAMPLE_PRICE = 10_000
+/** Same rounding as the database: two decimals, per fee. */
+const percentOf = (amount: number, pct: number) => Math.round(amount * pct) / 100
+
+/** A worked order at the saved percentages, so the two numbers read as money. */
+function CommissionExample({ brandPct, creatorPct }: { brandPct: number; creatorPct: number }) {
+  const brandFee = percentOf(EXAMPLE_PRICE, brandPct)
+  const commission = percentOf(EXAMPLE_PRICE, creatorPct)
+  const rows: { label: string; value: string; strong?: boolean; tone?: string }[] = [
+    { label: 'Creator’s price', value: formatINR(EXAMPLE_PRICE) },
+    { label: `Brand pays (price + ${brandPct}%)`, value: formatINR(EXAMPLE_PRICE + brandFee), strong: true },
+    { label: `Creator earns (price − ${creatorPct}%)`, value: formatINR(EXAMPLE_PRICE - commission), strong: true },
+    { label: 'Platform keeps', value: formatINR(brandFee + commission), strong: true, tone: 'text-brand-ink' },
+  ]
+  return (
+    <div className="rounded-card border border-dashed border-line-strong bg-subtle/60 p-4">
+      <p className="text-xs font-medium tracking-wide text-muted uppercase">Example order, at the saved rates</p>
+      <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-baseline justify-between gap-3">
+            <dt className="text-muted">{r.label}</dt>
+            <dd className={cn('tabular-nums', r.strong && 'font-semibold', r.tone)}>{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+}
 
 function validate(spec: Exclude<Spec, { kind: 'boolean' }>, raw: string): { value: Json } | { error: string } {
   if (spec.kind === 'number') {
@@ -263,6 +300,12 @@ export default function Settings() {
                     </div>
                   ))}
                 </Card>
+                {group.title === 'Commission' && (
+                  <CommissionExample
+                    brandPct={Number(byKey.get('brand_fee_percentage')?.value ?? 0)}
+                    creatorPct={Number(byKey.get('platform_fee_percentage')?.value ?? 0)}
+                  />
+                )}
               </section>
             )
           })}
