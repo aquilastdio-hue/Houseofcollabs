@@ -4,6 +4,7 @@ import PublicLayout from '@/layouts/PublicLayout'
 import AuthLayout from '@/layouts/AuthLayout'
 import { GuestOnly, RequireAuth, RequireRole } from './guards'
 import { RouteError } from './route-error'
+import { isNativeApp } from '@/lib/native'
 
 /** Route-level code splitting; `props` are type-checked against the page component. */
 function page<P extends object>(load: () => Promise<{ default: React.ComponentType<P> }>, props?: P): Pick<RouteObject, 'lazy'> {
@@ -31,7 +32,8 @@ const routes: RouteObject[] = [
       {
         element: <PublicLayout />,
         children: [
-          { index: true, ...page(() => import('@/pages/public/Home')) },
+          // The apps open on the login page; the landing page is the website's.
+          isNativeApp ? { index: true, element: <Navigate to="/login" replace /> } : { index: true, ...page(() => import('@/pages/public/Home')) },
           { path: 'get-started', ...page(() => import('@/pages/public/GetStarted')) },
           // Collabs / Creators are gated: the landing buttons point straight
           // here, RequireAuth bounces a signed-out visitor to /login?redirect=…

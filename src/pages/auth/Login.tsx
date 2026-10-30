@@ -3,7 +3,8 @@ import { Link, useSearchParams } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { MailWarning } from 'lucide-react'
+import { Building2, MailWarning, Sparkles } from 'lucide-react'
+import { isNativeApp } from '@/lib/native'
 import { loginSchema, type LoginValues } from '@/schemas/auth'
 import { resendVerification, signInWithEmail, signInWithGoogle } from '@/services/auth.service'
 import { toAppError } from '@/lib/errors'
@@ -43,19 +44,25 @@ export default function Login() {
       <Seo title="Log in" description="Log in to your House of Collabs workspace." noindex />
       <AuthHeading title="Welcome back" subtitle="Log in to manage your orders, messages and storefront." />
 
-      <GoogleButton
-        loading={googleLoading}
-        onClick={async () => {
-          setGoogleLoading(true)
-          try {
-            await signInWithGoogle({ role, redirect })
-          } catch (e) {
-            toast.error(toAppError(e).message)
-            setGoogleLoading(false)
-          }
-        }}
-      />
-      <OrDivider />
+      {/* Google refuses to sign in inside an app's web view, so the apps offer
+          email and password only. */}
+      {!isNativeApp && (
+        <>
+          <GoogleButton
+            loading={googleLoading}
+            onClick={async () => {
+              setGoogleLoading(true)
+              try {
+                await signInWithGoogle({ role, redirect })
+              } catch (e) {
+                toast.error(toAppError(e).message)
+                setGoogleLoading(false)
+              }
+            }}
+          />
+          <OrDivider />
+        </>
+      )}
 
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <Field label="Email" htmlFor="email" error={errors.email?.message}>
@@ -106,6 +113,29 @@ export default function Login() {
           </Link>
         </p>
       </form>
+
+      {/* The apps have no landing page, so this is where new people start. */}
+      {isNativeApp && (
+        <section aria-labelledby="create-account" className="mt-8 border-t border-line pt-6">
+          <h2 id="create-account" className="text-center text-sm font-medium text-muted">
+            New to House of Collabs? Create an account
+          </h2>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <Button asChild variant="secondary" size="lg" className="h-auto flex-col gap-1.5 py-4">
+              <Link to="/onboarding?role=brand">
+                <Building2 className="size-5" />
+                Brand
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" size="lg" className="h-auto flex-col gap-1.5 py-4">
+              <Link to="/get-started?role=creator">
+                <Sparkles className="size-5" />
+                Influencer
+              </Link>
+            </Button>
+          </div>
+        </section>
+      )}
     </>
   )
 }

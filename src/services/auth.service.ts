@@ -1,8 +1,10 @@
 import { supabase } from '@/lib/supabase/client'
 import { toAppError, unwrap } from '@/lib/errors'
+import { publicOrigin } from '@/lib/native'
 import type { UserRole } from '@/types'
 
-const origin = () => window.location.origin
+/** The website, even inside the apps: email links have to open somewhere real. */
+const origin = publicOrigin
 
 // Self-serve email sign-up was removed with the /signup screen: new brands and
 // creators apply through /get-started and are set up by an admin. Restore

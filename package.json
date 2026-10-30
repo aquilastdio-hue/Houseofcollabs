@@ -10,6 +10,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:app": "tsc -b && VITE_SITE_URL=https://www.houseofcollabs.com vite build && cap sync",
+    "app:ios": "cap open ios",
+    "app:android": "cap open android",
     "typecheck": "tsc -b --pretty",
     "preview": "vite preview",
     "test": "vitest run",
@@ -20,6 +23,9 @@
     "build:site": "node scripts/build-site.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -48,6 +54,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.10.0",
     "@types/react": "^19.1.0",
