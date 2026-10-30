@@ -91,6 +91,10 @@ function AnimatedBackdrop({ spotlight }: { spotlight: boolean }) {
  * It is kept small enough that the tallest content still fits inside one
  * viewport — otherwise the section would grow and the next one would peek.
  *
+ * The section reaches up behind the floating glass header (the negative top
+ * margin) so the moving colour shows through it, and pads that height back so
+ * the content still centres in the space below the bar.
+ *
  * Deliberately identical for everyone — signed in or not — so the landing page
  * always reads as the front door rather than a workspace shortcut.
  *
@@ -105,7 +109,7 @@ export function EntryHero() {
     <section
       ref={sectionRef}
       aria-labelledby="entry-title"
-      className="relative isolate flex min-h-[calc(100dvh-var(--header-height))] flex-col overflow-hidden bg-canvas"
+      className="relative isolate -mt-(--header-height) flex min-h-dvh flex-col overflow-hidden bg-canvas pt-(--header-height)"
     >
       <AnimatedBackdrop spotlight={spotlight} />
 
