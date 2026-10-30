@@ -17,6 +17,8 @@ import { FilterBar, FilterField, SearchInput } from '@/components/admin/filter-b
 import { BRAND_SORTS, brandColumns } from '@/components/admin/brand-table'
 import { isOneOf } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
+import { AccountCsvMenu } from '@/components/admin/account-csv-menu'
+import { exportBrandsCsv } from '@/services/account-csv.service'
 import type { AccountStatus } from '@/types'
 
 const STATUS_OPTIONS: { value: AccountStatus; label: string }[] = [
@@ -84,6 +86,7 @@ export default function Brands() {
         activeCount={activeCount}
         onReset={reset}
         search={<SearchInput value={search} onCommit={(q) => url.update({ q })} placeholder="Search brand, email or industry" label="Search brands" />}
+        actions={<AccountCsvMenu kind="brand" onExport={() => exportBrandsCsv(params)} />}
       >
         <FilterField label="Account status" htmlFor="brand-status">
           <Select id="brand-status" size="sm" value={status} onValueChange={(v) => url.update({ status: v })} options={STATUS_OPTIONS} anyLabel="All statuses" />

@@ -489,6 +489,9 @@ verify_jwt = false
 [functions.approve-application]
 verify_jwt = false
 
+[functions.admin-import-accounts]
+verify_jwt = false
+
 [functions.send-notification]
 verify_jwt = false
 

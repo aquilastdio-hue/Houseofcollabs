@@ -18,6 +18,7 @@ export function FilterBar({
   activeCount = 0,
   onReset,
   toolbar,
+  actions,
   className,
 }: {
   search?: React.ReactNode
@@ -26,6 +27,8 @@ export function FilterBar({
   onReset?: () => void
   /** Extra content under the filters (preset chips, active filter chips…). */
   toolbar?: React.ReactNode
+  /** Buttons at the far right of the filters; beside the search on phones. */
+  actions?: React.ReactNode
   className?: string
 }) {
   const isDesktop = useIsDesktop()
@@ -34,9 +37,10 @@ export function FilterBar({
 
   return (
     <div className={cn('mb-5 flex flex-col gap-3', className)}>
-      {(search || (hasFilters && !isDesktop)) && (
+      {(search || (!isDesktop && (hasFilters || actions))) && (
         <div className="flex items-center gap-2">
           {search && <div className="min-w-0 flex-1">{search}</div>}
+          {!isDesktop && actions && <div className="ml-auto shrink-0">{actions}</div>}
           {hasFilters && !isDesktop && (
             <Drawer open={open} onOpenChange={setOpen}>
               <DrawerTrigger asChild>
@@ -72,7 +76,7 @@ export function FilterBar({
           )}
         </div>
       )}
-      {hasFilters && isDesktop && (
+      {isDesktop && (hasFilters || actions) && (
         <div className="flex flex-wrap items-end gap-3">
           {children}
           {onReset && activeCount > 0 && (
@@ -80,6 +84,7 @@ export function FilterBar({
               <X /> Clear filters
             </Button>
           )}
+          {actions && <div className="ml-auto">{actions}</div>}
         </div>
       )}
       {toolbar}

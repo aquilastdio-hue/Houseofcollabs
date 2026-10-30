@@ -19,6 +19,8 @@ import { CREATOR_SORTS, creatorColumns } from '@/components/admin/creator-table'
 import { CREATOR_STATUS_META, metaOptions } from '@/components/admin/admin-status'
 import { isOneOf, yesNo } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
+import { AccountCsvMenu } from '@/components/admin/account-csv-menu'
+import { exportCreatorsCsv } from '@/services/account-csv.service'
 import type { CreatorStatus } from '@/types'
 
 const STATUS_OPTIONS = metaOptions(CREATOR_STATUS_META)
@@ -114,6 +116,7 @@ export default function Creators() {
         activeCount={activeCount}
         onReset={reset}
         search={<SearchInput value={search} onCommit={(q) => url.update({ q })} placeholder="Search name, email, WhatsApp, city or referral code" label="Search creators" />}
+        actions={<AccountCsvMenu kind="creator" onExport={() => exportCreatorsCsv(params)} />}
         toolbar={referralCount.data ? (
           <p className="text-sm text-muted">
             Referral code <span className="font-mono font-medium text-ink">{referralSearch}</span> was used by{' '}
