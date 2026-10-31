@@ -163,8 +163,9 @@ export function CreatorOverview({ creator: c }: { creator: AdminCreatorDetail })
             <span className="text-faint">Not uploaded</span>
           )}
         </DetailItem>
-        {/* Note: Onboarding application data (open_to, barter_stance, travel_scope) 
-             can be added later by updating the TypeScript types and safely accessing the application profile data. */}
+        <DetailItem label="Open to" className="sm:col-span-2">
+          {c.open_to?.length ? c.open_to.join(', ') : <span className="text-faint">Not answered</span>}
+        </DetailItem>
       </DetailList>
     </DetailCard>
   )

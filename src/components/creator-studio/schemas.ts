@@ -130,7 +130,6 @@ const httpsUrl = (required: boolean) =>
 // ---------------------------------------------------------------------------
 export const basicInfoSchema = z.object({
   profile_image_url: z.string().nullable(),
-  cover_image_url: z.string().nullable(),
   // Same rule as the application form. Without it here, a creator could be
   // approved under their real name and then rename the storefront to a handle
   // or a link from their own dashboard, which is the thing the rule exists to

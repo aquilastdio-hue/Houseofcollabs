@@ -15,7 +15,6 @@ import {
   type CreatorProfile,
 } from '@/services/creators.service'
 import { uploadAvatar } from '@/services/profile.service'
-import { uploadPortfolioMedia } from '@/services/portfolio.service'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -49,7 +48,6 @@ function sameLanguages(a: string[], b: string[]) {
 function defaultsFrom(creator: CreatorProfile | null, fallbackName: string, fallbackAvatar: string | null): BasicInfoInput {
   return {
     profile_image_url: creator ? creator.profile_image_url : fallbackAvatar,
-    cover_image_url: creator?.cover_image_url ?? null,
     display_name: creator?.display_name ?? fallbackName,
     headline: creator?.headline ?? '',
     bio: creator?.bio ?? '',
@@ -77,11 +75,11 @@ function BioHint({ control }: { control: Control<BasicInfoInput, unknown, BasicI
 }
 
 /**
- * Photo, cover, name, headline, bio, demographics, location and languages.
+ * Photo, name, headline, bio, demographics, location and languages.
  * Creates the creator record on first save (onboarding), updates it after.
  *
- * `essentials` hides everything a reviewer doesn't need — cover image,
- * headline, state, gender, age — so signup stays short. Those fields keep
+ * `essentials` hides everything a reviewer doesn't need — headline, state,
+ * gender, age — so signup stays short. Those fields keep
  * their existing values and are edited later in Profile.
  */
 export function BasicInfoForm({
@@ -118,7 +116,6 @@ export function BasicInfoForm({
         headline: values.headline || null,
         bio: values.bio || null,
         profile_image_url: values.profile_image_url,
-        cover_image_url: values.cover_image_url,
         gender: values.gender,
         age: values.age,
         city: values.city || null,
@@ -154,10 +151,7 @@ export function BasicInfoForm({
   return (
     <form onSubmit={onSubmit} noValidate className={cn('space-y-10', className)}>
       <StudioSection title="Photos" description="A clear, friendly photo is the first thing brands notice.">
-        {/* The first track must be bounded: `auto` resolves to max-content, so the
-            profile-photo column claimed the row's full width and squeezed the cover
-            column until its hint wrapped one word per line. */}
-        <div className={cn('grid grid-cols-1 gap-6 lg:items-start', !essentials && 'lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]')}>
+        <div className="grid grid-cols-1 gap-6">
           <Field label="Profile photo" hint="Required to publish. Image should be clear and of your Face only">
             <Controller
               control={form.control}
@@ -173,25 +167,6 @@ export function BasicInfoForm({
               )}
             />
           </Field>
-          {!essentials && (
-            <Field label="Cover image" optional hint="Shown across the top of your storefront. Wide images (3:1) look best.">
-              <Controller
-                control={form.control}
-                name="cover_image_url"
-                render={({ field }) => (
-                  <ImageUploader
-                    value={field.value}
-                    onChange={field.onChange}
-                    upload={async (file) => (await uploadPortfolioMedia(requireUserId(), file)).media_url}
-                    bucket="creator-portfolio"
-                    aspect="cover"
-                    shape="rounded"
-                    label="Upload cover"
-                  />
-                )}
-              />
-            </Field>
-          )}
         </div>
       </StudioSection>
 

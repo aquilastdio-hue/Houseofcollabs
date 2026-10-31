@@ -7,6 +7,7 @@ import {
   OPEN_TO,
   STEP_FIELDS,
   creatorApplicationSchema,
+  openToText,
 } from './creator-application'
 
 /** A creator who has answered every page the way the form asks. */
@@ -205,5 +206,14 @@ describe('referral code', () => {
   it('refuses something too long to be a code', () => {
     expect(issues({ ...complete, referral_code: 'X'.repeat(41) })).toContain('referral_code')
     expect(issues({ ...complete, referral_code: 'X'.repeat(40) })).toEqual([])
+  })
+})
+
+describe('openToText', () => {
+  it('reads as one line on the storefront', () => {
+    expect(openToText(['Paid collaborations', 'Long-term brand partnerships'])).toBe('Open to paid collaborations and long-term brand partnerships')
+    expect(openToText(['Long-term brand partnerships'])).toBe('Open to long-term brand partnerships')
+    expect(openToText([])).toBeNull()
+    expect(openToText(undefined)).toBeNull()
   })
 })

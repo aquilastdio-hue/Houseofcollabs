@@ -163,7 +163,7 @@ export const privacyPolicy: LegalBuilder = () => ({
       body: (
         <>
           <p>
-            A published creator storefront is public: anyone can see the display name, photo, cover image, bio, city and state, categories, languages,
+            A published creator storefront is public: anyone can see the display name, photo, bio, city and state, categories, languages,
             linked social accounts and follower counts, services, prices, add-ons, portfolio items that aren’t hidden, and reviews. Brand names and
             ratings may appear alongside reviews.
           </p>

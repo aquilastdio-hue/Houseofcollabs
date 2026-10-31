@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { Link } from 'react-router'
-import { BadgeCheck, Languages, MapPin, Timer, UserRound } from 'lucide-react'
+import { BadgeCheck, HeartHandshake, Languages, MapPin, Timer, UserRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCompact, formatDays, formatLocation, formatNumber } from '@/lib/format'
 import { RESPONSE_TIMES, labelFor } from '@/lib/constants'
+import { openToText } from '@/schemas/creator-application'
 import type { CreatorProfile } from '@/services/creators.service'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +24,7 @@ function Stat({ label, children }: { label: string; children: React.ReactNode })
 export function CreatorProfileHero({ creator, mode, actions }: { creator: CreatorProfile; mode: ProfileMode; actions?: React.ReactNode }) {
   const categories = profileCategories(creator)
   const languages = profileLanguages(creator)
+  const openTo = openToText(creator.open_to)
   const response = labelFor(RESPONSE_TIMES, creator.response_time)
   const categoryHref = (slug: string) => (mode === 'brand' ? `/brand/creators?category=${encodeURIComponent(slug)}` : `/categories/${slug}`)
 
@@ -63,6 +65,11 @@ export function CreatorProfileHero({ creator, mode, actions }: { creator: Creato
             {creator.creator_type_info && (
               <li className="inline-flex items-center gap-1.5">
                 <UserRound className="size-4 shrink-0" aria-hidden /> {creator.creator_type_info.name}
+              </li>
+            )}
+            {openTo && (
+              <li className="inline-flex items-center gap-1.5">
+                <HeartHandshake className="size-4 shrink-0" aria-hidden /> {openTo}
               </li>
             )}
           </ul>

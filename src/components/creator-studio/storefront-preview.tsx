@@ -1,12 +1,12 @@
-import { BadgeCheck, Clock3, Eye, Images, Languages, MapPin, Tags } from 'lucide-react'
+import { BadgeCheck, Clock3, Eye, HeartHandshake, Images, Languages, MapPin, Tags } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { siteUrl } from '@/config/site'
 import { formatCompact, formatDays, formatINR, formatLocation } from '@/lib/format'
 import { labelFor, RESPONSE_TIMES } from '@/lib/constants'
+import { openToText } from '@/schemas/creator-application'
 import type { CreatorProfile } from '@/services/creators.service'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { SmartImage } from '@/components/shared/smart-image'
 import { ServiceCard } from '@/components/creator/service-card'
 import { PortfolioGrid } from '@/components/creator/portfolio-grid'
 
@@ -45,18 +45,9 @@ export function StorefrontPreview({ creator, className }: { creator: CreatorProf
         <span className="truncate">Preview · {host}</span>
       </div>
 
-      <div className="relative h-32 sm:h-48">
-        <SmartImage
-          src={creator.cover_image_url}
-          alt=""
-          className="absolute inset-0 size-full"
-          fallback={<div className="size-full bg-gradient-to-br from-brand-soft via-sand-soft to-lilac-soft" />}
-        />
-      </div>
-
-      <div className="px-5 pb-6 sm:px-8">
-        <div className="-mt-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <Avatar src={creator.profile_image_url} name={creator.display_name} size="2xl" className="rounded-full ring-4 ring-surface" />
+      <div className="px-5 pt-6 pb-6 sm:px-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <Avatar src={creator.profile_image_url} name={creator.display_name} size="2xl" className="rounded-full shadow-card ring-4 ring-surface" />
           <div className="flex flex-wrap gap-1.5 sm:justify-end">
             {creator.creator_type_info && (
               <Badge tone="dark" size="md">
@@ -87,6 +78,11 @@ export function StorefrontPreview({ creator, className }: { creator: CreatorProf
             {creator.response_time && (
               <li className="inline-flex items-center gap-1.5">
                 <Clock3 className="size-4" aria-hidden /> Replies {labelFor(RESPONSE_TIMES, creator.response_time).toLowerCase()}
+              </li>
+            )}
+            {openToText(creator.open_to) && (
+              <li className="inline-flex items-center gap-1.5">
+                <HeartHandshake className="size-4" aria-hidden /> {openToText(creator.open_to)}
               </li>
             )}
           </ul>

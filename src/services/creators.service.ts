@@ -211,7 +211,7 @@ export async function getMyCreator(userId: string): Promise<CreatorOwnProfile | 
 
 export type CreatorEditable = Pick<
   TablesUpdate<'creators'>,
-  | 'display_name' | 'slug' | 'headline' | 'bio' | 'profile_image_url' | 'cover_image_url' | 'intro_video_url'
+  | 'display_name' | 'slug' | 'headline' | 'bio' | 'profile_image_url' | 'intro_video_url'
   | 'gender' | 'age' | 'city' | 'state' | 'country' | 'creator_type' | 'engagement_rate' | 'available'
   | 'response_time' | 'onboarding_step' | 'barter_stance' | 'travel_scope'
 >

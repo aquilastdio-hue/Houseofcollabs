@@ -125,7 +125,7 @@ export function WishlistFormDialog({
 export function WishlistCreatorCard({ creator, onRemove, removing }: { creator: WishlistCreator; onRemove: () => void; removing?: boolean }) {
   const { has, toggle } = useCompare()
   const comparing = has(creator.id)
-  const image = creator.profile_image_url ?? creator.cover_image_url
+  const image = creator.profile_image_url
 
   return (
     <article className="group relative flex h-full gap-3.5 rounded-card border border-line bg-surface p-3 shadow-card transition-[box-shadow,border-color] duration-300 hover:border-line-strong hover:shadow-card-hover">

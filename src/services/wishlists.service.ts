@@ -6,7 +6,7 @@ const WISHLIST_SELECT = `
   *,
   wishlist_items (
     id, creator_id, note, created_at,
-    creator:creators ( id, slug, display_name, headline, profile_image_url, cover_image_url, city, state, verified,
+    creator:creators ( id, slug, display_name, headline, profile_image_url, city, state, verified,
                        available, rating, review_count, starting_price, fastest_delivery_days, followers_count )
   )
 `

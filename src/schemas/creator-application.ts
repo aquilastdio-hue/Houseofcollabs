@@ -60,6 +60,12 @@ export const BARTER_STANCES = [
 /** Page 5 — what a creator is open to. */
 export const OPEN_TO = ['Paid collaborations', 'Long-term brand partnerships'] as const
 
+/** "Open to paid collaborations and long-term brand partnerships", or null when the creator didn't say. */
+export function openToText(openTo: readonly string[] | null | undefined) {
+  const list = (openTo ?? []).map((v) => v.charAt(0).toLowerCase() + v.slice(1))
+  return list.length ? `Open to ${list.join(' and ')}` : null
+}
+
 export const CONFIRMATION =
   'I confirm that my information and uploaded content are authentic and can be displayed on my House of Collabs creator profile.'
 
