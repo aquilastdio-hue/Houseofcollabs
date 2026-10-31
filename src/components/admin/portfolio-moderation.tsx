@@ -1,9 +1,9 @@
 import * as React from 'react'
 import { Link } from 'react-router'
-import { EllipsisVertical, Eye, EyeOff, ImageOff, Trash2 } from 'lucide-react'
+import { CircleUserRound, EllipsisVertical, Eye, EyeOff, ImageOff, ImageUp, Trash2 } from 'lucide-react'
 import { qk } from '@/lib/query-keys'
 import { formatDate } from '@/lib/format'
-import { deletePortfolioItemForGood, moderatePortfolioItem } from '@/services/admin.service'
+import { deletePortfolioItemForGood, moderatePortfolioItem, setPortfolioCover, setProfilePhotoFromPost } from '@/services/admin.service'
 import { MediaTile } from '@/components/creator/portfolio-grid'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { EmptyState } from '@/components/shared/states'
@@ -51,9 +51,26 @@ function PreviewDialog({ item, onClose }: { item: ModerationItem | null; onClose
 /**
  * Portfolio grid with an admin ⋮ menu on each item. Hide takes it away from
  * everyone but admins (storefront, brands, search and the creator's own
- * portfolio) until it's unhidden; Delete erases the item and its files.
+ * portfolio) until it's unhidden; Delete erases the item and its files; Make
+ * storefront image puts it first, which is the picture on the creator's card;
+ * Make profile picture uses a photo as their profile picture. `coverId` and
+ * `profilePhotoUrl` mark the current ones, on a single creator's page.
  */
-export function PortfolioModerationGrid({ items, showCreator, emptyTitle, emptyDescription }: { items: ModerationItem[]; showCreator?: boolean; emptyTitle?: string; emptyDescription?: string }) {
+export function PortfolioModerationGrid({
+  items,
+  showCreator,
+  coverId,
+  profilePhotoUrl,
+  emptyTitle,
+  emptyDescription,
+}: {
+  items: ModerationItem[]
+  showCreator?: boolean
+  coverId?: string
+  profilePhotoUrl?: string | null
+  emptyTitle?: string
+  emptyDescription?: string
+}) {
   const [preview, setPreview] = React.useState<ModerationItem | null>(null)
   const [pending, setPending] = React.useState<ModerationItem | null>(null)
   const [deleting, setDeleting] = React.useState<ModerationItem | null>(null)
@@ -63,6 +80,14 @@ export function PortfolioModerationGrid({ items, showCreator, emptyTitle, emptyD
     invalidate,
     success: (_d, v) => (v.hidden ? 'Hidden from everyone but admins' : 'Visible again'),
     onSuccess: () => setPending(null),
+  })
+  const cover = useAdminMutation((id: string) => setPortfolioCover(id), {
+    invalidate,
+    success: 'Storefront image updated',
+  })
+  const profilePhoto = useAdminMutation((id: string) => setProfilePhotoFromPost(id), {
+    invalidate,
+    success: 'Profile picture updated',
   })
   const remove = useAdminMutation((id: string) => deletePortfolioItemForGood(id), {
     invalidate,
@@ -91,6 +116,20 @@ export function PortfolioModerationGrid({ items, showCreator, emptyTitle, emptyD
                   </Badge>
                 </span>
               )}
+              {(item.id === coverId || (!!profilePhotoUrl && item.media_url === profilePhotoUrl)) && (
+                <span className="pointer-events-none absolute bottom-3 left-3 flex flex-col items-start gap-1">
+                  {item.id === coverId && (
+                    <Badge tone="brand" size="sm">
+                      <ImageUp /> Storefront image
+                    </Badge>
+                  )}
+                  {!!profilePhotoUrl && item.media_url === profilePhotoUrl && (
+                    <Badge tone="dark" size="sm">
+                      <CircleUserRound /> Profile picture
+                    </Badge>
+                  )}
+                </span>
+              )}
             </MediaTile>
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 text-xs">
@@ -110,6 +149,15 @@ export function PortfolioModerationGrid({ items, showCreator, emptyTitle, emptyD
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
+                  <DropdownMenuItem disabled={item.is_hidden || item.id === coverId || cover.isPending} onSelect={() => cover.mutate(item.id)}>
+                    <ImageUp /> Make storefront image
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={item.type !== 'image' || item.is_hidden || item.media_url === profilePhotoUrl || profilePhoto.isPending}
+                    onSelect={() => profilePhoto.mutate(item.id)}
+                  >
+                    <CircleUserRound /> Make profile picture
+                  </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setPending(item)}>
                     {item.is_hidden ? <Eye /> : <EyeOff />}
                     {item.is_hidden ? 'Unhide' : 'Hide'}

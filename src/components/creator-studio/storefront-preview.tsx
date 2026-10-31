@@ -2,6 +2,7 @@ import { BadgeCheck, Clock3, Eye, HeartHandshake, Images, Languages, MapPin, Tag
 import { cn } from '@/lib/utils'
 import { siteUrl } from '@/config/site'
 import { formatCompact, formatDays, formatINR, formatLocation } from '@/lib/format'
+import { portfolioOrder } from '@/lib/portfolio-order'
 import { labelFor, RESPONSE_TIMES } from '@/lib/constants'
 import { openToText } from '@/schemas/creator-application'
 import type { CreatorProfile } from '@/services/creators.service'
@@ -34,7 +35,10 @@ export function StorefrontPreview({ creator, className }: { creator: CreatorProf
   const services = creator.creator_services
     .filter((s) => !s.archived_at && s.active)
     .map((s) => ({ ...s, service_addons: [...s.service_addons].sort((a, b) => a.sort_order - b.sort_order) }))
-  const portfolio = creator.portfolio_items.filter((p) => !p.is_hidden)
+  const portfolio = portfolioOrder(
+    creator.portfolio_items.filter((p) => !p.is_hidden),
+    creator.profile_image_url,
+  )
   const languages = creator.creator_languages.map((l) => l.language)
   const host = siteUrl(`/creators/${creator.slug}`).replace(/^https?:\/\//, '')
 

@@ -3,14 +3,15 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, ArrowRight, EllipsisVertical, ExternalLink, EyeOff, Images, Link2, Pencil, Plus, Trash2, Upload } from 'lucide-react'
+import { CircleUserRound, EllipsisVertical, ExternalLink, EyeOff, ImageUp, Images, Link2, Pencil, Plus, Trash2, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { portfolioOrder } from '@/lib/portfolio-order'
 import { qk } from '@/lib/query-keys'
 import { AppError } from '@/lib/errors'
 import { PLATFORMS } from '@/lib/constants'
 import { useAuth } from '@/contexts/auth-context'
 import { useCategories } from '@/hooks/use-catalog'
-import type { CreatorProfile } from '@/services/creators.service'
+import { updateMyCreator, type CreatorProfile } from '@/services/creators.service'
 import {
   createPortfolioItem,
   deletePortfolioItem,
@@ -334,21 +335,29 @@ export function PortfolioManager({
 
   const remove = useMutation({
     mutationFn: async (item: PortfolioItem) => {
-      await deletePortfolioItem(item)
+      await deletePortfolioItem(item, creator.profile_image_url)
       await sync(qk.portfolio.mine)
     },
     meta: { successMessage: 'Removed from your portfolio' },
   })
 
-  const move = (index: number, delta: -1 | 1) => {
-    const target = index + delta
-    if (target < 0 || target >= items.length) return
-    const next = [...items]
-    const [moved] = next.splice(index, 1)
-    if (!moved) return
-    next.splice(target, 0, moved)
-    const order = next.map((item, i) => ({ id: item.id, sort_order: i, before: item.sort_order })).filter((o) => o.before !== o.sort_order)
-    reorder.mutate(order.map(({ id, sort_order }) => ({ id, sort_order })))
+  const profilePhoto = useMutation({
+    mutationFn: async (item: PortfolioItem) => {
+      await updateMyCreator(creator.id, { profile_image_url: item.media_url })
+      await sync(qk.creators.mine, qk.portfolio.mine)
+    },
+    meta: { successMessage: 'Profile picture updated' },
+  })
+
+  // The first visible item is the picture on the creator's marketplace card.
+  const coverId = items.find((i) => !i.is_hidden)?.id
+  const makeCover = (item: PortfolioItem) => {
+    const next = [item, ...items.filter((i) => i.id !== item.id)]
+    const order = next.map((i, at) => ({ id: i.id, sort_order: at, before: i.sort_order })).filter((o) => o.before !== o.sort_order)
+    reorder.mutate(
+      order.map(({ id, sort_order }) => ({ id, sort_order })),
+      { onSuccess: () => toast.success('Storefront image updated. Brands see it first on your card.') },
+    )
   }
 
   const openFilePicker = () => {
@@ -430,11 +439,26 @@ export function PortfolioManager({
             )}
           </p>
           <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
-            {items.map((item, i) => {
+            {portfolioOrder(items, creator.profile_image_url).map((item) => {
               const name = item.title || TYPE_LABEL[item.type]
               return (
                 <li key={item.id} className="min-w-0">
-                  <MediaTile item={item} onOpen={() => setEditing(item)} className={cn(item.is_hidden && 'opacity-60')} />
+                  <MediaTile item={item} onOpen={() => setEditing(item)} className={cn(item.is_hidden && 'opacity-60')}>
+                    {(item.id === coverId || item.media_url === creator.profile_image_url) && (
+                      <span className="pointer-events-none absolute bottom-3 left-3 flex flex-col items-start gap-1">
+                        {item.id === coverId && (
+                          <Badge tone="brand" size="sm">
+                            <ImageUp /> Storefront image
+                          </Badge>
+                        )}
+                        {item.media_url === creator.profile_image_url && (
+                          <Badge tone="dark" size="sm">
+                            <CircleUserRound /> Profile picture
+                          </Badge>
+                        )}
+                      </span>
+                    )}
+                  </MediaTile>
                   <div className="mt-2 flex items-start gap-1">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{name}</p>
@@ -455,11 +479,14 @@ export function PortfolioManager({
                         <DropdownMenuItem onSelect={() => setEditing(item)}>
                           <Pencil /> Edit details
                         </DropdownMenuItem>
-                        <DropdownMenuItem disabled={i === 0 || reorder.isPending} onSelect={() => move(i, -1)}>
-                          <ArrowLeft /> Move left
+                        <DropdownMenuItem disabled={item.id === coverId || item.is_hidden || reorder.isPending} onSelect={() => makeCover(item)}>
+                          <ImageUp /> Make storefront image
                         </DropdownMenuItem>
-                        <DropdownMenuItem disabled={i === items.length - 1 || reorder.isPending} onSelect={() => move(i, 1)}>
-                          <ArrowRight /> Move right
+                        <DropdownMenuItem
+                          disabled={item.type !== 'image' || item.is_hidden || item.media_url === creator.profile_image_url || profilePhoto.isPending}
+                          onSelect={() => profilePhoto.mutate(item)}
+                        >
+                          <CircleUserRound /> Make profile picture
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem destructive onSelect={() => setDeleting(item)}>

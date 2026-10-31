@@ -91,9 +91,11 @@ export async function updatePortfolioItem(id: string, patch: Omit<TablesUpdate<'
   return unwrap(await supabase.from('portfolio_items').update(patch).eq('id', id).select('*').single())
 }
 
-export async function deletePortfolioItem(item: PortfolioItem) {
+/** `profileImageUrl`: when the photo is also the profile picture, its file stays. */
+export async function deletePortfolioItem(item: PortfolioItem, profileImageUrl?: string | null) {
   unwrap(await supabase.from('portfolio_items').delete().eq('id', item.id))
-  const paths = [item.storage_path, pathFromPublicUrl('creator-portfolio', item.thumbnail_url)].filter((p): p is string => !!p)
+  const keepMedia = !!profileImageUrl && profileImageUrl === item.media_url
+  const paths = [keepMedia ? null : item.storage_path, pathFromPublicUrl('creator-portfolio', item.thumbnail_url)].filter((p): p is string => !!p)
   await removeFiles('creator-portfolio', paths).catch(() => undefined)
 }
 

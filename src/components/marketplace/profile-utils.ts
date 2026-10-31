@@ -1,3 +1,4 @@
+import { portfolioOrder } from '@/lib/portfolio-order'
 import type { CreatorProfile } from '@/services/creators.service'
 
 export type ProfileMode = 'brand' | 'public'
@@ -16,8 +17,12 @@ export function profileLanguages(creator: CreatorProfile) {
   return creator.creator_languages.map((l) => l.language)
 }
 
+/** Cover first, then the profile-picture photo, then the creator's order. */
 export function visiblePortfolio(creator: CreatorProfile) {
-  return creator.portfolio_items.filter((p) => !p.is_hidden)
+  return portfolioOrder(
+    creator.portfolio_items.filter((p) => !p.is_hidden),
+    creator.profile_image_url,
+  )
 }
 
 /** Non-owners only ever see bookable services (RLS may still return paused ones to past clients). */

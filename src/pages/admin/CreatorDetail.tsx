@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ExternalLink, Package, Pencil, UserX } from 'lucide-react'
 import { qk } from '@/lib/query-keys'
+import { portfolioOrder } from '@/lib/portfolio-order'
 import { getCreator } from '@/services/admin.service'
 import { Seo } from '@/components/shared/seo'
 import { Breadcrumb } from '@/components/shared/breadcrumb'
@@ -63,7 +64,8 @@ export default function CreatorDetail() {
     )
   }
 
-  const portfolio = [...(c.portfolio_items ?? [])].sort((a, b) => a.sort_order - b.sort_order)
+  // Cover first (the picture on the creator's card), then the profile-picture photo.
+  const portfolio = portfolioOrder(c.portfolio_items ?? [], c.profile_image_url)
   const hiddenCount = portfolio.filter((p) => p.is_hidden).length
 
   return (
@@ -105,7 +107,7 @@ export default function CreatorDetail() {
             title="Portfolio"
             description={`${portfolio.length} item${portfolio.length === 1 ? '' : 's'}${hiddenCount ? ` · ${hiddenCount} hidden by moderation` : ''}.`}
           >
-            <PortfolioModerationGrid items={portfolio} emptyTitle="No portfolio items" emptyDescription="Samples the creator uploads appear here for review." />
+            <PortfolioModerationGrid items={portfolio} coverId={portfolio.find((p) => !p.is_hidden)?.id} profilePhotoUrl={c.profile_image_url} emptyTitle="No portfolio items" emptyDescription="Samples the creator uploads appear here for review." />
           </DetailCard>
         </div>
         <aside className="space-y-6">

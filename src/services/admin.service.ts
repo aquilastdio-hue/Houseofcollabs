@@ -398,10 +398,23 @@ export async function moderatePortfolioItem(id: string, hidden: boolean) {
   return unwrap(await supabase.rpc('admin_moderate_portfolio_item', { p_item_id: id, p_hidden: hidden }))
 }
 
+/** Puts a post first in a creator's portfolio, so their marketplace card shows it. */
+export async function setPortfolioCover(id: string) {
+  unwrap(await supabase.rpc('admin_set_portfolio_cover', { p_item_id: id }))
+}
+
+/** Makes a photo post the creator's profile picture (the two then share the file). */
+export async function setProfilePhotoFromPost(id: string) {
+  unwrap(await supabase.rpc('admin_set_profile_photo_from_post', { p_item_id: id }))
+}
+
 /** Erases a post for good: the row (audited), then its photo or video and preview from storage. */
 export async function deletePortfolioItemForGood(id: string) {
   const row = unwrap(await supabase.rpc('admin_delete_portfolio_item', { p_item_id: id }))
-  const paths = [row.storage_path ?? pathFromPublicUrl('creator-portfolio', row.media_url), pathFromPublicUrl('creator-portfolio', row.thumbnail_url)]
+  // The photo can also be the creator's profile picture; that keeps the file.
+  const { data: creator } = await supabase.from('creators').select('profile_image_url').eq('id', row.creator_id).maybeSingle()
+  const keepMedia = creator?.profile_image_url === row.media_url
+  const paths = [keepMedia ? null : (row.storage_path ?? pathFromPublicUrl('creator-portfolio', row.media_url)), pathFromPublicUrl('creator-portfolio', row.thumbnail_url)]
   const files = [...new Set(paths.filter((p): p is string => !!p))]
   try {
     await removeFiles('creator-portfolio', files)
