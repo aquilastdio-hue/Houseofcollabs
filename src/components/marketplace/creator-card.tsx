@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link } from 'react-router'
-import { BadgeCheck, Clock3, GitCompareArrows, MapPin, Plane, Sparkles, Star, Users } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Clock3, GitCompareArrows, MapPin, Plane, Sparkles, Star, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCompact, formatDays, formatINR, formatLocation } from '@/lib/format'
 import { labelFor } from '@/lib/constants'
@@ -8,6 +8,7 @@ import { TRAVEL_SCOPES } from '@/schemas/creator-application'
 import { isVideoUrl } from '@/utils/media'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SmartImage } from '@/components/shared/smart-image'
 import { useCompare } from '@/contexts/compare-context'
@@ -36,7 +37,7 @@ function coverOf(c: CreatorCardData) {
   const first = previews[0]
   const portfolioVideo = previews.find((p) => p.type === 'video')?.media_url ?? null
   const intro = c.intro_video_url && isVideoUrl(c.intro_video_url) ? c.intro_video_url : null
-  const image = first ? (first.thumbnail_url ?? (first.type === 'image' ? first.media_url : null)) : (c.cover_image_url ?? c.profile_image_url)
+  const image = first ? (first.thumbnail_url ?? (first.type === 'image' ? first.media_url : null)) : c.profile_image_url
   return { image, video: portfolioVideo ?? intro }
 }
 
@@ -232,6 +233,19 @@ export function CreatorGrid({ children, className }: { children: React.ReactNode
   return (
     <div className={cn('grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5', className)}>
       {children}
+    </div>
+  )
+}
+
+/** "See all creators", on the right just under a list of creators. */
+export function SeeAllCreators({ to, className }: { to: string; className?: string }) {
+  return (
+    <div className={cn('mt-6 flex justify-end', className)}>
+      <Button asChild variant="outline">
+        <Link to={to}>
+          See all creators <ArrowRight />
+        </Link>
+      </Button>
     </div>
   )
 }

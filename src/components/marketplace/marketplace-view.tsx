@@ -15,7 +15,7 @@ import { EmptyState, ErrorState } from '@/components/shared/states'
 import { PageHeader } from '@/components/shared/page-header'
 import { Pagination } from '@/components/shared/pagination'
 import { creatorListSchema } from '@/lib/structured-data'
-import { CreatorCard, CreatorCardSkeleton, CreatorGrid } from './creator-card'
+import { CreatorCard, CreatorCardSkeleton, CreatorGrid, SeeAllCreators } from './creator-card'
 import { ActiveFilters } from './active-filters'
 import { FilterDrawer } from './filter-drawer'
 import { FilterPanel } from './filter-panel'
@@ -171,6 +171,9 @@ export function MarketplaceView({
             ))}
           </CreatorGrid>
         </div>
+        {/* Only when this is a slice of the marketplace (a category, a search,
+            filters). On the unfiltered list it would link to the page itself. */}
+        {(fixedKeys.length > 0 || hasCriteria) && <SeeAllCreators to={browseAllHref} />}
         <Pagination className="mt-8" page={page} pageSize={pageSize} total={search.data.total} onPageChange={goToPage} label="creators" showSummary={false} />
       </>
     )

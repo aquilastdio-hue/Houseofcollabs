@@ -4,7 +4,7 @@ import { cn, range } from '@/lib/utils'
 import { useCreatorSearch } from '@/hooks/use-creators'
 import type { CreatorSearchParams } from '@/services/creators.service'
 import { Button } from '@/components/ui/button'
-import { CreatorCard, CreatorCardSkeleton, CreatorGrid } from '@/components/marketplace/creator-card'
+import { CreatorCard, CreatorCardSkeleton, CreatorGrid, SeeAllCreators } from '@/components/marketplace/creator-card'
 import { EmptyState, ErrorState } from '@/components/shared/states'
 
 /**
@@ -88,6 +88,7 @@ export function LiveCreatorGrid({
           <CreatorCard key={creator.id} creator={creator} href={`/creators/${creator.slug}`} className={trimClass(i)} />
         ))}
       </CreatorGrid>
+      <SeeAllCreators to="/discover" />
     </div>
   )
 }

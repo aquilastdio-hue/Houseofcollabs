@@ -17,7 +17,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { StatsCard } from '@/components/shared/stats-card'
 import { EmptyState, ErrorState } from '@/components/shared/states'
 import { OrderCard } from '@/components/orders/order-card'
-import { CreatorCard, CreatorCardSkeleton } from '@/components/marketplace/creator-card'
+import { CreatorCard, CreatorCardSkeleton, SeeAllCreators } from '@/components/marketplace/creator-card'
 import { BrandMissing } from '@/components/brand/brand-missing'
 import { DashboardPanel, OrderListSkeleton } from '@/components/brand/dashboard-panel'
 import { PendingActionsPanel } from '@/components/brand/pending-actions'
@@ -249,13 +249,16 @@ function RecommendedCreators() {
           }
         />
       ) : (
-        <ul className={grid}>
-          {items.map((creator) => (
-            <li key={creator.id} className="flex">
-              <CreatorCard creator={creator} href={`/brand/creators/${creator.id}`} showCompare className="w-full" />
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className={grid}>
+            {items.map((creator) => (
+              <li key={creator.id} className="flex">
+                <CreatorCard creator={creator} href={`/brand/creators/${creator.id}`} showCompare className="w-full" />
+              </li>
+            ))}
+          </ul>
+          <SeeAllCreators to="/brand/creators" />
+        </>
       )}
     </DashboardPanel>
   )
