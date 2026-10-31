@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase/client'
 import { AppError, toAppError, unwrap } from '@/lib/errors'
 import { fetchAllPages } from '@/lib/fetch-all'
 import { invokeFunction } from '@/lib/supabase/functions'
-import { pathFromPublicUrl, removeFiles, signedUrl } from '@/lib/supabase/storage'
+import { objectFromPublicUrl, pathFromPublicUrl, removeFiles, signedUrl } from '@/lib/supabase/storage'
 import type { CreatorRequirements } from './creators.service'
 import { sanitizeFilter } from './orders.service'
 import type {
@@ -407,6 +407,24 @@ export async function deletePortfolioItemForGood(id: string) {
     await removeFiles('creator-portfolio', files)
   } catch {
     throw new AppError('The post is deleted, but its file couldn’t be removed from storage.', { code: 'FILE_NOT_REMOVED' })
+  }
+}
+
+/**
+ * Takes away a creator's or brand's profile picture. The database clears it
+ * and flags the account, so their dashboard asks for a new one, and hands back
+ * only the files nothing else uses (a creator's first post can be the same
+ * file); those are deleted from storage.
+ */
+export async function removeProfilePhoto(profileId: string) {
+  const result = unwrap(await supabase.rpc('admin_remove_profile_photo', { p_profile_id: profileId })) as { delete_files?: string[] } | null
+  const files = (result?.delete_files ?? []).map(objectFromPublicUrl).filter((o) => o !== null)
+  try {
+    for (const bucket of new Set(files.map((f) => f.bucket))) {
+      await removeFiles(bucket, files.filter((f) => f.bucket === bucket).map((f) => f.path))
+    }
+  } catch {
+    throw new AppError('The picture is removed, but its file couldn’t be deleted from storage.', { code: 'FILE_NOT_REMOVED' })
   }
 }
 

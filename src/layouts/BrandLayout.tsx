@@ -3,6 +3,7 @@ import { FileText, Heart, Home, Megaphone, Package, Search, X } from 'lucide-rea
 import { TopNavShell, type NavItem } from '@/components/layout/app-shell'
 import { useCompare } from '@/contexts/compare-context'
 import { Avatar } from '@/components/ui/avatar'
+import { PhotoRemovedNotice } from '@/components/shared/photo-removed-notice'
 import { Button } from '@/components/ui/button'
 
 const items: NavItem[] = [
@@ -66,6 +67,7 @@ export default function BrandLayout() {
         notificationsHref="/brand/notifications"
       />
       <CompareTray />
+      <PhotoRemovedNotice kind="brand" />
       <ScrollRestoration />
     </>
   )

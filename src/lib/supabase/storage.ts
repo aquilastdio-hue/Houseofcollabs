@@ -78,6 +78,12 @@ export async function removeFiles(bucket: Bucket, paths: string[]) {
   if (error) throw toAppError(error)
 }
 
+/** The bucket and path behind a public URL of one of our buckets, or null for anything else. */
+export function objectFromPublicUrl(url?: string | null): { bucket: Bucket; path: string } | null {
+  const m = url?.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/)
+  return m ? { bucket: m[1] as Bucket, path: decodeURIComponent(m[2]!) } : null
+}
+
 /** Extracts the storage path from a public URL of our own bucket (for deletes). */
 export function pathFromPublicUrl(bucket: Bucket, url?: string | null) {
   if (!url) return null

@@ -5,7 +5,6 @@ import { fetchAllPages } from '@/lib/fetch-all'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatDateTime, formatRelative } from '@/lib/format'
 import { listOrders, type AdminBrandDetail } from '@/services/admin.service'
-import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/shared/data-table'
 import { EmptyState } from '@/components/shared/states'
@@ -13,11 +12,12 @@ import { ACCOUNT_STATUS_META, StatusBadge } from './admin-status'
 import { DetailCard, DetailItem, DetailList, ExternalAnchor, IdText } from './detail'
 import { orderColumns } from './order-table'
 import { ordersHref } from './order-presets'
+import { ProfilePhoto } from './profile-photo'
 
 export function BrandIdentity({ brand: b }: { brand: AdminBrandDetail }) {
   return (
     <div className="flex min-w-0 items-center gap-4">
-      <Avatar src={b.brand_logo_url} name={b.brand_name} size="xl" shape="rounded" />
+      <ProfilePhoto profileId={b.profile_id} src={b.brand_logo_url} name={b.brand_name} kind="brand" shape="rounded" />
       <div className="min-w-0">
         <h1 className="font-display text-display-sm font-semibold sm:text-display-md">{b.brand_name}</h1>
         <p className="mt-0.5 truncate text-sm text-muted">{[b.industry, b.location].filter(Boolean).join(' · ') || `@${b.brand_slug}`}</p>

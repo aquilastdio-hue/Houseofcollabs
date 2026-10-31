@@ -3,11 +3,11 @@ import { formatCompact, formatDate, formatDateTime, formatDays, formatINR, forma
 import { ADDON_TYPES, CONTENT_TYPES, GENDERS, PLATFORMS, RESPONSE_TIMES, labelFor } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { whatsappHref } from '@/lib/whatsapp'
-import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/shared/states'
 import type { AdminCreatorDetail } from '@/services/admin.service'
 import { ACCOUNT_STATUS_META, CREATOR_STATUS_META, StatusBadge } from './admin-status'
+import { ProfilePhoto } from './profile-photo'
 import { DetailCard, DetailItem, DetailList, ExternalAnchor, IdText } from './detail'
 
 export function CreatorBadges({ creator }: { creator: AdminCreatorDetail }) {
@@ -68,7 +68,7 @@ export function CreatorWhatsapp({ creator }: { creator: AdminCreatorDetail }) {
 export function CreatorIdentity({ creator }: { creator: AdminCreatorDetail }) {
   return (
     <div className="flex min-w-0 items-center gap-4">
-      <Avatar src={creator.profile_image_url} name={creator.display_name} size="xl" />
+      <ProfilePhoto profileId={creator.profile_id} src={creator.profile_image_url} name={creator.display_name} kind="creator" />
       <div className="min-w-0">
         <h1 className="font-display text-display-sm font-semibold sm:text-display-md">{creator.display_name}</h1>
         <p className="mt-0.5 truncate text-sm text-muted">

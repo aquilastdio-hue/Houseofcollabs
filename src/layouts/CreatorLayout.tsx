@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { SidebarShell, type NavSection } from '@/components/layout/app-shell'
 import { useAuth } from '@/contexts/auth-context'
+import { PhotoRemovedNotice } from '@/components/shared/photo-removed-notice'
 
 const sections: NavSection[] = [
   {
@@ -81,6 +82,7 @@ export default function CreatorLayout() {
         notificationsHref="/creator/notifications"
         banner={<StatusBanner />}
       />
+      <PhotoRemovedNotice kind="creator" />
       <ScrollRestoration />
     </>
   )
