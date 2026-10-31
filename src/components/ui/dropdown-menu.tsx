@@ -7,12 +7,31 @@ export const DropdownMenu = DropdownPrimitive.Root
 export const DropdownMenuTrigger = DropdownPrimitive.Trigger
 export const DropdownMenuGroup = DropdownPrimitive.Group
 
-export function DropdownMenuContent({ className, sideOffset = 8, align = 'end', ...props }: React.ComponentProps<typeof DropdownPrimitive.Content>) {
+// Whether the last thing the person did was a click/tap or a key press.
+let lastInput: 'pointer' | 'keyboard' = 'pointer'
+if (typeof document !== 'undefined') {
+  document.addEventListener('pointerdown', () => (lastInput = 'pointer'), true)
+  document.addEventListener('keydown', () => (lastInput = 'keyboard'), true)
+}
+
+export function DropdownMenuContent({
+  className,
+  sideOffset = 8,
+  align = 'end',
+  onCloseAutoFocus,
+  ...props
+}: React.ComponentProps<typeof DropdownPrimitive.Content>) {
   return (
     <DropdownPrimitive.Portal>
       <DropdownPrimitive.Content
         sideOffset={sideOffset}
         align={align}
+        // Closing a menu puts focus back on its button, which draws a focus
+        // ring around it. Only keyboard users need to land there again.
+        onCloseAutoFocus={(e) => {
+          onCloseAutoFocus?.(e)
+          if (lastInput === 'pointer') e.preventDefault()
+        }}
         className={cn(
           'z-50 min-w-52 overflow-hidden rounded-card border border-line bg-surface p-1.5 shadow-float data-[state=open]:animate-scale-in',
           className,
