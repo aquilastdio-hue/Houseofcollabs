@@ -1,15 +1,16 @@
 import * as React from 'react'
 import { Link } from 'react-router'
-import { Eye, EyeOff, ImageOff } from 'lucide-react'
+import { EllipsisVertical, Eye, EyeOff, ImageOff, Trash2 } from 'lucide-react'
 import { qk } from '@/lib/query-keys'
 import { formatDate } from '@/lib/format'
-import { moderatePortfolioItem } from '@/services/admin.service'
+import { deletePortfolioItemForGood, moderatePortfolioItem } from '@/services/admin.service'
 import { MediaTile } from '@/components/creator/portfolio-grid'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { EmptyState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import type { PortfolioItem } from '@/types'
 import { adminLists } from './admin-keys'
 import { ExternalAnchor } from './detail'
@@ -48,17 +49,25 @@ function PreviewDialog({ item, onClose }: { item: ModerationItem | null; onClose
 }
 
 /**
- * Portfolio grid with admin hide / unhide. Hidden items disappear from the
- * public storefront but stay visible to the creator and admins.
+ * Portfolio grid with an admin ⋮ menu on each item. Hide takes it away from
+ * everyone but admins (storefront, brands, search and the creator's own
+ * portfolio) until it's unhidden; Delete erases the item and its files.
  */
 export function PortfolioModerationGrid({ items, showCreator, emptyTitle, emptyDescription }: { items: ModerationItem[]; showCreator?: boolean; emptyTitle?: string; emptyDescription?: string }) {
   const [preview, setPreview] = React.useState<ModerationItem | null>(null)
   const [pending, setPending] = React.useState<ModerationItem | null>(null)
+  const [deleting, setDeleting] = React.useState<ModerationItem | null>(null)
+  const invalidate = [adminLists.content, [...qk.admin.all, 'creator'], qk.creators.all]
 
   const moderate = useAdminMutation(({ id, hidden }: { id: string; hidden: boolean }) => moderatePortfolioItem(id, hidden), {
-    invalidate: [adminLists.content, [...qk.admin.all, 'creator'], qk.creators.all],
-    success: (_d, v) => (v.hidden ? 'Item hidden from the storefront' : 'Item is visible again'),
+    invalidate,
+    success: (_d, v) => (v.hidden ? 'Hidden from everyone but admins' : 'Visible again'),
     onSuccess: () => setPending(null),
+  })
+  const remove = useAdminMutation((id: string) => deletePortfolioItemForGood(id), {
+    invalidate,
+    success: 'Deleted for good',
+    onSuccess: () => setDeleting(null),
   })
 
   if (items.length === 0) {
@@ -94,15 +103,22 @@ export function PortfolioModerationGrid({ items, showCreator, emptyTitle, emptyD
                 <p className="text-faint">{formatDate(item.created_at)}</p>
                 {item.type === 'link' && <ExternalAnchor href={item.media_url} className="text-xs">Open link</ExternalAnchor>}
               </div>
-              <Button
-                variant={item.is_hidden ? 'secondary' : 'ghost'}
-                size="xs"
-                onClick={() => setPending(item)}
-                aria-label={`${item.is_hidden ? 'Unhide' : 'Hide'} ${item.title ?? 'portfolio item'}`}
-              >
-                {item.is_hidden ? <Eye /> : <EyeOff />}
-                {item.is_hidden ? 'Unhide' : 'Hide'}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-xs" aria-label={`More for ${item.title ?? 'this item'}`}>
+                    <EllipsisVertical />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onSelect={() => setPending(item)}>
+                    {item.is_hidden ? <Eye /> : <EyeOff />}
+                    {item.is_hidden ? 'Unhide' : 'Hide'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem destructive onSelect={() => setDeleting(item)}>
+                    <Trash2 /> Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </li>
         ))}
@@ -113,17 +129,30 @@ export function PortfolioModerationGrid({ items, showCreator, emptyTitle, emptyD
       <ConfirmDialog
         open={!!pending}
         onOpenChange={(o) => !o && setPending(null)}
-        title={pending?.is_hidden ? 'Show this item again?' : 'Hide this portfolio item?'}
+        title={pending?.is_hidden ? 'Show this item again?' : 'Hide this item?'}
         description={
           pending?.is_hidden
-            ? 'It will reappear on the creator’s public storefront.'
-            : 'It disappears from the public storefront and search previews. The creator still sees it in their portfolio.'
+            ? 'It comes back on the creator’s storefront and in their portfolio.'
+            : 'Only admins will see it. It disappears from the storefront, brands, search and the creator’s own portfolio, until you unhide it.'
         }
         confirmLabel={pending?.is_hidden ? 'Unhide item' : 'Hide item'}
         destructive={!pending?.is_hidden}
         loading={moderate.isPending}
         onConfirm={() => {
           if (pending) moderate.mutate({ id: pending.id, hidden: !pending.is_hidden })
+        }}
+      />
+
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(o) => !o && setDeleting(null)}
+        title="Delete this item for good?"
+        description="This can’t be undone. The item and its photo or video are erased from the platform, the creator’s portfolio included."
+        confirmLabel="Delete for good"
+        destructive
+        loading={remove.isPending}
+        onConfirm={() => {
+          if (deleting) remove.mutate(deleting.id)
         }}
       />
     </>

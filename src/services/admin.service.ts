@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase/client'
 import { AppError, toAppError, unwrap } from '@/lib/errors'
 import { fetchAllPages } from '@/lib/fetch-all'
 import { invokeFunction } from '@/lib/supabase/functions'
-import { signedUrl } from '@/lib/supabase/storage'
+import { pathFromPublicUrl, removeFiles, signedUrl } from '@/lib/supabase/storage'
 import type { CreatorRequirements } from './creators.service'
 import { sanitizeFilter } from './orders.service'
 import type {
@@ -396,6 +396,18 @@ export async function listPortfolioItems(p: { hidden?: boolean; page?: number; p
 
 export async function moderatePortfolioItem(id: string, hidden: boolean) {
   return unwrap(await supabase.rpc('admin_moderate_portfolio_item', { p_item_id: id, p_hidden: hidden }))
+}
+
+/** Erases a post for good: the row (audited), then its photo or video and preview from storage. */
+export async function deletePortfolioItemForGood(id: string) {
+  const row = unwrap(await supabase.rpc('admin_delete_portfolio_item', { p_item_id: id }))
+  const paths = [row.storage_path ?? pathFromPublicUrl('creator-portfolio', row.media_url), pathFromPublicUrl('creator-portfolio', row.thumbnail_url)]
+  const files = [...new Set(paths.filter((p): p is string => !!p))]
+  try {
+    await removeFiles('creator-portfolio', files)
+  } catch {
+    throw new AppError('The post is deleted, but its file couldn’t be removed from storage.', { code: 'FILE_NOT_REMOVED' })
+  }
 }
 
 export async function listContactMessages(p: { status?: 'new' | 'read' | 'archived' | ''; page?: number; pageSize?: number }) {
