@@ -37,9 +37,16 @@ export async function getTimeseries(days = 30) {
 // ---------------------------------------------------------------------------
 // Creators
 // ---------------------------------------------------------------------------
+/**
+ * Admin → Creators status filter. Published means live on an active account;
+ * Suspended covers the storefront or the whole account; Deleted is an account
+ * closed by its owner (it had orders, so its records stay).
+ */
+export type AdminCreatorStatusFilter = 'published' | 'suspended' | 'storefront_removed' | 'deleted'
+
 export type AdminCreatorParams = {
   search?: string
-  status?: CreatorStatus | ''
+  status?: AdminCreatorStatusFilter | ''
   verified?: boolean
   featured?: boolean
   includeDeleted?: boolean

@@ -5,7 +5,7 @@ import { fetchAllPages } from '@/lib/fetch-all'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatNumber } from '@/lib/format'
-import { countCreatorsByReferralCode, getPeopleStats, listCreators, type AdminCreatorParams } from '@/services/admin.service'
+import { countCreatorsByReferralCode, getPeopleStats, listCreators, type AdminCreatorParams, type AdminCreatorStatusFilter } from '@/services/admin.service'
 import { Seo } from '@/components/shared/seo'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatsCard } from '@/components/shared/stats-card'
@@ -16,14 +16,17 @@ import { Select } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { FilterBar, FilterField, SearchInput } from '@/components/admin/filter-bar'
 import { CREATOR_SORTS, creatorColumns } from '@/components/admin/creator-table'
-import { CREATOR_STATUS_META, metaOptions } from '@/components/admin/admin-status'
 import { isOneOf, yesNo } from '@/components/admin/admin-utils'
 import { useUrlState } from '@/components/admin/use-url-state'
 import { AccountCsvMenu } from '@/components/admin/account-csv-menu'
 import { exportCreatorsCsv } from '@/services/account-csv.service'
-import type { CreatorStatus } from '@/types'
 
-const STATUS_OPTIONS = metaOptions(CREATOR_STATUS_META)
+const STATUS_OPTIONS: { value: AdminCreatorStatusFilter; label: string }[] = [
+  { value: 'published', label: 'Published' },
+  { value: 'suspended', label: 'Suspended' },
+  { value: 'storefront_removed', label: 'Storefront removed' },
+  { value: 'deleted', label: 'Deleted' },
+]
 const STATUS_VALUES = STATUS_OPTIONS.map((o) => o.value)
 const SORT_VALUES = CREATOR_SORTS.map((s) => s.value)
 const VERIFIED_OPTIONS = [
@@ -40,7 +43,7 @@ export default function Creators() {
   const url = useUrlState()
   const search = url.get('q')
   const rawStatus = url.get('status')
-  const status: CreatorStatus | '' = isOneOf(STATUS_VALUES, rawStatus) ? rawStatus : ''
+  const status: AdminCreatorStatusFilter | '' = isOneOf(STATUS_VALUES, rawStatus) ? rawStatus : ''
   const verified = url.get('verified')
   const featured = url.get('featured')
   const includeDeleted = url.get('deleted') === '1'
@@ -136,12 +139,15 @@ export default function Creators() {
         <FilterField label="Sort by" htmlFor="creator-sort">
           <Select id="creator-sort" size="sm" value={sort} onValueChange={(v) => url.update({ sort: v === 'newest' ? null : v })} options={CREATOR_SORTS} />
         </FilterField>
-        <div className="flex h-9 items-center gap-2.5 lg:self-end">
-          <Switch id="creator-deleted" checked={includeDeleted} onCheckedChange={(v) => url.update({ deleted: v })} />
-          <label htmlFor="creator-deleted" className="cursor-pointer text-sm font-medium">
-            Include removed
-          </label>
-        </div>
+        {/* Storefront removed and Deleted list removed storefronts anyway. */}
+        {status !== 'storefront_removed' && status !== 'deleted' && (
+          <div className="flex h-9 items-center gap-2.5 lg:self-end">
+            <Switch id="creator-deleted" checked={includeDeleted} onCheckedChange={(v) => url.update({ deleted: v })} />
+            <label htmlFor="creator-deleted" className="cursor-pointer text-sm font-medium">
+              Include removed
+            </label>
+          </div>
+        )}
       </FilterBar>
 
       <DataTable
