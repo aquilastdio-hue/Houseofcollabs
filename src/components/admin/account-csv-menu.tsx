@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Download, Ellipsis, FileSpreadsheet, Upload } from 'lucide-react'
+import { Download, EllipsisVertical, FileSpreadsheet, Upload } from 'lucide-react'
 import { downloadCsv, toCsv } from '@/lib/csv'
 import { toAppError } from '@/lib/errors'
 import { formatNumber } from '@/lib/format'
@@ -34,7 +34,7 @@ const count = (kind: AccountKind, n: number) => `${formatNumber(n)} ${NOUN[kind]
 const today = () => istParts(new Date().toISOString()).date
 
 /**
- * Admin → Creators / Brands, right of the filters: "More" → Export CSV (the
+ * Admin → Creators / Brands, right of the filters: the ⋮ menu → Export CSV (the
  * list as a spreadsheet) or Upload CSV (a spreadsheet of new people, each
  * added as an approved account).
  */
@@ -59,9 +59,8 @@ export function AccountCsvMenu({ kind, onExport }: { kind: AccountKind; onExport
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="secondary" size="sm" loading={exporting}>
-            {/* Icon only on phones, where it shares a row with the search and Filters. */}
-            <Ellipsis /> <span className="max-sm:sr-only">More</span>
+          <Button variant="secondary" size="icon-sm" aria-label="More" loading={exporting}>
+            <EllipsisVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
