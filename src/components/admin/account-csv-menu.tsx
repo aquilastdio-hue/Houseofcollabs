@@ -18,6 +18,7 @@ import {
   type ImportRow,
 } from '@/lib/account-import'
 import { importAccounts, type ImportResult } from '@/services/account-csv.service'
+import { useCategories } from '@/hooks/use-catalog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { CheckboxRow } from '@/components/ui/checkbox'
@@ -92,6 +93,15 @@ function UploadDialog({ kind, open, onOpenChange }: { kind: AccountKind; open: b
   const [done, setDone] = React.useState(0)
   const [results, setResults] = React.useState<ImportResult[] | null>(null)
   const [one, many] = NOUN[kind]
+  const categories = useCategories()
+
+  // Categories the file names that aren't on the list. They don't stop anyone
+  // being added; the creator just starts without them and picks their own.
+  const unmatched = React.useMemo(() => {
+    if (kind !== 'creator' || !picked || !categories.data) return []
+    const known = new Set(categories.data.map((c) => c.name.trim().toLowerCase()))
+    return [...new Set(picked.rows.flatMap((r) => r.categories ?? []).filter((c) => !known.has(c.toLowerCase())))]
+  }, [kind, picked, categories.data])
 
   function close(next: boolean) {
     if (running) return // closing mid-way would lose track of what's been added
@@ -239,6 +249,12 @@ function UploadDialog({ kind, open, onOpenChange }: { kind: AccountKind; open: b
                     </li>
                   ))}
                 </ul>
+              )}
+              {unmatched.length > 0 && (
+                <p className="rounded-card bg-subtle px-3 py-2 text-xs text-ink-soft">
+                  <span className="font-medium text-ink">Not on your category list:</span> {unmatched.join(', ')}. Those creators are still added,
+                  without these categories, and can choose their own from their profile.
+                </p>
               )}
             </div>
           )}

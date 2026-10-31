@@ -116,6 +116,20 @@ async function importOne(db: Db, asAdmin: Db, role: Role, raw: Record<string, un
     .maybeSingle()
   if (pending) return result('skipped', `Has a ${other} application. One email can be a creator or a brand, not both.`)
 
+  // The sign-up rule: a WhatsApp number and an Instagram account belong to one
+  // person. Asked before the login exists, so a refused row sends no email.
+  if (role === 'creator') {
+    if (!row.phone || !/^\+\d{11,13}$/.test(row.phone)) return result('failed', 'Add a 10-digit WhatsApp number.')
+    const { data: taken } = await asAdmin.rpc('check_application_duplicates', {
+      p_phone: row.phone,
+      p_instagram: row.instagram ?? undefined,
+      p_email: email,
+    })
+    const t = (taken ?? {}) as { phone_taken?: boolean; instagram_taken?: boolean }
+    if (t.phone_taken) return result('failed', 'This WhatsApp number already belongs to another account.')
+    if (t.instagram_taken) return result('failed', 'This Instagram account already belongs to another creator.')
+  }
+
   let userId: string | null = profile?.id ?? null
   let created = false
   let emailed = false

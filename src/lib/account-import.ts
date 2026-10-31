@@ -8,7 +8,7 @@ import { parseCsv, toCsv, uncell } from './csv'
 
 export type AccountKind = 'creator' | 'brand'
 
-/** One account to create. Only `email` and the name are required. */
+/** One account to create. Email and the name are required, and a creator's WhatsApp number. */
 export type ImportRow = {
   email: string
   name: string | null
@@ -59,6 +59,7 @@ export const IMPORT_COLUMNS: Record<AccountKind, Column[]> = {
       key: 'phone',
       header: 'WhatsApp',
       aliases: ['whatsapp number', 'phone', 'phone number', 'mobile', 'mobile number'],
+      required: true,
       example: '+91 98765 43210',
     },
     {
@@ -158,6 +159,26 @@ export function parseFollowers(value: string): number | null {
   return Number.isFinite(n) ? Math.round(n) : null
 }
 
+/**
+ * A creator's WhatsApp number: ten digits, with or without a country code.
+ * Without one it's an Indian number, so "98765 43210", "09876543210" and
+ * "919876543210" all become "+919876543210". One written with "+" keeps its
+ * own code ("+1 202 555 0123").
+ */
+export function importPhone(value: string): string | null {
+  const trimmed = value.trim()
+  if (!/^\+?[\d\s().-]+$/.test(trimmed)) return null
+  const digits = trimmed.replace(/\D/g, '')
+  if (trimmed.startsWith('+')) {
+    // +91 is followed by exactly ten; other codes are one to three digits long.
+    const ok = digits.startsWith('91') ? digits.length === 12 : digits.length >= 11 && digits.length <= 13
+    return ok ? `+${digits}` : null
+  }
+  const local =
+    digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits.length === 11 && digits.startsWith('0') ? digits.slice(1) : digits
+  return local.length === 10 ? `+91${local}` : null
+}
+
 export function templateCsv(kind: AccountKind) {
   const columns = IMPORT_COLUMNS[kind]
   return toCsv(
@@ -205,6 +226,7 @@ export function readImportFile(text: string, kind: AccountKind): { rows: (Import
   const rows: (ImportRow & { line: number })[] = []
   const problems: ImportProblem[] = []
   const seen = new Map<string, number>()
+  const seenPhone = new Map<string, number>()
   const body = table.slice(1)
   if (body.length > MAX_IMPORT_ROWS) {
     problems.push({
@@ -236,13 +258,22 @@ export function readImportFile(text: string, kind: AccountKind): { rows: (Import
       })
     if (kind === 'brand' && (!brand || brand.length < 2)) return problems.push({ line, message: 'No brand name.' })
     if (kind === 'creator' && (!name || name.length < 2)) return problems.push({ line, message: 'No name.' })
+    const phone = kind === 'creator' ? importPhone(get('phone')) : opt('phone')
+    if (kind === 'creator' && !phone)
+      return problems.push({
+        line,
+        message: get('phone') ? `“${get('phone')}” isn’t a 10-digit mobile number.` : 'No WhatsApp number.',
+      })
+    if (kind === 'creator' && phone && seenPhone.has(phone))
+      return problems.push({ line, message: `WhatsApp ${phone} is already on line ${seenPhone.get(phone)}.` })
     seen.set(email, line)
+    if (kind === 'creator' && phone) seenPhone.set(phone, line)
 
     const row: ImportRow & { line: number } = {
       line,
       email,
       name,
-      phone: opt('phone'),
+      phone,
       instagram: opt('instagram'),
       city: opt('city'),
     }
