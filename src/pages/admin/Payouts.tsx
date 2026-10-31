@@ -116,20 +116,16 @@ export default function Payouts() {
       header: <span className="sr-only">Actions</span>,
       mobileLabel: ' ',
       cell: (p) => (
-        <>
-          <Button
-            size="xs"
-            variant={p.status === 'pending' || p.status === 'processing' ? 'primary' : 'secondary'}
-            className="hidden md:inline-flex"
-            onClick={(e) => {
-              e.stopPropagation()
-              setSelectedId(p.id)
-            }}
-          >
-            {p.status === 'pending' || p.status === 'processing' ? 'Process' : 'View'}
-          </Button>
-          <span className="text-xs font-medium text-ink md:hidden">{p.status === 'pending' || p.status === 'processing' ? 'Tap to process' : 'Tap for details'}</span>
-        </>
+        <Button
+          size="xs"
+          variant={p.status === 'pending' || p.status === 'processing' ? 'primary' : 'secondary'}
+          onClick={(e) => {
+            e.stopPropagation()
+            setSelectedId(p.id)
+          }}
+        >
+          {p.status === 'pending' || p.status === 'processing' ? 'Process' : 'View'}
+        </Button>
       ),
     },
   ]

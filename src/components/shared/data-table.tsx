@@ -17,6 +17,18 @@ export type Column<T> = {
 }
 
 /**
+ * How a DataTable looks below `lg`: stacked cards (the default), or the same
+ * table as on a laptop, scrolling sideways. Admin uses the table everywhere so
+ * a phone shows the lists the way a laptop does; brands and creators keep cards.
+ */
+export type DataTableLayout = 'cards' | 'table'
+const LayoutContext = React.createContext<DataTableLayout>('cards')
+
+export function DataTableLayoutProvider({ layout, children }: { layout: DataTableLayout; children: React.ReactNode }) {
+  return <LayoutContext.Provider value={layout}>{children}</LayoutContext.Provider>
+}
+
+/**
  * Responsive table: a real <table> from `lg` up, stacked cards below.
  * Tablets get cards: these tables run 8-9 columns, which needed ~1200px and
  * forced sideways scrolling inside the card on iPad portrait.
@@ -48,6 +60,7 @@ export function DataTable<T>({
   /** Column key rendered as the card title on mobile. */
   mobilePrimary?: string
 }) {
+  const tableOnly = React.useContext(LayoutContext) === 'table'
   if (error) return <ErrorState error={error} onRetry={onRetry} />
   const isEmpty = !loading && (rows?.length ?? 0) === 0
   if (isEmpty) return <>{empty ?? <EmptyState title="Nothing here yet" />}</>
@@ -55,9 +68,11 @@ export function DataTable<T>({
 
   return (
     <div className={cn('space-y-4', className)}>
-      <div className="hidden overflow-hidden rounded-card border border-line bg-surface shadow-card lg:block">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+      <div className={cn('overflow-hidden rounded-card border border-line bg-surface shadow-card', !tableOnly && 'hidden lg:block')}>
+        <div className="overflow-x-auto overscroll-x-contain">
+          {/* On a phone the table keeps a small laptop's width and scrolls
+              sideways, rather than squeezing every column into 375px. */}
+          <table className={cn('w-full text-left text-sm', tableOnly && 'max-lg:min-w-[48rem]')}>
             <thead>
               <tr className="border-b border-line bg-subtle/60">
                 {columns.map((c) => (
@@ -96,7 +111,7 @@ export function DataTable<T>({
         </div>
       </div>
 
-      <ul className="space-y-3 lg:hidden">
+      <ul className={cn('space-y-3 lg:hidden', tableOnly && 'hidden')}>
         {loading
           ? Array.from({ length: 4 }, (_, i) => (
               <li key={i} className="rounded-card border border-line bg-surface p-4">

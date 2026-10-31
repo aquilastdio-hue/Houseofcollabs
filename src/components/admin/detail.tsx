@@ -112,26 +112,12 @@ export function ExternalAnchor({ href, children, className }: { href: string; ch
   )
 }
 
-/**
- * Link inside a clickable table row. On mobile the whole card is the button,
- * so the link renders as plain text there unless `always` is set.
- */
-export function CellLink({ to, children, className, always }: { to: string; children: React.ReactNode; className?: string; always?: boolean }) {
-  const link = (
-    <Link
-      to={to}
-      onClick={stopPropagation}
-      className={cn('focus-ring rounded-sm font-medium text-ink hover:underline hover:underline-offset-2', !always && 'hidden md:inline', className)}
-    >
+/** Link inside a clickable table row; clicking it doesn't also click the row. */
+export function CellLink({ to, children, className }: { to: string; children: React.ReactNode; className?: string }) {
+  return (
+    <Link to={to} onClick={stopPropagation} className={cn('focus-ring rounded-sm font-medium text-ink hover:underline hover:underline-offset-2', className)}>
       {children}
     </Link>
-  )
-  if (always) return link
-  return (
-    <>
-      {link}
-      <span className={cn('font-medium md:hidden', className)}>{children}</span>
-    </>
   )
 }
 
@@ -144,7 +130,6 @@ export function IdentityCell({
   shape = 'circle',
   size = 'sm',
   badge,
-  always,
 }: {
   name: string
   subtitle?: React.ReactNode
@@ -153,7 +138,6 @@ export function IdentityCell({
   shape?: 'circle' | 'rounded'
   size?: 'xs' | 'sm' | 'md' | 'lg'
   badge?: React.ReactNode
-  always?: boolean
 }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
@@ -162,9 +146,7 @@ export function IdentityCell({
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="truncate">
             {to ? (
-              <CellLink to={to} always={always}>
-                {name}
-              </CellLink>
+              <CellLink to={to}>{name}</CellLink>
             ) : (
               <span className="font-medium">{name}</span>
             )}

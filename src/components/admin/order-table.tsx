@@ -24,12 +24,9 @@ const ORDER_COLUMNS: Record<OrderColumnKey, Column<AdminOrderListItem>> = {
     key: 'number',
     header: 'Order',
     cell: (o) => (
-      <span className="flex flex-col">
-        <CellLink to={`/admin/orders/${o.id}`} className="font-mono text-xs">
-          {o.order_number}
-        </CellLink>
-        <span className="truncate text-xs text-muted md:hidden">{o.service_title}</span>
-      </span>
+      <CellLink to={`/admin/orders/${o.id}`} className="font-mono text-xs">
+        {o.order_number}
+      </CellLink>
     ),
   },
   brand: {

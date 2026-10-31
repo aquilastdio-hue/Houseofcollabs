@@ -81,7 +81,7 @@ export function useReportTable() {
               {REPORT_TARGET_LABEL[r.target_type]}
             </Badge>
             {href ? (
-              <CellLink to={href} always className="font-mono text-xs">
+              <CellLink to={href} className="font-mono text-xs">
                 {r.target_id.slice(0, 8)}…
               </CellLink>
             ) : (

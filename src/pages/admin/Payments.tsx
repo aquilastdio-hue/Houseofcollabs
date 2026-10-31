@@ -93,13 +93,14 @@ const columns: Column<AdminPaymentItem>[] = [
                 type="button"
                 onClick={(e) => e.stopPropagation()}
                 aria-label={`Payment error: ${p.error_description}`}
-                className="focus-ring hidden size-6 items-center justify-center rounded-full text-danger hover:bg-danger-soft md:inline-flex"
+                className="focus-ring inline-flex size-6 items-center justify-center rounded-full text-danger hover:bg-danger-soft"
               >
                 <AlertCircle className="size-4" />
               </button>
             </Tooltip>
           )}
         </span>
+        {/* Tooltips don't open on tap, so phones show the error in full. */}
         {p.error_description && <span className="max-w-48 truncate text-xs text-danger md:hidden">{p.error_description}</span>}
       </span>
     ),
@@ -120,9 +121,7 @@ const columns: Column<AdminPaymentItem>[] = [
           <span className="truncate font-mono text-xs" title={p.provider_payment_id}>
             {p.provider_payment_id}
           </span>
-          <span className="hidden md:inline-flex">
-            <CopyButton value={p.provider_payment_id} label="Copy payment id" />
-          </span>
+          <CopyButton value={p.provider_payment_id} label="Copy payment id" />
         </span>
       ) : (
         <span className="text-xs text-faint">{p.provider_order_id ? 'Not paid yet' : '—'}</span>

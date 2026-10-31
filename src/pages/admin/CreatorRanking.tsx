@@ -63,7 +63,7 @@ function Row({
         transition,
       }}
       className={cn(
-        'flex flex-wrap items-center gap-4 px-4 py-3.5 cursor-grab active:cursor-grabbing transition-colors',
+        'flex items-center gap-3 px-4 py-3.5 cursor-grab active:cursor-grabbing transition-colors sm:flex-wrap sm:gap-4',
         pinned && 'bg-brand-soft/40',
         isDragging && 'relative z-10 ring-2 ring-brand ring-inset shadow-float',
       )}
@@ -94,7 +94,8 @@ function Row({
         </p>
       </div>
 
-      <div className="shrink-0">
+      {/* Phones: the stars would squeeze the name to a letter, so rating moves into the menu. */}
+      <div className="hidden shrink-0 sm:block">
         <RatingStars value={creator.admin_rating} onChange={(r) => rate.mutate(r)} disabled={rate.isPending} size="sm" />
       </div>
 
@@ -105,6 +106,10 @@ function Row({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
+          <div className="px-2.5 pt-1.5 pb-2.5 sm:hidden">
+            <p className="mb-1.5 text-xs font-medium text-muted">Rating</p>
+            <RatingStars value={creator.admin_rating} onChange={(r) => rate.mutate(r)} disabled={rate.isPending} size="sm" />
+          </div>
           <DropdownMenuItem onSelect={() => pin.mutate(!pinned)}>
             <ArrowUpToLine /> {pinned ? 'Remove from top' : 'Send on top'}
           </DropdownMenuItem>

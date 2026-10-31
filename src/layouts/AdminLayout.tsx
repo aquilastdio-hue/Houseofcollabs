@@ -26,6 +26,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import { SidebarShell, type NavSection } from '@/components/layout/app-shell'
+import { DataTableLayoutProvider } from '@/components/shared/data-table'
 
 const sections: NavSection[] = [
   { items: [{ label: 'Dashboard', href: '/admin', icon: LayoutDashboard, end: true }] },
@@ -89,7 +90,9 @@ const sections: NavSection[] = [
 
 export default function AdminLayout() {
   return (
-    <>
+    // Every list in Admin is the full table on phones too, scrolling sideways,
+    // so it reads the same as on a laptop.
+    <DataTableLayoutProvider layout="table">
       <SidebarShell
         sections={sections}
         homeHref="/admin"
@@ -98,6 +101,6 @@ export default function AdminLayout() {
         badge="Admin"
       />
       <ScrollRestoration />
-    </>
+    </DataTableLayoutProvider>
   )
 }
