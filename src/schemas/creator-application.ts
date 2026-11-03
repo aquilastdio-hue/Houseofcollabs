@@ -16,8 +16,9 @@ import { z } from 'zod'
 export const CREATOR_CATEGORIES = ['Fashion', 'Beauty', 'Lifestyle', 'Food', 'Travel', 'Fitness', 'Other'] as const
 export const MAX_CATEGORIES = CREATOR_CATEGORIES.length
 
-/** Page 3 — upload ceilings. */
+/** Page 3 — upload limits. Four photos gives the storefront a full first row. */
 export const MAX_VIDEOS = 5
+export const MIN_PHOTOS = 4
 export const MAX_PHOTOS = 10
 
 /**
@@ -189,7 +190,13 @@ export const creatorApplicationSchema = z
 
     // page 3 — "show us your work" means at least one of each
     if (v.videos.length < 1) need(['videos'], 'Upload at least one video')
-    if (v.photos.length < 1) need(['photos'], 'Upload at least one photo')
+    if (v.photos.length < MIN_PHOTOS) {
+      const left = MIN_PHOTOS - v.photos.length
+      need(
+        ['photos'],
+        v.photos.length === 0 ? `Upload at least ${MIN_PHOTOS} photos` : `Upload ${left} more photo${left === 1 ? '' : 's'} (at least ${MIN_PHOTOS})`,
+      )
+    }
 
     // page 4 — a creator with no rate and no barter is offering nothing
     if (!Object.values(v.rates).some(Boolean) && !v.barter_available) {

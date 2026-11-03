@@ -19,7 +19,7 @@ import {
 } from '@/services/applications.service'
 import {
   BARTER_STANCES, COLLABORATIONS, TRAVEL_SCOPES, CONFIRMATION, CREATOR_APPLICATION_DEFAULTS, CREATOR_CATEGORIES,
-  MAX_CATEGORIES, MAX_PHOTOS, MAX_VIDEOS, OPEN_TO, STEP_FIELDS, STEP_META,
+  MAX_CATEGORIES, MAX_PHOTOS, MAX_VIDEOS, MIN_PHOTOS, OPEN_TO, STEP_FIELDS, STEP_META,
   SUBMITTED_COPY, TOTAL_STEPS, creatorApplicationSchema, type CreatorApplicationValues,
 } from '@/schemas/creator-application'
 import { Button } from '@/components/ui/button'
@@ -262,7 +262,7 @@ export function Page3({ control }: { control: Control<CreatorApplicationValues> 
         control={control}
         name="photos"
         render={({ field, fieldState }) => (
-          <Field label="Photos" required error={fieldState.error?.message} hint={`Up to ${MAX_PHOTOS}.`}>
+          <Field label="Photos" required error={fieldState.error?.message} hint={`At least ${MIN_PHOTOS}, up to ${MAX_PHOTOS}.`}>
             <MultiFileDrop kind="image" value={field.value} onChange={field.onChange} max={MAX_PHOTOS} label="Add photos" />
             <p className="mt-2 text-xs text-muted">Please upload clear photos; vertical photos are preferred.</p>
           </Field>

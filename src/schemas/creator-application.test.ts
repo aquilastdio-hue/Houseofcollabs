@@ -4,6 +4,7 @@ import {
   BARTER_STANCES,
   MAX_PHOTOS,
   MAX_VIDEOS,
+  MIN_PHOTOS,
   OPEN_TO,
   STEP_FIELDS,
   creatorApplicationSchema,
@@ -23,7 +24,7 @@ const complete = {
   selfie_path: 'selfie.jpg',
   categories: ['Beauty', 'Fashion'],
   videos: ['v1.mp4'],
-  photos: ['p1.jpg'],
+  photos: ['p1.jpg', 'p2.jpg', 'p3.jpg', 'p4.jpg'],
   rates: { ...CREATOR_APPLICATION_DEFAULTS.rates, ugc_video: '8000' },
   travel_scope: 'within_country',
   confirmed: true,
@@ -66,9 +67,11 @@ describe('creator sign-up schema', () => {
     expect(issues({ ...complete, categories: [] })).toContain('categories')
   })
 
-  it('needs at least one video and one photo, and caps both', () => {
+  it('needs at least one video and four photos, and caps both', () => {
     expect(issues({ ...complete, videos: [] })).toContain('videos')
     expect(issues({ ...complete, photos: [] })).toContain('photos')
+    expect(issues({ ...complete, photos: Array(MIN_PHOTOS - 1).fill('p.jpg') })).toContain('photos')
+    expect(issues({ ...complete, photos: Array(MIN_PHOTOS).fill('p.jpg') })).toEqual([])
     expect(issues({ ...complete, videos: Array(MAX_VIDEOS + 1).fill('v.mp4') })).toContain('videos')
     expect(issues({ ...complete, photos: Array(MAX_PHOTOS + 1).fill('p.jpg') })).toContain('photos')
     expect(issues({ ...complete, videos: Array(MAX_VIDEOS).fill('v.mp4'), photos: Array(MAX_PHOTOS).fill('p.jpg') })).toEqual([])
