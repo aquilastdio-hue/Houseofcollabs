@@ -1,11 +1,12 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router'
-import { Ban, ShieldCheck, Trash2 } from 'lucide-react'
+import { Ban, FlaskConical, ShieldCheck, Trash2 } from 'lucide-react'
 import { qk } from '@/lib/query-keys'
-import { accountAction, type AccountAction } from '@/services/admin.service'
+import { accountAction, deleteTestAccount, setTestAccount, type AccountAction } from '@/services/admin.service'
 import { adminLists } from './admin-keys'
 import { useAdminMutation } from './use-admin-mutation'
 import { DetailCard } from './detail'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 
@@ -19,38 +20,48 @@ import { ConfirmDialog } from '@/components/shared/confirm-dialog'
  * Deleting is permanent and is allowed to fail. Orders, earnings and payout
  * requests reference creators and brands with ON DELETE RESTRICT, so Postgres
  * refuses to remove anyone who has traded — the server turns that into an
- * explanation rather than a constraint error, and there is deliberately no way
- * to force it.
+ * explanation rather than a constraint error. The one exception is a test
+ * account: marked as one here, it is deleted together with its test orders.
  */
 export function AccountActionsPanel({
   profileId,
   name,
   status,
+  isTest = false,
   /** Where to go once the account no longer exists. */
   afterDelete,
 }: {
   profileId: string
   name: string
   status: string
+  isTest?: boolean
   afterDelete: string
 }) {
   const [pending, setPending] = React.useState<AccountAction | null>(null)
   const navigate = useNavigate()
   const suspended = status === 'suspended'
 
-  const run = useAdminMutation((v: { action: AccountAction; reason: string }) => accountAction(profileId, v.action, v.reason), {
-    invalidate: [qk.admin.all, adminLists.creators, adminLists.brands, qk.admin.stats],
-    success: (_d, v) =>
-      v.action === 'suspend'
-        ? `${name} can no longer sign in`
-        : v.action === 'reactivate'
+  const run = useAdminMutation(
+    (v: { action: AccountAction; reason: string }) =>
+      v.action === 'delete' && isTest ? deleteTestAccount(profileId, v.reason) : accountAction(profileId, v.action, v.reason),
+    {
+      invalidate: [qk.admin.all, adminLists.creators, adminLists.brands, qk.admin.stats],
+      success: (_d, v) =>
+        v.action === 'suspend'
+          ? `${name} can no longer sign in`
+          : v.action === 'reactivate'
           ? `${name} can sign in again`
           : `${name}’s account was deleted`,
-    onSuccess: (_d, v) => {
-      setPending(null)
-      // The record is gone — staying on its page would 404 on the next fetch.
-      if (v.action === 'delete') void navigate(afterDelete, { replace: true })
-    },
+      onSuccess: (_d, v) => {
+        setPending(null)
+        // The record is gone — staying on its page would 404 on the next fetch.
+        if (v.action === 'delete') void navigate(afterDelete, { replace: true })
+      },
+    }
+  )
+  const markTest = useAdminMutation((next: boolean) => setTestAccount(profileId, next), {
+    invalidate: [qk.admin.all, adminLists.creators, adminLists.brands, qk.admin.stats],
+    success: (_d, next) => (next ? `${name} is now a test account` : `${name} is a real account again`),
   })
 
   const COPY: Record<AccountAction, { title: string; description: string; confirm: string; destructive?: boolean; reasonLabel?: string }> = {
@@ -68,14 +79,23 @@ export function AccountActionsPanel({
       confirm: 'Revoke suspension',
       reasonLabel: 'Note (optional, recorded in the audit log)',
     },
-    delete: {
-      title: `Permanently delete ${name}?`,
-      description:
-        'This cannot be undone. Everything about them is erased: login, profile, storefront, portfolio, sign-up application, selfie and documents, and every uploaded file. If they have ever had an order, earning or payout, the deletion will be refused — those records are part of the platform’s financial history, and you should suspend instead.',
-      confirm: 'Delete permanently',
-      destructive: true,
-      reasonLabel: 'Reason (recorded in the audit log)',
-    },
+    delete: isTest
+      ? {
+          title: `Permanently delete the test account ${name}?`,
+          description:
+            'This cannot be undone. The account is erased, and so is every order it was part of, with their payments, refunds, earnings and payouts — including test orders it placed with real creators, who keep their accounts. Refund any real payment in Razorpay first; deleting the record does not return the money.',
+          confirm: 'Delete test account',
+          destructive: true,
+          reasonLabel: 'Reason (recorded in the audit log)',
+        }
+      : {
+          title: `Permanently delete ${name}?`,
+          description:
+            'This cannot be undone. Everything about them is erased: login, profile, storefront, portfolio, sign-up application, selfie and documents, and every uploaded file. If they have ever had an order, earning or payout, the deletion will be refused — those records are part of the platform’s financial history, and you should suspend instead.',
+          confirm: 'Delete permanently',
+          destructive: true,
+          reasonLabel: 'Reason (recorded in the audit log)',
+        },
   }
 
   const action = pending
@@ -96,9 +116,19 @@ export function AccountActionsPanel({
         <Button size="sm" block variant="danger-ghost" className="justify-start" onClick={() => setPending('delete')}>
           <Trash2 /> Delete permanently
         </Button>
+        <Button size="sm" block variant="ghost" className="justify-start" loading={markTest.isPending} onClick={() => markTest.mutate(!isTest)}>
+          <FlaskConical /> {isTest ? 'Not a test account' : 'Mark as test account'}
+        </Button>
+        {isTest && (
+          <Badge tone="warning" size="sm" className="self-start">
+            <FlaskConical /> Test account: not on the marketplace or in the counts
+          </Badge>
+        )}
         <p className="px-1 text-xs text-muted">
           {suspended
             ? 'Suspended — they cannot sign in.'
+            : isTest
+            ? 'Deleting a test account also deletes its test orders.'
             : 'Suspending keeps everything; deleting keeps nothing and is refused for accounts with orders.'}
         </p>
       </div>

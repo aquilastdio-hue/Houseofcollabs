@@ -116,6 +116,7 @@ export default function CreatorDetail() {
             profileId={c.profile_id}
             name={c.display_name}
             status={c.profile?.status ?? 'active'}
+            isTest={c.profile?.is_test ?? false}
             afterDelete={backUrl}
           />
           <CreatorSetupCard creatorId={c.id} />

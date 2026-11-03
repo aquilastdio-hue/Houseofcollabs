@@ -86,6 +86,7 @@ export default function BrandDetail() {
             profileId={b.profile_id}
             name={b.brand_name}
             status={b.profile?.status ?? 'active'}
+            isTest={b.profile?.is_test ?? false}
             afterDelete="/admin/brands"
           />
           <BrandAccountCard brand={b} />

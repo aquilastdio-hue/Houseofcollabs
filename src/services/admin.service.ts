@@ -84,7 +84,7 @@ export async function countCreatorsByReferralCode(code: string, includeDeleted =
 const ADMIN_CREATOR_SELECT = `
   *,
   profile:profiles (
-    id, email, full_name, status, created_at, last_seen_at, phone
+    id, email, full_name, status, created_at, last_seen_at, phone, is_test
   ),
   creator_type_info:creator_types ( slug, name ),
   creator_categories ( is_primary, category:categories ( id, name, slug ) ),
@@ -180,7 +180,7 @@ export async function listBrandContacts() {
   })
 }
 
-const ADMIN_BRAND_SELECT = `*, profile:profiles ( id, email, full_name, status, created_at, last_seen_at, phone )`
+const ADMIN_BRAND_SELECT = `*, profile:profiles ( id, email, full_name, status, created_at, last_seen_at, phone, is_test )`
 const adminBrandQuery = () => supabase.from('brands').select(ADMIN_BRAND_SELECT)
 export type AdminBrandDetail = QueryData<ReturnType<typeof adminBrandQuery>>[number]
 
@@ -891,6 +891,21 @@ export async function reorderCreators(ids: string[]) {
 }
 
 export type AccountAction = 'suspend' | 'reactivate' | 'delete'
+
+/** Marks an account as a test account (out of the marketplace and the counts), or back. */
+export async function setTestAccount(profileId: string, isTest: boolean) {
+  unwrap(await supabase.rpc('admin_set_test_account', { p_profile_id: profileId, p_is_test: isTest }))
+}
+
+/**
+ * Deletes a test account for good: first every order it was part of, with
+ * their payments and earnings (the database refuses to delete an account with
+ * orders), then the account itself.
+ */
+export async function deleteTestAccount(profileId: string, reason: string) {
+  unwrap(await supabase.rpc('admin_delete_test_history', { p_profile_id: profileId }))
+  return accountAction(profileId, 'delete', reason)
+}
 
 /**
  * Account-level moderation that needs the server.
