@@ -5,7 +5,7 @@
 // 4. confirms through the service-only DB function (idempotent with the webhook)
 import { handler, HttpError, json, must, readJson, requireString } from '../_shared/http.ts'
 import { adminClient, audit, requireUser } from '../_shared/supabase.ts'
-import { razorpay, verifyPaymentSignature } from '../_shared/razorpay.ts'
+import { paymentModeForOrder, razorpayFor, verifyPaymentSignature } from '../_shared/razorpay.ts'
 
 export const handle = handler(async (req) => {
   if (req.method !== 'POST') throw new HttpError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED')
@@ -22,7 +22,11 @@ export const handle = handler(async (req) => {
   ) as { id: string; order_id: string; payer_id: string | null; amount: number; currency: string; status: string } | null
   if (!payment || payment.payer_id !== user.id) throw new HttpError(404, 'Payment not found.', 'PAYMENT_NOT_FOUND')
 
-  if (!(await verifyPaymentSignature(orderId, paymentId, signature))) {
+  // Same keys as the checkout: test mode for a test account's order.
+  const mode = await paymentModeForOrder(db, payment.order_id)
+  const razorpay = razorpayFor(mode)
+
+  if (!(await verifyPaymentSignature(orderId, paymentId, signature, mode))) {
     await audit(user.id, 'payment_signature_invalid', 'payment', payment.id, { provider_order_id: orderId, provider_payment_id: paymentId })
     throw new HttpError(400, 'We could not verify this payment. If money was deducted it will be reconciled automatically.', 'INVALID_SIGNATURE')
   }

@@ -2,7 +2,7 @@
 // awaiting payment. The amount always comes from the database, never the client.
 import { handler, HttpError, json, must, readJson, requireUuid } from '../_shared/http.ts'
 import { adminClient, requireUser } from '../_shared/supabase.ts'
-import { razorpay, razorpayConfigured, razorpayKeyId } from '../_shared/razorpay.ts'
+import { paymentModeForOrder, razorpayConfigured, razorpayFor, razorpayKeyIdFor } from '../_shared/razorpay.ts'
 
 type OrderRow = {
   id: string
@@ -20,7 +20,6 @@ export const handle = handler(async (req) => {
   const user = await requireUser(req)
   const { order_id } = await readJson<{ order_id?: string }>(req)
   const orderId = requireUuid(order_id, 'order_id')
-  if (!razorpayConfigured()) throw new HttpError(503, 'Payments are not configured yet. Please contact support.', 'PAYMENTS_NOT_CONFIGURED')
 
   const db = adminClient()
   const order = must(
@@ -33,6 +32,15 @@ export const handle = handler(async (req) => {
 
   if (!order || order.brand?.profile_id !== user.id) throw new HttpError(404, 'Order not found.', 'ORDER_NOT_FOUND')
   if (order.status !== 'payment_pending') throw new HttpError(409, 'This order is not awaiting payment.', 'INVALID_ORDER_STATE')
+
+  // A test account's order is paid in Razorpay test mode: test card, no real money.
+  const mode = await paymentModeForOrder(db, order.id)
+  if (!razorpayConfigured(mode)) {
+    throw mode === 'test'
+      ? new HttpError(503, 'Test payments are not set up yet.', 'TEST_PAYMENTS_NOT_CONFIGURED')
+      : new HttpError(503, 'Payments are not configured yet. Please contact support.', 'PAYMENTS_NOT_CONFIGURED')
+  }
+  const razorpay = razorpayFor(mode)
 
   const amountPaise = Math.round(Number(order.total_amount) * 100)
   const currency = order.currency || 'INR'
@@ -76,7 +84,7 @@ export const handle = handler(async (req) => {
   const { data: profile } = await db.from('profiles').select('full_name, email, phone').eq('id', user.id).maybeSingle()
 
   return json({
-    key_id: razorpayKeyId,
+    key_id: razorpayKeyIdFor(mode),
     razorpay_order_id: razorpayOrderId,
     amount: amountPaise,
     currency,

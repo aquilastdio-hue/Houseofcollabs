@@ -5,7 +5,7 @@
 //   set_status      { status, reason }             (validated by the DB state machine)
 import { handler, HttpError, json, must, readJson, requireString, requireUuid } from '../_shared/http.ts'
 import { adminClient, audit, requireAdmin } from '../_shared/supabase.ts'
-import { razorpay } from '../_shared/razorpay.ts'
+import { paymentModeForOrder, razorpayFor } from '../_shared/razorpay.ts'
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 
 type Order = { id: string; order_number: string; status: string; total_amount: number }
@@ -29,6 +29,8 @@ async function refundPayment(db: SupabaseClient, order: Order, adminId: string, 
   const value = amount === undefined ? refundable : Math.round(amount * 100) / 100
   if (!(value > 0) || value > refundable) throw new HttpError(422, `Refund must be between ₹1 and ₹${refundable}.`, 'INVALID_REFUND_AMOUNT')
 
+  // Refunded with the keys it was paid with (test mode for a test account's order).
+  const razorpay = razorpayFor(await paymentModeForOrder(db, order.id))
   const refund = await razorpay.refund(payment.provider_payment_id, Math.round(value * 100), {
     reason: reason.slice(0, 200),
     order_number: order.order_number,

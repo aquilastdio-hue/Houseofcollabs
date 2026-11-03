@@ -3,7 +3,7 @@
 // through service-only, idempotent database functions.
 import { handler, json } from '../_shared/http.ts'
 import { adminClient } from '../_shared/supabase.ts'
-import { razorpay, sha256Hex, verifyWebhookSignature, type RzpPayment, type RzpPayout, type RzpRefund } from '../_shared/razorpay.ts'
+import { paymentModeForOrder, razorpayFor, sha256Hex, verifyWebhookSignature, type RzpPayment, type RzpPayout, type RzpRefund } from '../_shared/razorpay.ts'
 
 type Event = {
   event: string
@@ -23,7 +23,9 @@ async function applyEvent(evt: Event) {
     case 'payment.authorized': {
       // Only needed when the account captures manually; Orders use auto-capture.
       if (!payment?.order_id) return 'ignored'
-      const captured = await razorpay.capturePayment(payment.id, payment.amount, payment.currency).catch(() => null)
+      const { data: ours } = await db.from('payments').select('order_id').eq('provider_order_id', payment.order_id).maybeSingle()
+      const mode = ours?.order_id ? await paymentModeForOrder(db, ours.order_id) : 'live'
+      const captured = await razorpayFor(mode).capturePayment(payment.id, payment.amount, payment.currency).catch(() => null)
       if (captured?.status !== 'captured') return 'authorized'
       const { error } = await db.rpc('confirm_order_payment', {
         p_provider_order_id: payment.order_id,
