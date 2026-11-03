@@ -34,7 +34,22 @@ const APIFY = 'https://api.apify.com/v2'
 const ACTOR = 'apify~instagram-profile-scraper'
 const BUCKET = 'instagram-media'
 /** Creators saved per invocation: keeps each one well inside the time limit. */
-const CHUNK = 20
+const CHUNK = 10
+/** Creators whose images are copied at once within a chunk. */
+const PARALLEL = 3
+/**
+ * Image copying stops after this long; the numbers are saved regardless.
+ * Before this, one stalled Instagram image could run an invocation into the
+ * platform's time limit, which killed it before it saved or handed on the
+ * next chunk: Sunday's refresh saved nothing and a manual one stopped at 79.
+ */
+const CHUNK_BUDGET_MS = 90_000
+/** One image download and upload. */
+const IMAGE_TIMEOUT_MS = 10_000
+/** How long each chunk waits before starting, so only a few run at once. */
+const STAGGER_MS = 8_000
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 type Target = { creator_id: string; username: string }
@@ -44,15 +59,26 @@ type ApifyRun = { id: string; status: string; defaultDatasetId: string; defaultK
 
 async function apify(path: string, init: RequestInit = {}): Promise<Response> {
   if (!APIFY_TOKEN) throw new HttpError(500, 'Instagram stats are not configured (APIFY_TOKEN).', 'MISCONFIGURED')
-  const res = await fetch(`${APIFY}${path}`, {
-    ...init,
-    headers: { Authorization: `Bearer ${APIFY_TOKEN}`, 'Content-Type': 'application/json', ...init.headers },
-  })
-  if (!res.ok) {
-    console.error('apify', path.split('?')[0], res.status, (await res.text()).slice(0, 300))
-    throw new HttpError(502, 'Instagram stats could not be fetched. Please try again later.', 'APIFY_FAILED')
+  // Reads are retried after a busy or failed answer; starting a run is not, so it never starts twice.
+  const attempts = (init.method ?? 'GET') === 'GET' ? 3 : 1
+  for (let attempt = 1; ; attempt++) {
+    let res: Response | null = null
+    try {
+      res = await fetch(`${APIFY}${path}`, {
+        ...init,
+        headers: { Authorization: `Bearer ${APIFY_TOKEN}`, 'Content-Type': 'application/json', ...init.headers },
+      })
+    } catch (e) {
+      if (attempt >= attempts) throw e
+    }
+    if (res?.ok) return res
+    const retryable = !res || res.status === 429 || res.status >= 500
+    if (!retryable || attempt >= attempts) {
+      console.error('apify', path.split('?')[0], res?.status, res ? (await res.text()).slice(0, 300) : '')
+      throw new HttpError(502, 'Instagram stats could not be fetched. Please try again later.', 'APIFY_FAILED')
+    }
+    await sleep(1_000 * attempt)
   }
-  return res
 }
 
 async function startRun(usernames: string[]): Promise<string> {
@@ -81,12 +107,40 @@ async function targets(creatorId: string | null = null): Promise<Target[]> {
 
 async function save(rows: (StatsRow & { creator_id: string })[]) {
   if (!rows.length) return 0
-  const { data, error } = await adminClient().rpc('instagram_stats_upsert', { p_rows: rows })
-  if (error) throw error
-  return data as number
+  const unique = [...new Map(rows.map((r) => [r.creator_id, r])).values()]
+  const db = adminClient()
+  const { data, error } = await db.rpc('instagram_stats_upsert', { p_rows: unique })
+  if (!error) return data as number
+  if (unique.length === 1) throw error
+
+  // One row the database refuses fails the whole batch. Save the rest one at
+  // a time, and note on the refused one why, so it doesn't take the others with it.
+  console.error('instagram-stats: batch refused, saving one at a time', error.message)
+  let saved = 0
+  for (const row of unique) {
+    const one = await db.rpc('instagram_stats_upsert', { p_rows: [row] })
+    if (!one.error) {
+      saved += one.data as number
+      continue
+    }
+    console.error('instagram-stats: not saved', row.creator_id, one.error.message)
+    const note = `Not saved: ${one.error.message}`.slice(0, 500)
+    const { data: kept } = await db.from('creator_instagram_stats').update({ last_error: note }).eq('creator_id', row.creator_id).select('creator_id')
+    if (!kept?.length) {
+      await db.from('creator_instagram_stats').insert({ creator_id: row.creator_id, username: row.username, status: 'error', last_error: note })
+    }
+  }
+  return saved
 }
 
 // --------------------------------------------------------- image mirroring --
+
+/** `promise`, or `fallback` once `ms` have passed (the promise is left to settle on its own). */
+function within<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const late = new Promise<T>((resolve) => (timer = setTimeout(() => resolve(fallback), ms)))
+  return Promise.race([promise, late]).finally(() => clearTimeout(timer))
+}
 
 async function pool<T>(items: T[], size: number, fn: (item: T) => Promise<void>) {
   let next = 0
@@ -100,20 +154,19 @@ async function pool<T>(items: T[], size: number, fn: (item: T) => Promise<void>)
  * Swaps Instagram's short-lived image links for copies in our own bucket, and
  * removes copies of posts that have dropped out of the recent list. A post
  * already copied is not downloaded again. An image that can't be copied
- * becomes null, and the profile page shows a plain tile for it.
+ * becomes null, and the profile page shows a plain tile for it. Nothing new
+ * is started after `deadline`.
  */
-async function mirrorImages(creatorId: string, row: StatsRow): Promise<StatsRow> {
+async function mirrorImages(creatorId: string, row: StatsRow, deadline: number): Promise<StatsRow> {
   const store = adminClient().storage.from(BUCKET)
   const { data: existing } = await store.list(creatorId, { limit: 100 })
   const have = new Set((existing ?? []).map((f) => f.name))
   const publicUrl = (name: string) => store.getPublicUrl(`${creatorId}/${name}`).data.publicUrl
   const version = Date.now()
 
-  const copy = async (source: string | null, name: string, force: boolean): Promise<string | null> => {
-    if (!force && have.has(name)) return publicUrl(name)
-    if (!source) return null
+  const download = async (source: string, name: string): Promise<string | null> => {
     try {
-      const res = await fetch(source)
+      const res = await fetch(source, { signal: AbortSignal.timeout(IMAGE_TIMEOUT_MS) })
       const type = (res.headers.get('content-type') ?? '').split(';')[0]
       if (!res.ok) return null
       const { error } = await store.upload(`${creatorId}/${name}`, await res.arrayBuffer(), {
@@ -124,6 +177,11 @@ async function mirrorImages(creatorId: string, row: StatsRow): Promise<StatsRow>
     } catch {
       return null
     }
+  }
+  const copy = async (source: string | null, name: string, force: boolean): Promise<string | null> => {
+    if (!force && have.has(name)) return publicUrl(name)
+    if (!source || Date.now() > deadline) return have.has(name) ? publicUrl(name) : null
+    return within(download(source, name), IMAGE_TIMEOUT_MS + 5_000, null)
   }
 
   const posts = row.recent_posts.map((p) => ({ ...p }))
@@ -141,13 +199,13 @@ async function mirrorImages(creatorId: string, row: StatsRow): Promise<StatsRow>
   return { ...row, recent_posts: posts, profile_pic_url: pic ? `${pic}?v=${version}` : null }
 }
 
-async function rowsFor(item: ApifyProfile, byUsername: Map<string, string[]>) {
+async function rowsFor(item: ApifyProfile, byUsername: Map<string, string[]>, deadline: number) {
   const username = normalizeHandle(item.username ?? (item as { inputUrl?: string }).inputUrl)
   if (!username) return []
   const summary = summarizeProfile(item, username)
   const rows = []
   for (const creatorId of byUsername.get(username) ?? []) {
-    rows.push({ creator_id: creatorId, ...(await mirrorImages(creatorId, summary)) })
+    rows.push({ creator_id: creatorId, ...(await mirrorImages(creatorId, summary, deadline)) })
   }
   return rows
 }
@@ -178,14 +236,15 @@ async function refreshOne(creatorId: string) {
   const items = (await res.json()) as ApifyProfile[]
   const item = items.find((i) => normalizeHandle(i.username) === target.username) ?? items[0]
   const row = item
-    ? { creator_id: creatorId, ...(await mirrorImages(creatorId, summarizeProfile(item, target.username))) }
+    ? { creator_id: creatorId, ...(await mirrorImages(creatorId, summarizeProfile(item, target.username), Date.now() + CHUNK_BUDGET_MS)) }
     : { creator_id: creatorId, ...notFoundRow(target.username) }
   await save([row])
   return row
 }
 
 /** Saves one chunk of a finished run, then hands the next chunk to a fresh invocation. */
-async function ingest(runId: string, offset: number) {
+async function ingest(runId: string, offset: number, delayMs = 0) {
+  if (delayMs) await sleep(delayMs)
   const run = await getRun(runId)
   if (run.status !== 'SUCCEEDED' && run.status !== 'TIMED-OUT') return { skipped: run.status }
 
@@ -200,14 +259,25 @@ async function ingest(runId: string, offset: number) {
   const total = Number(page.headers.get('x-apify-pagination-total') ?? 0)
   const items = (await page.json()) as ApifyProfile[]
 
-  const rows = []
-  for (const item of items) rows.push(...(await rowsFor(item, byUsername)))
+  const next = offset + items.length
+  const more = items.length > 0 && next < total
+  // The next chunk is sent on before this one does its work, so a chunk that
+  // fails or is cut short loses only its own creators, not the rest of the
+  // run. It waits STAGGER_MS before starting, which keeps only a few going.
+  if (more) await handOff({ action: 'ingest', run_id: runId, offset: next, delay: STAGGER_MS })
+
+  const deadline = Date.now() + CHUNK_BUDGET_MS
+  const rows: (StatsRow & { creator_id: string })[] = []
+  await pool(items, PARALLEL, async (item) => {
+    try {
+      rows.push(...(await rowsFor(item, byUsername, deadline)))
+    } catch (e) {
+      console.error('instagram-stats: skipped a profile', item.username, e)
+    }
+  })
   let saved = await save(rows)
 
-  const next = offset + items.length
-  if (items.length && next < total) {
-    await handOff({ action: 'ingest', run_id: runId, offset: next })
-  } else if (run.status === 'SUCCEEDED') {
+  if (!more && run.status === 'SUCCEEDED') {
     // Last chunk of a complete run: anyone Apify returned nothing for is gone
     // or renamed. A run that timed out proves nothing about the ones it missed.
     const all = (await (await apify(`/datasets/${run.defaultDatasetId}/items?clean=true&fields=username`)).json()) as {
@@ -222,12 +292,20 @@ async function ingest(runId: string, offset: number) {
 
 /** Calls this function again with the shared secret; it answers 202 straight away. */
 async function handOff(body: Record<string, unknown>) {
-  const res = await fetch(SELF_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-webhook-secret': WEBHOOK_SECRET },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) console.error('instagram-stats hand-off failed', res.status)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await fetch(SELF_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-webhook-secret': WEBHOOK_SECRET },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) return
+      console.error('instagram-stats hand-off failed', res.status, `attempt ${attempt}`)
+    } catch (e) {
+      console.error('instagram-stats hand-off failed', e, `attempt ${attempt}`)
+    }
+    await sleep(2_000 * attempt)
+  }
 }
 
 /** Keeps work running after the response is sent (Supabase Edge Runtime). */
@@ -244,6 +322,7 @@ type Body = {
   creator_id?: string
   run_id?: string
   offset?: number
+  delay?: number
   // Apify's default webhook payload
   eventType?: string
   eventData?: { actorRunId?: string }
@@ -267,7 +346,8 @@ export const handle = handler(async (req) => {
     if (!WEBHOOK_SECRET || !safeEqual(secret, WEBHOOK_SECRET)) throw new HttpError(401, 'Invalid webhook secret.', 'UNAUTHORIZED')
     if (body.action === 'refresh-all') return json(await refreshAll())
     if (body.action === 'ingest' && typeof body.run_id === 'string') {
-      inBackground(ingest(body.run_id, Math.max(0, Math.floor(Number(body.offset) || 0))))
+      const delay = Math.min(Math.max(0, Number(body.delay) || 0), 30_000)
+      inBackground(ingest(body.run_id, Math.max(0, Math.floor(Number(body.offset) || 0)), delay))
       return json({ accepted: true }, 202)
     }
     throw new HttpError(400, 'Unsupported request.', 'BAD_REQUEST')

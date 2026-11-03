@@ -27,7 +27,10 @@ export function CreatorInstagramCard({ creatorId }: { creatorId: string }) {
     success: (row) => (row.status === 'ok' ? 'Instagram stats updated' : `Instagram: ${STATUS[row.status as keyof typeof STATUS]?.label ?? row.status}`),
   })
   const refreshAll = useAdminMutation(() => refreshAllInstagramStats(), {
-    success: (r) => (r.started ? `Refreshing ${r.profiles} creators — results arrive in a few minutes` : 'No live creators with Instagram'),
+    success: (r) =>
+      r.started
+        ? `Refreshing ${r.profiles} creators. Stats fill in over the next 5 minutes or so; no need to click again.`
+        : 'No live creators with Instagram',
   })
   const status = stats ? STATUS[stats.status as keyof typeof STATUS] : null
 

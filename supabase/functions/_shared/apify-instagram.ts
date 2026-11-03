@@ -83,6 +83,17 @@ function mean(values: (number | null)[]): number | null {
   return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null
 }
 
+/**
+ * The first `max` characters, never half an emoji. Cutting with slice() can
+ * split one, and the database refuses a half emoji in JSON, which failed the
+ * whole batch the post was saved in. Broken halves already in the text go too.
+ */
+export function clip(text: string, max: number) {
+  return Array.from(text.replace(/[\uD800-\uDFFF]/gu, ''))
+    .slice(0, max)
+    .join('')
+}
+
 const round = (n: number | null, places = 0) => (n === null ? null : Math.round(n * 10 ** places) / 10 ** places)
 
 export const isReel = (p: ApifyPost) => p.productType === 'clips' || (p.type === 'Video' && p.productType !== 'feed')
@@ -149,7 +160,7 @@ export function summarizeProfile(item: ApifyProfile, username = normalizeHandle(
       comments: count(p.commentsCount),
       views: isReel(p) ? views(p) : null,
       posted_at: p.timestamp ?? null,
-      caption: p.caption ? p.caption.slice(0, 140) : null,
+      caption: p.caption ? clip(p.caption, 140) : null,
     }))
 
   return {

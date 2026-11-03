@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeHandle, notFoundRow, summarizeProfile, type ApifyProfile } from './apify-instagram'
+import { clip, normalizeHandle, notFoundRow, summarizeProfile, type ApifyProfile } from './apify-instagram'
 
 describe('normalizeHandle', () => {
   it.each([
@@ -63,5 +63,18 @@ describe('summarizeProfile', () => {
       last_error: 'Page not found',
     })
     expect(notFoundRow('ghost').status).toBe('not_found')
+  })
+})
+
+describe('clip', () => {
+  it('never cuts an emoji in half, so the database accepts it', () => {
+    const cut = clip('x'.repeat(139) + '😍 love this', 140)
+    expect(cut).toBe('x'.repeat(139) + '😍')
+    expect(JSON.stringify(cut)).not.toMatch(/\\ud83d"/)
+    expect(clip('hi', 140)).toBe('hi')
+  })
+
+  it('drops broken emoji halves already in the text', () => {
+    expect(clip('ok\ud83d then', 140)).toBe('ok then')
   })
 })
