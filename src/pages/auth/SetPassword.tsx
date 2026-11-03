@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { KeyRound, LinkIcon, PartyPopper } from 'lucide-react'
+import { KeyRound, PartyPopper } from 'lucide-react'
 import { resetSchema, type ResetValues } from '@/schemas/auth'
 import { updatePassword } from '@/services/auth.service'
 import { establishSessionFromLink, readAuthLink } from '@/lib/auth-link'
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { PageLoader } from '@/components/ui/spinner'
 import { Seo } from '@/components/shared/seo'
-import { AuthHeading, PasswordInput, PasswordMeter } from '@/components/auth/auth-parts'
+import { AuthHeading, ExpiredLinkResend, PasswordInput, PasswordMeter } from '@/components/auth/auth-parts'
 
 /**
  * Landing page for the approval invite.
@@ -75,20 +75,10 @@ export default function SetPassword() {
 
   if (state === 'invalid') {
     return (
-      <div className="text-center">
-        <Seo title="Invitation link expired" noindex />
-        <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-warning-soft text-warning">
-          <LinkIcon className="size-6" />
-        </span>
-        <h1 className="mt-5 font-display text-display-md font-semibold">This link has expired</h1>
-        <p className="mt-2 text-muted">
-          Invitation links work once and expire after a while. Ask for a fresh one and we’ll email it to the address you applied
-          with.
-        </p>
-        <Button asChild className="mt-6">
-          <Link to="/forgot-password">Email me a new link</Link>
-        </Button>
-      </div>
+      <ExpiredLinkResend
+        seoTitle="Invitation link expired"
+        description="Invitation links work once and expire after a while. Enter the email you applied with and we’ll send a new one right away."
+      />
     )
   }
 

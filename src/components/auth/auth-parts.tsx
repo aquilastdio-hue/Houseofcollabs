@@ -1,9 +1,16 @@
 import * as React from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Link } from 'react-router'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { ArrowLeft, Eye, EyeOff, LinkIcon, MailCheck, Send } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toAppError } from '@/lib/errors'
+import { requestPasswordReset } from '@/services/auth.service'
 import { Button } from '@/components/ui/button'
+import { Field } from '@/components/ui/field'
 import { Input, type InputProps } from '@/components/ui/input'
-import { passwordStrength } from '@/schemas/auth'
+import { Seo } from '@/components/shared/seo'
+import { forgotSchema, passwordStrength, type ForgotValues } from '@/schemas/auth'
 
 export function AuthHeading({ title, subtitle }: { title: React.ReactNode; subtitle?: React.ReactNode }) {
   return (
@@ -78,6 +85,100 @@ export function PasswordMeter({ value }: { value: string }) {
         ))}
       </div>
       <span className="text-xs text-muted">{labels[score]}</span>
+    </div>
+  )
+}
+
+const RESET_EMAIL_KEY = 'reset-email'
+
+/** Remembers the address this browser asked a reset link for, so an expired link can send a new one in a tap. */
+export function rememberResetEmail(email: string) {
+  try {
+    localStorage.setItem(RESET_EMAIL_KEY, email)
+  } catch {
+    // Private mode: the field just starts empty.
+  }
+}
+
+function rememberedResetEmail() {
+  try {
+    return localStorage.getItem(RESET_EMAIL_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+/** "Check your email", after a reset link has gone out. */
+export function ResetLinkSent({ email }: { email: string }) {
+  return (
+    <div className="text-center">
+      <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-brand text-white">
+        <MailCheck className="size-6" />
+      </span>
+      <h1 className="mt-5 font-display text-display-md font-semibold">Check your email</h1>
+      <p className="mt-2 text-muted">
+        If an account exists for <span className="font-medium text-ink">{email}</span>, you’ll receive a link to choose a new password. The
+        link expires in an hour.
+      </p>
+      <Button asChild variant="secondary" className="mt-6">
+        <Link to="/login">
+          <ArrowLeft /> Back to log in
+        </Link>
+      </Button>
+    </div>
+  )
+}
+
+/**
+ * What an expired reset or invitation link shows: the email and a button that
+ * sends a new link right away, filled in when this browser asked for the last
+ * one. The expired link itself can't say whose it was.
+ */
+export function ExpiredLinkResend({ seoTitle, description }: { seoTitle: string; description: string }) {
+  const [sent, setSent] = React.useState<string | null>(null)
+  const form = useForm<ForgotValues>({ resolver: zodResolver(forgotSchema), defaultValues: { email: rememberedResetEmail() } })
+  const { errors, isSubmitting } = form.formState
+
+  const onSubmit = form.handleSubmit(async ({ email }) => {
+    try {
+      await requestPasswordReset(email)
+      rememberResetEmail(email)
+      setSent(email)
+    } catch (e) {
+      form.setError('root', { message: toAppError(e).message })
+    }
+  })
+
+  if (sent) return <ResetLinkSent email={sent} />
+
+  return (
+    <div>
+      <Seo title={seoTitle} noindex />
+      <div className="text-center">
+        <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-warning-soft text-warning">
+          <LinkIcon className="size-6" />
+        </span>
+        <h1 className="mt-5 font-display text-display-md font-semibold">This link has expired</h1>
+        <p className="mt-2 text-muted">{description}</p>
+      </div>
+      <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
+        <Field label="Email" htmlFor="resend-email" error={errors.email?.message}>
+          <Input id="resend-email" type="email" autoComplete="email" placeholder="you@company.com" {...form.register('email')} />
+        </Field>
+        {errors.root?.message && (
+          <p role="alert" className="rounded-control bg-danger-soft px-3 py-2.5 text-sm text-danger">
+            {errors.root.message}
+          </p>
+        )}
+        <Button type="submit" size="lg" block loading={isSubmitting}>
+          <Send /> Send new link
+        </Button>
+      </form>
+      <p className="mt-4 text-center text-sm">
+        <Link to="/login" className="font-medium text-ink underline-offset-2 hover:underline">
+          Back to log in
+        </Link>
+      </p>
     </div>
   )
 }

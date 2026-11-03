@@ -1,9 +1,9 @@
 import * as React from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { KeyRound, LinkIcon } from 'lucide-react'
+import { KeyRound } from 'lucide-react'
 import { resetSchema, type ResetValues } from '@/schemas/auth'
 import { updatePassword } from '@/services/auth.service'
 import { establishSessionFromLink, readAuthLink } from '@/lib/auth-link'
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { PageLoader } from '@/components/ui/spinner'
 import { Seo } from '@/components/shared/seo'
-import { AuthHeading, PasswordInput, PasswordMeter } from '@/components/auth/auth-parts'
+import { AuthHeading, ExpiredLinkResend, PasswordInput, PasswordMeter } from '@/components/auth/auth-parts'
 
 /**
  * Landing page for the password-recovery email.
@@ -67,17 +67,10 @@ export default function ResetPassword() {
 
   if (state === 'invalid') {
     return (
-      <div className="text-center">
-        <Seo title="Reset link expired" noindex />
-        <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-warning-soft text-warning">
-          <LinkIcon className="size-6" />
-        </span>
-        <h1 className="mt-5 font-display text-display-md font-semibold">This link has expired</h1>
-        <p className="mt-2 text-muted">Reset links work once and expire after an hour. Request a new one to continue.</p>
-        <Button asChild className="mt-6">
-          <Link to="/forgot-password">Request a new link</Link>
-        </Button>
-      </div>
+      <ExpiredLinkResend
+        seoTitle="Reset link expired"
+        description="Reset links work once and expire after an hour. We’ll email you a new one right away."
+      />
     )
   }
 

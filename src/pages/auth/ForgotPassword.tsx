@@ -2,7 +2,6 @@ import * as React from 'react'
 import { Link } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, MailCheck } from 'lucide-react'
 import { forgotSchema, type ForgotValues } from '@/schemas/auth'
 import { requestPasswordReset } from '@/services/auth.service'
 import { toAppError } from '@/lib/errors'
@@ -10,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Seo } from '@/components/shared/seo'
-import { AuthHeading } from '@/components/auth/auth-parts'
+import { AuthHeading, rememberResetEmail, ResetLinkSent } from '@/components/auth/auth-parts'
 
 export default function ForgotPassword() {
   const [sent, setSent] = React.useState<string | null>(null)
@@ -20,6 +19,7 @@ export default function ForgotPassword() {
   const onSubmit = form.handleSubmit(async ({ email }) => {
     try {
       await requestPasswordReset(email)
+      rememberResetEmail(email)
       setSent(email)
     } catch (e) {
       form.setError('root', { message: toAppError(e).message })
@@ -30,21 +30,7 @@ export default function ForgotPassword() {
     <>
       <Seo title="Reset your password" noindex />
       {sent ? (
-        <div className="text-center">
-          <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-brand text-white">
-            <MailCheck className="size-6" />
-          </span>
-          <h1 className="mt-5 font-display text-display-md font-semibold">Check your email</h1>
-          <p className="mt-2 text-muted">
-            If an account exists for <span className="font-medium text-ink">{sent}</span>, you’ll receive a link to choose a new password. The
-            link expires in an hour.
-          </p>
-          <Button asChild variant="secondary" className="mt-6">
-            <Link to="/login">
-              <ArrowLeft /> Back to log in
-            </Link>
-          </Button>
-        </div>
+        <ResetLinkSent email={sent} />
       ) : (
         <>
           <AuthHeading title="Forgot your password?" subtitle="Enter the email you signed up with and we’ll send you a reset link." />
