@@ -37,6 +37,8 @@ export type ImportResult = {
 const looksAlreadyRegistered = (msg: string) => /already (been )?registered|already exists|email_exists|user already/i.test(msg)
 
 const text = (v: unknown, max: number) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null)
+const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? String(Math.round(v)) : null)
+const GENDERS = ['female', 'male', 'non_binary', 'prefer_not_to_say']
 
 /** Only the fields the database reads, each a string of sensible length. */
 function clean(raw: Record<string, unknown>) {
@@ -48,11 +50,18 @@ function clean(raw: Record<string, unknown>) {
     brand_name: text(raw.brand_name, 80),
     phone: text(raw.phone, 30),
     instagram: text(raw.instagram, 200),
-    followers: typeof raw.followers === 'number' && Number.isFinite(raw.followers) && raw.followers >= 0 ? String(Math.round(raw.followers)) : null,
+    followers: count(raw.followers),
     categories: Array.isArray(raw.categories) ? raw.categories.filter((c): c is string => typeof c === 'string').slice(0, 5) : [],
     city: text(raw.city, 80),
     state: text(raw.state, 80),
     bio: text(raw.bio, 1500),
+    headline: text(raw.headline, 120),
+    gender: typeof raw.gender === 'string' && GENDERS.includes(raw.gender) ? raw.gender : null,
+    age: Number.isInteger(raw.age) && (raw.age as number) >= 13 && (raw.age as number) <= 100 ? raw.age : null,
+    languages: Array.isArray(raw.languages) ? raw.languages.filter((l): l is string => typeof l === 'string').map((l) => l.trim().slice(0, 40)).slice(0, 10) : [],
+    youtube: text(raw.youtube, 300),
+    youtube_subscribers: count(raw.youtube_subscribers),
+    engagement_rate: typeof raw.engagement_rate === 'number' && raw.engagement_rate >= 0 && raw.engagement_rate <= 100 ? raw.engagement_rate : null,
     website: text(raw.website, 300),
     industry: text(raw.industry, 80),
   }
@@ -120,6 +129,7 @@ async function importOne(db: Db, asAdmin: Db, role: Role, raw: Record<string, un
   // person. Asked before the login exists, so a refused row sends no email.
   if (role === 'creator') {
     if (!row.phone || !/^\+\d{11,13}$/.test(row.phone)) return result('failed', 'Add a 10-digit WhatsApp number.')
+    if (!row.instagram) return result('failed', 'Add an Instagram ID.')
     const { data: taken } = await asAdmin.rpc('check_application_duplicates', {
       p_phone: row.phone,
       p_instagram: row.instagram ?? undefined,

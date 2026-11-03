@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { importPhone, parseFollowers, readImportFile, templateCsv } from './account-import'
+import { importInstagram, importPhone, parseFollowers, readImportFile, templateCsv } from './account-import'
 import { toCsv } from './csv'
 
 describe('readImportFile', () => {
@@ -12,42 +12,56 @@ describe('readImportFile', () => {
         email: 'riya@example.com',
         name: 'Riya Sharma',
         phone: '+919876543210',
-        instagram: '@riyasharma',
+        instagram: 'riyasharma',
         city: 'Delhi',
         followers: 12500,
         categories: ['Fashion', 'Beauty'],
         state: 'Delhi',
         bio: 'Fashion and lifestyle creator from Delhi.',
+        headline: 'Everyday fashion, honest reviews',
+        gender: 'female',
+        age: 24,
+        languages: ['Hindi', 'English'],
+        youtube: 'https://youtube.com/@riyasharma',
+        youtube_subscribers: 8000,
+        engagement_rate: 4.2,
       },
     ])
   })
 
   it('matches loose headers, ignores extra columns, and prefers the exact "Name" over "Full name"', () => {
-    const csv = toCsv(['Full name', 'Name', 'E-mail', 'WhatsApp number', 'Orders'], [['Riya S', 'Riya', 'RIYA@x.in', "'+91 99999 00000", '3']])
+    const csv = toCsv(
+      ['Full name', 'Name', 'E-mail', 'WhatsApp number', 'Insta', 'Orders'],
+      [['Riya S', 'Riya', 'RIYA@x.in', "'+91 99999 00000", 'https://www.instagram.com/Riya.S/', '3']],
+    )
     const { rows } = readImportFile(csv, 'creator')
     expect(rows[0]).toMatchObject({
       name: 'Riya',
       email: 'riya@x.in',
       phone: '+919999900000',
+      instagram: 'riya.s',
     })
   })
 
   it('says which required column is missing', () => {
     expect(readImportFile(toCsv(['Name'], [['Riya']]), 'creator').problems[0]!.message).toBe(
-      'The file needs a “Email” column and a “WhatsApp” column.',
+      'The file needs these columns: Email, WhatsApp, Instagram.',
     )
   })
 
   it('reports bad and repeated rows with their line numbers, and keeps the good ones', () => {
     const csv = toCsv(
-      ['Name', 'Email', 'WhatsApp'],
+      ['Name', 'Email', 'WhatsApp', 'Instagram'],
       [
-        ['Riya', 'riya@x.in', '9876543210'],
-        ['Ayush', 'not-an-email', '9876543211'],
-        ['R', 'r@x.in', '9876543212'],
-        ['Riya again', 'Riya@x.in', '9876543213'],
-        ['Kabir', 'kabir@x.in', ''],
-        ['Meera', 'meera@x.in', '98765 4321'],
+        ['Riya', 'riya@x.in', '9876543210', '@riya'],
+        ['Ayush', 'not-an-email', '9876543211', '@ayush'],
+        ['R', 'r@x.in', '9876543212', '@r'],
+        ['Riya again', 'Riya@x.in', '9876543213', '@riya2'],
+        ['Kabir', 'kabir@x.in', '', '@kabir'],
+        ['Meera', 'meera@x.in', '98765 4321', '@meera'],
+        ['Zoya', 'zoya@x.in', '9876543214', ''],
+        ['Ira', 'ira@x.in', '9876543215', 'not a handle!'],
+        ['Riya twin', 'twin@x.in', '9876543216', 'RIYA'],
       ],
     )
     const { rows, problems } = readImportFile(csv, 'creator')
@@ -58,16 +72,19 @@ describe('readImportFile', () => {
       { line: 5, message: 'riya@x.in is already on line 2.' },
       { line: 6, message: 'No WhatsApp number.' },
       { line: 7, message: '“98765 4321” isn’t a 10-digit mobile number.' },
+      { line: 8, message: 'No Instagram ID.' },
+      { line: 9, message: '“not a handle!” isn’t an Instagram ID.' },
+      { line: 10, message: 'Instagram @riya is already on line 2.' },
     ])
   })
 
   it('takes each WhatsApp number once, however it is written', () => {
     const csv = toCsv(
-      ['Name', 'Email', 'WhatsApp'],
+      ['Name', 'Email', 'WhatsApp', 'Instagram'],
       [
-        ['Riya', 'riya@x.in', '98765 43210'],
-        ['Ayush', 'ayush@x.in', '+91 98765 43210'],
-        ['Kabir', 'kabir@x.in', '9876543211'],
+        ['Riya', 'riya@x.in', '98765 43210', 'riya'],
+        ['Ayush', 'ayush@x.in', '+91 98765 43210', 'ayush'],
+        ['Kabir', 'kabir@x.in', '9876543211', 'kabir'],
       ],
     )
     const { rows, problems } = readImportFile(csv, 'creator')
@@ -98,6 +115,31 @@ describe('readImportFile', () => {
       },
     ])
     expect(problems).toEqual([{ line: 3, message: 'No brand name.' }])
+  })
+})
+
+describe('optional creator details', () => {
+  it('fills in what it can read and leaves the rest blank, without refusing the row', () => {
+    const csv = toCsv(
+      ['Name', 'Email', 'WhatsApp', 'Instagram', 'Gender', 'Age', 'Languages', 'YouTube', 'ER'],
+      [
+        ['Riya', 'riya@x.in', '9876543210', 'riya', 'F', '24', 'Hindi, English, Hindi', 'youtube.com/@riya', '3.5 %'],
+        ['Ayush', 'ayush@x.in', '9876543211', 'ayush', 'robot', '7', '', 'https://example.com', 'lots'],
+      ],
+    )
+    const { rows, problems } = readImportFile(csv, 'creator')
+    expect(problems).toEqual([])
+    expect(rows[0]).toMatchObject({ gender: 'female', age: 24, languages: ['Hindi', 'English'], youtube: 'https://youtube.com/@riya', engagement_rate: 3.5 })
+    expect(rows[1]).toMatchObject({ gender: null, age: null, languages: [], youtube: null, engagement_rate: null })
+  })
+})
+
+describe('importInstagram', () => {
+  it('reads a handle, an @handle or a profile link', () => {
+    expect(importInstagram('@Riya.Sharma')).toBe('riya.sharma')
+    expect(importInstagram('https://instagram.com/riya_s?igsh=abc')).toBe('riya_s')
+    expect(importInstagram('')).toBeNull()
+    expect(importInstagram('riya sharma')).toBeNull()
   })
 })
 

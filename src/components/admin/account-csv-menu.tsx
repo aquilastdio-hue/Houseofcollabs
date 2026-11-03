@@ -147,7 +147,13 @@ function UploadDialog({ kind, open, onOpenChange }: { kind: AccountKind; open: b
             `house-of-collabs-${many}-upload-report-${today()}.csv`,
             toCsv(
               ['Line', 'Email', 'Result', 'Note'],
-              results.map((r) => [r.line, r.email, r.status, r.message ?? '']),
+              // Rows refused before the upload too, so the report is the whole file.
+              [
+                ...(picked?.problems ?? []).map((p) => ({ line: p.line, email: '', status: 'refused', message: p.message })),
+                ...results,
+              ]
+                .sort((a, b) => a.line - b.line)
+                .map((r) => [r.line, r.email, r.status, r.message ?? '']),
             ),
           )
         }

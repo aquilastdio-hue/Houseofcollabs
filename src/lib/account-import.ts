@@ -8,7 +8,7 @@ import { parseCsv, toCsv, uncell } from './csv'
 
 export type AccountKind = 'creator' | 'brand'
 
-/** One account to create. Email and the name are required, and a creator's WhatsApp number. */
+/** One account to create. Email and the name are required, and a creator's WhatsApp and Instagram. */
 export type ImportRow = {
   email: string
   name: string | null
@@ -20,11 +20,20 @@ export type ImportRow = {
   city: string | null
   state?: string | null
   bio?: string | null
+  headline?: string | null
+  gender?: Gender | null
+  age?: number | null
+  languages?: string[]
+  youtube?: string | null
+  youtube_subscribers?: number | null
+  engagement_rate?: number | null
   website?: string | null
   industry?: string | null
 }
 
 export type ImportProblem = { line: number; message: string }
+
+export type Gender = 'female' | 'male' | 'non_binary' | 'prefer_not_to_say'
 
 type Column = {
   key: keyof ImportRow
@@ -66,6 +75,7 @@ export const IMPORT_COLUMNS: Record<AccountKind, Column[]> = {
       key: 'instagram',
       header: 'Instagram',
       aliases: ['instagram handle', 'instagram id', 'instagram url', 'insta', 'ig'],
+      required: true,
       example: '@riyasharma',
     },
     {
@@ -88,6 +98,13 @@ export const IMPORT_COLUMNS: Record<AccountKind, Column[]> = {
       aliases: ['about', 'description'],
       example: 'Fashion and lifestyle creator from Delhi.',
     },
+    { key: 'headline', header: 'Headline', aliases: ['tagline', 'title'], example: 'Everyday fashion, honest reviews' },
+    { key: 'gender', header: 'Gender', aliases: ['sex'], example: 'Female' },
+    { key: 'age', header: 'Age', aliases: [], example: '24' },
+    { key: 'languages', header: 'Languages', aliases: ['language', 'languages spoken'], example: 'Hindi; English' },
+    { key: 'youtube', header: 'YouTube', aliases: ['youtube channel', 'youtube url', 'youtube link', 'yt'], example: 'https://youtube.com/@riyasharma' },
+    { key: 'youtube_subscribers', header: 'YouTube subscribers', aliases: ['subscribers', 'youtube subs'], example: '8K' },
+    { key: 'engagement_rate', header: 'Engagement rate', aliases: ['engagement', 'er', 'engagement %'], example: '4.2%' },
   ],
   brand: [
     {
@@ -179,6 +196,52 @@ export function importPhone(value: string): string | null {
   return local.length === 10 ? `+91${local}` : null
 }
 
+/** "@riya.s", "riya.s" or an instagram.com link → "riya.s"; anything that can't be a handle → null. */
+export function importInstagram(value: string): string | null {
+  const handle = value
+    .trim()
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')
+    .replace(/[/?#].*$/, '')
+    .replace(/^@/, '')
+  return /^[A-Za-z0-9._]{1,30}$/.test(handle) ? handle.toLowerCase() : null
+}
+
+const GENDER_WORDS: Record<string, Gender> = {
+  f: 'female',
+  female: 'female',
+  woman: 'female',
+  m: 'male',
+  male: 'male',
+  man: 'male',
+  'non-binary': 'non_binary',
+  'non binary': 'non_binary',
+  nonbinary: 'non_binary',
+  'prefer not to say': 'prefer_not_to_say',
+}
+
+/** Optional creator details: anything unreadable is left blank, never a reason to refuse the row. */
+function creatorExtras(get: (key: keyof ImportRow) => string) {
+  const age = Number(get('age'))
+  const er = Number(get('engagement_rate').replace('%', '').trim())
+  const youtube = get('youtube')
+  return {
+    headline: get('headline').slice(0, 120) || null,
+    gender: GENDER_WORDS[get('gender').toLowerCase()] ?? null,
+    age: Number.isInteger(age) && age >= 13 && age <= 100 ? age : null,
+    languages: [
+      ...new Set(
+        get('languages')
+          .split(/[;,|]/)
+          .map((l) => l.trim())
+          .filter((l) => l.length >= 2 && l.length <= 40),
+      ),
+    ].slice(0, 10),
+    youtube: /^(https?:\/\/)?(www\.|m\.)?(youtube\.com|youtu\.be)\//i.test(youtube) ? youtube.replace(/^(?!https?:\/\/)/, 'https://') : null,
+    youtube_subscribers: parseFollowers(get('youtube_subscribers')),
+    engagement_rate: get('engagement_rate') && Number.isFinite(er) && er >= 0 && er <= 100 ? Math.round(er * 100) / 100 : null,
+  }
+}
+
 export function templateCsv(kind: AccountKind) {
   const columns = IMPORT_COLUMNS[kind]
   return toCsv(
@@ -217,7 +280,7 @@ export function readImportFile(text: string, kind: AccountKind): { rows: (Import
       problems: [
         {
           line: 1,
-          message: `The file needs ${missing.map((m) => `a “${m}” column`).join(' and ')}.`,
+          message: missing.length === 1 ? `The file needs a “${missing[0]}” column.` : `The file needs these columns: ${missing.join(', ')}.`,
         },
       ],
     }
@@ -227,6 +290,7 @@ export function readImportFile(text: string, kind: AccountKind): { rows: (Import
   const problems: ImportProblem[] = []
   const seen = new Map<string, number>()
   const seenPhone = new Map<string, number>()
+  const seenInstagram = new Map<string, number>()
   const body = table.slice(1)
   if (body.length > MAX_IMPORT_ROWS) {
     problems.push({
@@ -266,15 +330,24 @@ export function readImportFile(text: string, kind: AccountKind): { rows: (Import
       })
     if (kind === 'creator' && phone && seenPhone.has(phone))
       return problems.push({ line, message: `WhatsApp ${phone} is already on line ${seenPhone.get(phone)}.` })
+    const instagram = kind === 'creator' ? importInstagram(get('instagram')) : opt('instagram')
+    if (kind === 'creator' && !instagram)
+      return problems.push({
+        line,
+        message: get('instagram') ? `“${get('instagram')}” isn’t an Instagram ID.` : 'No Instagram ID.',
+      })
+    if (kind === 'creator' && instagram && seenInstagram.has(instagram))
+      return problems.push({ line, message: `Instagram @${instagram} is already on line ${seenInstagram.get(instagram)}.` })
     seen.set(email, line)
     if (kind === 'creator' && phone) seenPhone.set(phone, line)
+    if (kind === 'creator' && instagram) seenInstagram.set(instagram, line)
 
     const row: ImportRow & { line: number } = {
       line,
       email,
       name,
       phone,
-      instagram: opt('instagram'),
+      instagram,
       city: opt('city'),
     }
     if (kind === 'creator') {
@@ -286,6 +359,7 @@ export function readImportFile(text: string, kind: AccountKind): { rows: (Import
         .slice(0, 5)
       row.state = opt('state')
       row.bio = opt('bio')
+      Object.assign(row, creatorExtras(get))
     } else {
       row.brand_name = brand
       row.website = opt('website')
