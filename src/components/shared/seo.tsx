@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router'
-import { site, siteUrl } from '@/config/site'
+import { site, siteUrl, isStaging } from '@/config/site'
 
 /** The shared social card. 1200x630 PNG — SVG is not rendered by any major crawler. */
 export const DEFAULT_OG_IMAGE = '/preview.png'
@@ -52,7 +52,7 @@ export function Seo({
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={url} />
-      {noindex && <meta name="robots" content="noindex, nofollow" />}
+      {(noindex || isStaging) && <meta name="robots" content="noindex, nofollow" />}
       <meta property="og:site_name" content={site.name} />
       <meta property="og:locale" content="en_IN" />
       <meta property="og:type" content={type} />

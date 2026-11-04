@@ -319,6 +319,26 @@ export async function listPayouts(p: { status?: PayoutStatus | ''; page?: number
 }
 export type AdminPayoutItem = Awaited<ReturnType<typeof listPayouts>>['items'][number]
 
+export type AutoPayoutStatus = { enabled: boolean; hold_hours: number; live_configured: boolean; test_configured: boolean }
+export type AutoPayoutRun = {
+  ok: true
+  synced: { paid: number; failed: number }
+  claimed: number
+  sent: number
+  failed: number
+  skipped?: string
+}
+
+/** Whether automatic payouts are on and RazorpayX is connected (Edge Function `auto-payouts`). */
+export function getAutoPayoutStatus() {
+  return invokeFunction<AutoPayoutStatus>('auto-payouts', { action: 'status' })
+}
+
+/** Runs the automatic payout job now instead of waiting for its 15-minute schedule. */
+export function runAutoPayouts() {
+  return invokeFunction<AutoPayoutRun>('auto-payouts', { action: 'run' })
+}
+
 export function processPayout(payload: {
   payout_request_id: string
   action: 'processing' | 'paid' | 'failed' | 'rejected' | 'razorpayx'

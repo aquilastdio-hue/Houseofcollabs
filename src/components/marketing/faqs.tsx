@@ -18,6 +18,7 @@ function creatorFeeSentence(t: PlatformTerms) {
 }
 
 function payoutSentence(t: PlatformTerms) {
+  if (t.autoPayouts) return 'It is then paid automatically to their UPI ID or bank account.'
   return t.minPayout != null
     ? `Once their available balance reaches ${minPayoutText(t)}, they can request a payout to their UPI ID or bank account.`
     : 'Once their available balance reaches the minimum payout amount, they can request a payout to their UPI ID or bank account.'
@@ -157,7 +158,9 @@ export function creatorFaqs(t: PlatformTerms): FaqItem[] {
     },
     {
       q: 'When can I withdraw my earnings?',
-      a: `Your earning is recorded when the brand approves the delivery and becomes available ${holdText(t)}. You can request a payout once your available balance reaches ${minPayoutText(t, 'the minimum payout amount')}.`,
+      a: t.autoPayouts
+        ? `Your earning is recorded when the brand approves the delivery, and ${holdText(t)} it is paid automatically to the UPI ID or bank account in your payout settings.`
+        : `Your earning is recorded when the brand approves the delivery and becomes available ${holdText(t)}. You can request a payout once your available balance reaches ${minPayoutText(t, 'the minimum payout amount')}.`,
     },
     {
       q: 'How do payouts work?',

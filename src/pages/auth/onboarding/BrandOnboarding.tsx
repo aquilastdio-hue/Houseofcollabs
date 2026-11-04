@@ -406,23 +406,25 @@ export default function BrandOnboarding() {
 
   if (submitted) {
     return (
-      <div className="w-full max-w-lg">
-        <Card className="p-8 text-center">
-          <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-brand-gradient text-white shadow-brand">
-            <Mail className="size-7" />
-          </span>
-          <h1 className="mt-5 font-display text-display-sm font-semibold">Check your email</h1>
-          <p className="mt-3 text-muted">
-            We've sent a password setup link to <span className="font-medium text-ink">{submitted.email}</span>.
-          </p>
-          <p className="mt-2 text-sm text-muted">
-            You can also sign in with Google using the same email.
-          </p>
-          <Button className="mt-6" onClick={() => navigate('/login')}>
-            Go to login
-          </Button>
-        </Card>
-      </div>
+      <main id="main" className="flex min-h-dvh items-center justify-center bg-canvas px-4 py-10">
+        <div className="w-full max-w-lg">
+          <Card className="p-8 text-center">
+            <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-brand-gradient text-white shadow-brand">
+              <Mail className="size-7" />
+            </span>
+            <h1 className="mt-5 font-display text-display-sm font-semibold">Check your email</h1>
+            <p className="mt-3 text-muted">
+              We've sent a password setup link to <span className="font-medium text-ink">{submitted.email}</span>.
+            </p>
+            <p className="mt-2 text-sm text-muted">
+              You can also sign in with Google using the same email.
+            </p>
+            <Button className="mt-6" onClick={() => navigate('/login')}>
+              Go to login
+            </Button>
+          </Card>
+        </div>
+      </main>
     )
   }
 

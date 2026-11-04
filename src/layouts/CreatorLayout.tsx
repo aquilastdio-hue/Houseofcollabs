@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Megaphone,
   Package,
+  ReceiptText,
   Settings,
   Tags,
   TrendingUp,
@@ -38,6 +39,7 @@ const sections: NavSection[] = [
     items: [
       { label: 'Earnings', href: '/creator/earnings', icon: TrendingUp },
       { label: 'Payouts', href: '/creator/payouts', icon: Wallet },
+      { label: 'Billing & tax', href: '/creator/billing', icon: ReceiptText },
     ],
   },
   {

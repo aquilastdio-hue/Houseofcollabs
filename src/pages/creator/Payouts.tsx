@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Link } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowUpRight, Info, Wallet } from 'lucide-react'
+import { AlertTriangle, ArrowUpRight, Info, Wallet, Zap } from 'lucide-react'
 import { qk } from '@/lib/query-keys'
 import { formatDateTime, formatINR } from '@/lib/format'
 import { useAuth } from '@/contexts/auth-context'
@@ -35,6 +35,7 @@ import {
 } from '@/components/creator-studio/payout-method-form'
 import { PAYOUT_STATUS_META, PAYOUT_TXN_STATUS_META } from '@/components/creator-studio/status'
 import { PAYOUT_NOTE_MAX } from '@/components/creator-studio/schemas'
+import { holdPeriodText } from '@/components/marketing/platform-terms'
 import type { EarningsSummary, PayoutMethod } from '@/types'
 
 /**
@@ -115,6 +116,11 @@ function PayoutRequestCard({ request }: { request: PayoutRequestWithTransactions
   )
 }
 
+/** "24 hours after an order is completed", or "as soon as…" with no hold. */
+function holdText(hours: number) {
+  return hours > 0 ? `${holdPeriodText(hours)} after an order is completed` : 'as soon as an order is completed'
+}
+
 function PayoutMethodCard({ method, loading, error, onRetry, inProgress }: {
   method: PayoutMethod | null | undefined
   loading: boolean
@@ -136,6 +142,15 @@ function PayoutMethodCard({ method, loading, error, onRetry, inProgress }: {
           </Button>
         )}
       </div>
+      {method?.auto_payout_paused_at && !editing && (
+        <p className="mt-4 flex items-start gap-2 rounded-control bg-danger-soft px-3 py-2.5 text-sm text-danger">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span>
+            Our last transfer to these details failed{method.auto_payout_error ? ` (${method.auto_payout_error})` : ''}. Update them and automatic payouts
+            resume.
+          </span>
+        </p>
+      )}
       {inProgress && (
         <p className="mt-4 flex items-start gap-2 rounded-control bg-info-soft px-3 py-2.5 text-sm text-info">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -190,12 +205,22 @@ export default function Payouts() {
   const gate = useFeatureGate('withdraw')
   const requirements = useRequirements()
   const inProgress = !!s?.open_payout_request
-  const holdDays = Number(settings.data?.earning_hold_days ?? 0)
+  const holdHours = Number(settings.data?.earning_hold_hours ?? Number(settings.data?.earning_hold_days ?? 0) * 24)
+  // RazorpayX pays matured earnings on its own (0041): nothing to request.
+  const automatic = settings.data?.auto_payouts_enabled === true
+  const paused = !!method.data?.auto_payout_paused_at
 
   return (
     <>
       <Seo title="Payouts" noindex />
-      <PageHeader title="Payouts" description="Withdraw your available balance to your UPI ID or bank account." />
+      <PageHeader
+        title="Payouts"
+        description={
+          automatic
+            ? `Your earnings are paid to your UPI ID or bank account automatically, ${holdText(holdHours)}.`
+            : 'Withdraw your available balance to your UPI ID or bank account.'
+        }
+      />
       <ResumeBanner satisfied={requirements.data?.payout.configured ?? false} />
       {!creator ? (
         <CreatorSetupRequired />
@@ -228,6 +253,18 @@ export default function Payouts() {
                     </div>
                   </dl>
                 </div>
+                {automatic ? (
+                  <div className={`flex items-start gap-3 p-5 text-sm sm:p-6 ${paused || !hasMethod ? 'text-danger' : 'text-ink-soft'}`}>
+                    {paused || !hasMethod ? <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden /> : <Zap className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />}
+                    <p id="payout-status">
+                      {!hasMethod
+                        ? 'Add your UPI ID or bank account (on the right) so we can pay you. Payouts are automatic once it’s saved.'
+                        : paused
+                          ? 'Automatic payouts are paused because the last transfer failed. Update your payout details to resume.'
+                          : `Automatic: each earning is sent to your ${method.data ? `${payoutMethodLabel(method.data.method_type)} (${maskPayoutMethod(method.data)})` : 'payout method'} ${holdText(holdHours)}, with no minimum. Nothing to request.`}
+                    </p>
+                  </div>
+                ) : (
                 <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                   <p id="payout-status" className="text-sm text-muted">
                     {reason ??
@@ -246,6 +283,7 @@ export default function Payouts() {
                     <ArrowUpRight /> Request payout
                   </Button>
                 </div>
+                )}
                 {summary.data.open_payout_request && (
                   <div className="border-t border-line bg-info-soft/60 px-5 py-3 text-sm text-info sm:px-6">
                     {formatINR(summary.data.open_payout_request.amount)} requested {formatDateTime(summary.data.open_payout_request.created_at)} —{' '}
@@ -287,19 +325,23 @@ export default function Payouts() {
             />
             <Card className="p-5 sm:p-6">
               <h2 className="font-display text-lg font-semibold tracking-tight">Payout policy</h2>
-              <ul className="mt-3 space-y-2.5 text-sm text-ink-soft">
-                <li>
-                  Minimum payout: <span className="font-medium text-ink">{s ? formatINR(s.minimum_payout) : '—'}</span>. Each request withdraws your full available
-                  balance.
-                </li>
-                <li>
-                  {holdDays > 0
-                    ? `Earnings become withdrawable ${holdDays} day${holdDays === 1 ? '' : 's'} after an order is completed.`
-                    : 'Earnings become withdrawable as soon as an order is completed.'}
-                </li>
-                <li>Our finance team reviews each request and transfers it to your UPI ID or bank account. You’re notified at every step, and the transfer reference appears here once it’s paid.</li>
-                <li>You can have one payout in progress at a time, and payout details are locked until it’s processed.</li>
-              </ul>
+              {automatic ? (
+                <ul className="mt-3 space-y-2.5 text-sm text-ink-soft">
+                  <li>Each earning is paid automatically {holdText(holdHours)}, with no minimum.</li>
+                  <li>We send it to the UPI ID or bank account above through RazorpayX. You’re notified when it’s paid, and the transfer reference appears here.</li>
+                  <li>If a transfer fails, automatic payouts pause until you update your payout details.</li>
+                </ul>
+              ) : (
+                <ul className="mt-3 space-y-2.5 text-sm text-ink-soft">
+                  <li>
+                    Minimum payout: <span className="font-medium text-ink">{s ? formatINR(s.minimum_payout) : '—'}</span>. Each request withdraws your full available
+                    balance.
+                  </li>
+                  <li>{`Earnings become withdrawable ${holdText(holdHours)}.`}</li>
+                  <li>Our finance team reviews each request and transfers it to your UPI ID or bank account. You’re notified at every step, and the transfer reference appears here once it’s paid.</li>
+                  <li>You can have one payout in progress at a time, and payout details are locked until it’s processed.</li>
+                </ul>
+              )}
               <Link to="/payout-policy" className="mt-4 inline-flex text-sm font-medium text-ink underline underline-offset-2">
                 Read the full payout policy
               </Link>

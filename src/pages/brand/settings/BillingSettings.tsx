@@ -1,11 +1,13 @@
 import { Link, useSearchParams } from 'react-router'
+import * as React from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { CalendarRange, Mail, Package, ReceiptText, ShieldCheck, Wallet } from 'lucide-react'
+import { CalendarRange, FileText, Mail, Package, ReceiptText, ShieldCheck, Wallet } from 'lucide-react'
 import { site, supportEmailHref } from '@/config/site'
 import { formatDate, formatINR, formatNumber } from '@/lib/format'
 import { qk } from '@/lib/query-keys'
 import { useAuth } from '@/contexts/auth-context'
 import { listMyPayments, type PaymentListItem } from '@/services/payments.service'
+import { getMyBillingSummary, listInvoices, type BrandBillingSummary } from '@/services/billing.service'
 import type { PaymentStatus } from '@/types'
 import { Badge, type BadgeTone } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -17,6 +19,11 @@ import { BrandMissing } from '@/components/brand/brand-missing'
 import { BrandSettingsLayout } from '@/components/brand/settings-nav'
 import { patchParams, readPage } from '@/components/brand/url-search-field'
 import { useBrandDashboardStats } from '@/components/brand/use-brand-stats'
+import { SectionCard } from '@/components/brand/section-card'
+import { InvoiceTable } from '@/components/billing/invoice-table'
+import { TaxProfileForm } from '@/components/billing/tax-profile-form'
+
+const INVOICE_PAGE_SIZE = 10
 
 /** `listMyPayments` default page size (kept in sync so cache keys stay unique). */
 const PAGE_SIZE = 20
@@ -124,6 +131,16 @@ export default function BillingSettings() {
     placeholderData: keepPreviousData,
   })
 
+  const billing = useQuery({ queryKey: qk.billing.summary, queryFn: getMyBillingSummary, enabled: !!brand })
+  const b = billing.data?.role === 'brand' ? (billing.data as BrandBillingSummary) : null
+  const [invoicePage, setInvoicePage] = React.useState(1)
+  const invoices = useQuery({
+    queryKey: qk.billing.invoices({ brand: true, page: invoicePage }),
+    queryFn: () => listInvoices({ page: invoicePage, pageSize: INVOICE_PAGE_SIZE, includeTest: true }),
+    enabled: !!brand,
+    placeholderData: keepPreviousData,
+  })
+
   const setPage = (next: number) => {
     setSp((prev) => patchParams(prev, { page: next > 1 ? String(next) : null }))
     document.getElementById('payment-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -132,7 +149,7 @@ export default function BillingSettings() {
   return (
     <>
       <Seo title="Billing" noindex />
-      <BrandSettingsLayout title="Billing" description="Your spend on creator collaborations and every payment you’ve made.">
+      <BrandSettingsLayout title="Billing" description="Your spend, your invoices, the details printed on them, and every payment you’ve made.">
         {!brand ? (
           <BrandMissing />
         ) : (
@@ -165,6 +182,54 @@ export default function BillingSettings() {
                 />
               </section>
             )}
+
+            {b && Number(b.campaign_payments) > 0 && (
+              <SectionCard title="Where your money went" description="Across every paid order. Creator GST goes to the creator; GST on our commission is ours to pay.">
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
+                  {[
+                    ['Creator fees', b.creator_fees],
+                    ['GST on creator fees', b.creator_gst],
+                    [`${site.name} commission`, b.hoc_commission],
+                    ['GST on commission', b.commission_gst],
+                  ].map(([label, value]) => (
+                    <div key={label as string}>
+                      <dt className="text-muted">{label}</dt>
+                      <dd className="mt-0.5 font-display text-lg font-semibold tabular-nums">{formatINR(value as number)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </SectionCard>
+            )}
+
+            <section aria-labelledby="invoices-title" className="space-y-4">
+              <div>
+                <h2 id="invoices-title" className="font-display text-lg font-semibold tracking-tight">
+                  Invoices
+                </h2>
+                <p className="mt-0.5 text-sm text-muted">
+                  Every paid order has two: the creator’s invoice for their work, and ours for the commission. Both carry your GSTIN for input credit.
+                </p>
+              </div>
+              <InvoiceTable
+                rows={invoices.data?.items}
+                perspective="brand"
+                loading={invoices.isPending}
+                error={invoices.isError && !invoices.data ? invoices.error : undefined}
+                onRetry={() => void invoices.refetch()}
+                pagination={
+                  invoices.data ? { page: invoicePage, pageSize: INVOICE_PAGE_SIZE, total: invoices.data.total, onPageChange: setInvoicePage } : undefined
+                }
+                empty={<EmptyState icon={<FileText />} title="No invoices yet" description="Invoices are issued the moment an order is paid." />}
+              />
+            </section>
+
+            <SectionCard title="Billing details" description="Printed on your invoices. Add your GSTIN to claim input tax credit." id="billing-details">
+              {billing.isPending ? null : billing.isError ? (
+                <ErrorState compact error={billing.error} onRetry={() => void billing.refetch()} />
+              ) : (
+                <TaxProfileForm key={b?.billing_profile?.updated_at ?? 'new'} role="brand" profile={b?.billing_profile ?? null} />
+              )}
+            </SectionCard>
 
             <section id="payment-history" aria-labelledby="payment-history-title" className="scroll-mt-28 space-y-4">
               <div>
@@ -208,7 +273,7 @@ export default function BillingSettings() {
                 <p>Payments are processed securely by Razorpay. {site.name} never stores your card details.</p>
                 <p>
                   <Mail className="mr-1 inline size-3.5 align-[-0.125em]" aria-hidden />
-                  Need an invoice? Invoices are available on request — email{' '}
+                  Questions about an invoice? Email{' '}
                   <a href={supportEmailHref()} target="_blank" rel="noreferrer" className="focus-ring rounded font-medium text-ink underline underline-offset-4">
                     {site.supportEmail}
                   </a>{' '}

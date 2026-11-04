@@ -18,6 +18,7 @@
 //   SITE_URL → VITE_SITE_URL → VERCEL_PROJECT_PRODUCTION_URL → VERCEL_URL
 //   (localhost ignored at every step)
 import { execFileSync } from 'node:child_process'
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -64,5 +65,13 @@ run('npx', ['vite', 'build'])
 // After the bundle exists: bake a static <head> per public route, so crawlers
 // that do not run JavaScript still get a real title, description and card.
 run('node', ['scripts/prerender-meta.mjs'])
+
+// The staging site (VITE_ENVIRONMENT=staging on Vercel's `staging` branch)
+// must never be indexed: every page also carries a noindex meta tag.
+if ((env.VITE_ENVIRONMENT ?? '').toLowerCase() === 'staging') {
+  fs.writeFileSync(path.join(root, 'dist', 'robots.txt'), '# Staging: not for search engines\nUser-agent: *\nDisallow: /\n')
+  fs.rmSync(path.join(root, 'dist', 'sitemap.xml'), { force: true })
+  console.log('staging: robots.txt blocks all crawlers, sitemap removed')
+}
 
 console.log('\nBuild complete → dist/')

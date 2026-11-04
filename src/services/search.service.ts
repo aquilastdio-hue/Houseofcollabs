@@ -4,6 +4,9 @@ import type { CreatorSearchParams } from './creators.service'
 
 export type { SmartSearchFilters, SmartSearchResult }
 
+/** The rule-based parser, run in the browser: instant, for search-as-you-type. */
+export { parseSmartQuery }
+
 /**
  * Natural-language search → structured filters. Uses the `smart-search`
  * Edge Function (where an AI parser can be enabled server-side) with a short

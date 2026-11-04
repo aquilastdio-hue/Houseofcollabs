@@ -55,6 +55,7 @@ export const handle = handler(async (req) => {
 
   const payout = await razorpay.createPayout({
     referenceId: request.id,
+    contactReference: request.creator_id,
     amountPaise: Math.round(Number(request.amount) * 100),
     name: method.account_holder_name,
     method: method.method_type,

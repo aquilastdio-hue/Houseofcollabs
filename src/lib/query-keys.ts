@@ -65,6 +65,15 @@ export const qk = {
     requests: ['payouts', 'requests'] as const,
   },
   payments: { mine: (page: number) => ['payments', 'mine', page] as const },
+  billing: {
+    all: ['billing'] as const,
+    summary: ['billing', 'summary'] as const,
+    invoices: (params: unknown) => ['billing', 'invoices', params] as const,
+    entity: ['billing', 'entity'] as const,
+    rates: ['billing', 'rates'] as const,
+    deposits: ['billing', 'deposits'] as const,
+    adminSummary: (params: unknown) => ['billing', 'admin-summary', params] as const,
+  },
   dashboard: {
     creator: ['dashboard', 'creator'] as const,
     brand: ['dashboard', 'brand'] as const,

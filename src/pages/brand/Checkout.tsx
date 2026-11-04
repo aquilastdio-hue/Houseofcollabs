@@ -77,6 +77,8 @@ export default function Checkout() {
   const quote = useOrderQuote(serviceId, addonIds)
   /** Platform fee on top of the creator's price (0 when none is set). */
   const brandFee = Number(quote.data?.brand_fee ?? 0)
+  const creatorGst = Number(quote.data?.creator_gst ?? 0)
+  const brandFeeGst = Number(quote.data?.brand_fee_gst ?? 0)
 
   const briefs = useQuery({
     queryKey: qk.briefs.list({ scope: 'brand', ownerId: brand?.id, status: 'all', page: 1, checkout: true }),
@@ -420,16 +422,28 @@ export default function Checkout() {
                       <span className="tabular-nums">{formatINR(quote.data.addons_total)}</span>
                     </div>
                   )}
-                  {brandFee > 0 && addonIds.length > 0 && (
+                  {(brandFee > 0 || creatorGst > 0) && addonIds.length > 0 && (
                     <div className="flex justify-between gap-3">
                       <span className="text-muted">Creator’s price</span>
                       <span className="tabular-nums">{formatINR(Number(quote.data.subtotal) + Number(quote.data.addons_total))}</span>
+                    </div>
+                  )}
+                  {creatorGst > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted">GST on creator’s price ({Number(quote.data.creator_gst_percent)}%)</span>
+                      <span className="tabular-nums">{formatINR(creatorGst)}</span>
                     </div>
                   )}
                   {brandFee > 0 && (
                     <div className="flex justify-between gap-3">
                       <span className="text-muted">Platform fee ({Number(quote.data.brand_fee_percent)}%)</span>
                       <span className="tabular-nums">{formatINR(brandFee)}</span>
+                    </div>
+                  )}
+                  {brandFeeGst > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted">GST on platform fee ({Number(quote.data.brand_fee_gst_percent)}%)</span>
+                      <span className="tabular-nums">{formatINR(brandFeeGst)}</span>
                     </div>
                   )}
                 </div>
@@ -439,6 +453,7 @@ export default function Checkout() {
                 </div>
                 <p className="text-xs text-muted">
                   Price calculated securely on our servers. {brandFee > 0 ? 'Everything you pay is listed above.' : 'No hidden charges.'}
+                  {quote.data.billing_version === 2 && ' You’ll get GST invoices for both, under Settings → Billing.'}
                 </p>
               </div>
             )}

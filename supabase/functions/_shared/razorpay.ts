@@ -14,7 +14,12 @@ const KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET') ?? ''
 const TEST_KEY_ID = Deno.env.get('RAZORPAY_TEST_KEY_ID') ?? ''
 const TEST_KEY_SECRET = Deno.env.get('RAZORPAY_TEST_KEY_SECRET') ?? ''
 const WEBHOOK_SECRET = Deno.env.get('RAZORPAY_WEBHOOK_SECRET') ?? ''
-const X_ACCOUNT = Deno.env.get('RAZORPAYX_ACCOUNT_NUMBER') ?? ''
+// RazorpayX account numbers (X Dashboard → Account details). The test one pays
+// test creators in RazorpayX test mode; without it they are simply not paid.
+const X_ACCOUNTS: Record<'live' | 'test', string> = {
+  live: Deno.env.get('RAZORPAYX_ACCOUNT_NUMBER') ?? '',
+  test: Deno.env.get('RAZORPAYX_TEST_ACCOUNT_NUMBER') ?? '',
+}
 
 export type RazorpayMode = 'live' | 'test'
 const KEYS: Record<RazorpayMode, { id: string; secret: string }> = {
@@ -25,7 +30,7 @@ const KEYS: Record<RazorpayMode, { id: string; secret: string }> = {
 export const razorpayKeyId = KEY_ID
 export const razorpayKeyIdFor = (mode: RazorpayMode) => KEYS[mode].id
 export const razorpayConfigured = (mode: RazorpayMode = 'live') => Boolean(KEYS[mode].id && KEYS[mode].secret)
-export const razorpayXConfigured = () => razorpayConfigured() && Boolean(X_ACCOUNT)
+export const razorpayXConfigured = (mode: RazorpayMode = 'live') => razorpayConfigured(mode) && Boolean(X_ACCOUNTS[mode])
 
 /** 'test' when the order's brand or creator is a test account, else 'live'. */
 export async function paymentModeForOrder(db: SupabaseClient, orderId: string): Promise<RazorpayMode> {
@@ -51,7 +56,16 @@ export type RzpPayment = {
   captured?: boolean
 }
 export type RzpRefund = { id: string; payment_id: string; amount: number; status: 'pending' | 'processed' | 'failed'; notes?: Record<string, string> }
-export type RzpPayout = { id: string; status: string; amount: number; utr?: string | null; reference_id?: string | null }
+export type RzpPayout = {
+  id: string
+  /** queued, pending, processing, processed, reversed, cancelled, rejected, failed */
+  status: string
+  amount: number
+  utr?: string | null
+  reference_id?: string | null
+  failure_reason?: string | null
+  status_details?: { description?: string | null; reason?: string | null } | null
+}
 
 async function call<T>(path: string, init: RequestInit & { idempotencyKey?: string } = {}, mode: RazorpayMode = 'live'): Promise<T> {
   if (!razorpayConfigured(mode)) {
@@ -113,43 +127,62 @@ export function razorpayFor(mode: RazorpayMode) {
   }
 }
 
+export type PayoutInput = {
+  referenceId: string
+  /** Stable per creator, so RazorpayX keeps one contact for them. */
+  contactReference: string
+  amountPaise: number
+  name: string
+  method: 'upi' | 'bank_transfer'
+  upi?: string | null
+  accountNumber?: string | null
+  ifsc?: string | null
+  narration: string
+}
+
+/** RazorpayX payouts with the live or the test keys and account. */
+export function razorpayXFor(mode: RazorpayMode) {
+  return {
+    /** Composite payout: contact and fund account inline. Idempotent per `referenceId`. */
+    createPayout(input: PayoutInput) {
+      const account = X_ACCOUNTS[mode]
+      if (!account) throw new HttpError(503, 'RazorpayX payouts are not configured.', 'RAZORPAYX_NOT_CONFIGURED')
+      const contact = { name: input.name, type: 'vendor', reference_id: input.contactReference }
+      const fund_account =
+        input.method === 'upi'
+          ? { account_type: 'vpa', vpa: { address: input.upi }, contact }
+          : { account_type: 'bank_account', bank_account: { name: input.name, ifsc: input.ifsc, account_number: input.accountNumber }, contact }
+      return call<RzpPayout>(
+        '/payouts',
+        {
+          method: 'POST',
+          idempotencyKey: input.referenceId,
+          body: JSON.stringify({
+            account_number: account,
+            amount: input.amountPaise,
+            currency: 'INR',
+            mode: input.method === 'upi' ? 'UPI' : 'IMPS',
+            purpose: 'payout',
+            fund_account,
+            queue_if_low_balance: true,
+            reference_id: input.referenceId,
+            narration: input.narration.slice(0, 30),
+          }),
+        },
+        mode,
+      )
+    },
+    fetchPayout(payoutId: string) {
+      return call<RzpPayout>(`/payouts/${encodeURIComponent(payoutId)}`, {}, mode)
+    },
+  }
+}
+
 export const razorpay = {
   ...razorpayFor('live'),
-  /** RazorpayX composite payout (contact + fund account inline). */
-  createPayout(input: {
-    referenceId: string
-    amountPaise: number
-    name: string
-    method: 'upi' | 'bank_transfer'
-    upi?: string | null
-    accountNumber?: string | null
-    ifsc?: string | null
-    narration: string
-  }) {
-    if (!X_ACCOUNT) throw new HttpError(503, 'RazorpayX payouts are not configured.', 'RAZORPAYX_NOT_CONFIGURED')
-    const fund_account =
-      input.method === 'upi'
-        ? { account_type: 'vpa', vpa: { address: input.upi }, contact: { name: input.name, type: 'vendor', reference_id: input.referenceId } }
-        : {
-            account_type: 'bank_account',
-            bank_account: { name: input.name, ifsc: input.ifsc, account_number: input.accountNumber },
-            contact: { name: input.name, type: 'vendor', reference_id: input.referenceId },
-          }
-    return call<RzpPayout>('/payouts', {
-      method: 'POST',
-      idempotencyKey: input.referenceId,
-      body: JSON.stringify({
-        account_number: X_ACCOUNT,
-        amount: input.amountPaise,
-        currency: 'INR',
-        mode: input.method === 'upi' ? 'UPI' : 'IMPS',
-        purpose: 'payout',
-        fund_account,
-        queue_if_low_balance: true,
-        reference_id: input.referenceId,
-        narration: input.narration.slice(0, 30),
-      }),
-    })
+  /** Live RazorpayX payout, as Admin → Payouts → "Send with RazorpayX" uses it. */
+  createPayout(input: Omit<PayoutInput, 'contactReference'> & { contactReference?: string }) {
+    return razorpayXFor('live').createPayout({ ...input, contactReference: input.contactReference ?? input.referenceId })
   },
 }
 

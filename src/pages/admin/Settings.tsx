@@ -33,6 +33,8 @@ const SPECS: Record<string, Spec> = {
   minimum_payout_amount: { kind: 'number', min: 0, max: 1_000_000, integer: false, money: true },
   max_revisions: { kind: 'number', min: 0, max: 10, integer: true, unit: 'revisions' },
   earning_hold_days: { kind: 'number', min: 0, max: 60, integer: true, unit: 'days' },
+  earning_hold_hours: { kind: 'number', min: 0, max: 1440, integer: true, unit: 'hours' },
+  auto_payouts_enabled: { kind: 'boolean' },
   creator_response_hours: { kind: 'number', min: 1, max: 720, integer: true, unit: 'hours' },
   auto_approve_days: { kind: 'number', min: 1, max: 60, integer: true, unit: 'days' },
   payment_expiry_hours: { kind: 'number', min: 1, max: 168, integer: true, unit: 'hours' },
@@ -51,8 +53,9 @@ const GROUPS: { title: string; description: string; keys: string[] }[] = [
   },
   {
     title: 'Payouts',
-    description: 'When creators can be paid. Changes apply to new earnings and payout requests, never to money already moved.',
-    keys: ['minimum_payout_amount', 'earning_hold_days'],
+    description:
+      'When creators are paid. With automatic payouts on, RazorpayX sends each creator their earnings once the hold has passed (needs RAZORPAYX_ACCOUNT_NUMBER in Supabase). The hold applies to new earnings; the minimum only to manual withdraw requests.',
+    keys: ['auto_payouts_enabled', 'earning_hold_hours', 'minimum_payout_amount'],
   },
   {
     title: 'Order timings',
@@ -67,7 +70,9 @@ const LABELS: Record<string, string> = {
   brand_fee_percentage: 'Brand platform fee',
   platform_fee_percentage: 'Creator commission',
   minimum_payout_amount: 'Minimum payout',
-  earning_hold_days: 'Earnings hold',
+  earning_hold_days: 'Earnings hold (days, old)',
+  earning_hold_hours: 'Hold before payout',
+  auto_payouts_enabled: 'Pay creators automatically (RazorpayX)',
   creator_response_hours: 'Creator response window',
   auto_approve_days: 'Auto-approve after delivery',
   payment_expiry_hours: 'Checkout expiry',

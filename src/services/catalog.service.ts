@@ -21,6 +21,9 @@ export type PublicSettings = {
   require_creator_approval: boolean
   max_revisions: number
   earning_hold_days: number
+  /** Replaces earning_hold_days (0041). */
+  earning_hold_hours: number
+  auto_payouts_enabled: boolean
   creator_response_hours: number
   auto_approve_days: number
   payment_expiry_hours: number

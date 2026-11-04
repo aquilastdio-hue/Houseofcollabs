@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { ArrowRight, Search, Sparkles, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useDebounce } from '@/hooks/use-utils'
-import { smartSearch, type SmartSearchResult } from '@/services/search.service'
+import { parseSmartQuery, smartSearch, type SmartSearchResult } from '@/services/search.service'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -18,6 +18,9 @@ const inputClass = 'h-11 min-w-0 flex-1 bg-transparent text-[0.95rem] text-ink o
 /**
  * Two ways to search, made explicit with tabs:
  * - Smart search: plain-English request → structured filters (replaces current filters).
+ *   Results follow the typing: each pause runs the rule-based parser in the
+ *   browser (no network), so a name or a sentence filters straight away. The
+ *   Search button still asks the `smart-search` Edge Function.
  * - Keyword: free-text match on names, niches, cities and bios (debounced into `q`).
  */
 export function SmartSearchBar({
@@ -39,6 +42,13 @@ export function SmartSearchBar({
   className?: string
 }) {
   const [smartText, setSmartText] = React.useState('')
+  const debouncedSmart = useDebounce(smartText, 450)
+  /** The smart text whose filters are on screen, so a pause doesn't re-apply them. */
+  const appliedSmart = React.useRef('')
+  const onSmartResultRef = React.useRef(onSmartResult)
+  React.useEffect(() => {
+    onSmartResultRef.current = onSmartResult
+  })
   const [keywordText, setKeywordText] = React.useState(keyword)
   const debouncedKeyword = useDebounce(keywordText, 350)
 
@@ -76,8 +86,17 @@ export function SmartSearchBar({
   const runSmart = (text: string) => {
     const trimmed = text.trim()
     if (!trimmed) return
+    appliedSmart.current = trimmed
     smart.mutate(trimmed)
   }
+
+  // Search as you type. Emptying the box clears what typing set.
+  React.useEffect(() => {
+    const text = debouncedSmart.trim()
+    if (text === appliedSmart.current) return
+    appliedSmart.current = text
+    onSmartResultRef.current(parseSmartQuery(text))
+  }, [debouncedSmart])
 
   return (
     <Tabs value={mode} onValueChange={(v) => onModeChange(v === 'keyword' ? 'keyword' : 'smart')} className={className}>
@@ -91,7 +110,7 @@ export function SmartSearchBar({
           </TabsTrigger>
         </TabsList>
         <p className="text-sm text-muted">
-          {mode === 'smart' ? 'Describe who you need in plain words — we’ll set the filters for you.' : 'Match names, niches, cities and bios as you type.'}
+          {mode === 'smart' ? 'Type a name, or describe who you need in plain words. Results update as you type.' : 'Match names, niches, cities and bios as you type.'}
         </p>
       </div>
 

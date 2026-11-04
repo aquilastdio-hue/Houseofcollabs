@@ -87,7 +87,15 @@ export type OrderQuote = {
   /** Platform fee the brand pays on top of the price; absent before 0027. */
   brand_fee_percent?: number
   brand_fee?: number
-  /** What the brand pays: price + brand fee. */
+  /** Billing version the order would use: 2 adds GST, TDS/TCS and invoices (migration 0038). */
+  billing_version?: 1 | 2
+  /** v2: GST on a registered creator's fee, passed on to the creator. */
+  creator_gst_percent?: number
+  creator_gst?: number
+  /** v2: GST on the brand fee (HOC's commission). */
+  brand_fee_gst_percent?: number
+  brand_fee_gst?: number
+  /** What the brand pays: price + brand fee (+ both GSTs in v2). */
   total: number
   currency: string
   platform_fee_percent: number

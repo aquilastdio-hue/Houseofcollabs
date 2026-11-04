@@ -26,8 +26,14 @@ export const payoutPolicy: LegalBuilder = (t) => {
           <ol>
             <li>A brand pays the full order total at checkout, and {site.name} holds it.</li>
             <li>When the order completes, we record your earning: the order total minus the platform fee.</li>
-            <li>The earning becomes available to withdraw {holdText(t)}.</li>
-            <li>You request a payout of your available balance to your UPI ID or bank account, and we send it.</li>
+            {t.autoPayouts ? (
+              <li>{holdText(t).replace(/^./, (c) => c.toUpperCase())}, we pay it automatically to the UPI ID or bank account in your payout settings.</li>
+            ) : (
+              <>
+                <li>The earning becomes available to withdraw {holdText(t)}.</li>
+                <li>You request a payout of your available balance to your UPI ID or bank account, and we send it.</li>
+              </>
+            )}
           </ol>
         ),
       },
@@ -92,11 +98,18 @@ export const payoutPolicy: LegalBuilder = (t) => {
         id: 'requesting-a-payout',
         title: 'Requesting a payout',
         body: (
-          <ul>
-            <li>Request a payout from your Payouts page. Each request covers your full available balance.</li>
-            <li>The minimum payout is {minPayoutText(t, 'shown on your Payouts page')}. Smaller balances roll over until they reach it.</li>
-            <li>You can have one payout request in progress at a time.</li>
-          </ul>
+          t.autoPayouts ? (
+            <ul>
+              <li>You don’t need to request anything: once an earning becomes available, we send it to your saved payout details, with no minimum.</li>
+              <li>Keep your UPI ID or bank details up to date on your Payouts page. If a transfer fails, automatic payouts pause until you update them.</li>
+            </ul>
+          ) : (
+            <ul>
+              <li>Request a payout from your Payouts page. Each request covers your full available balance.</li>
+              <li>The minimum payout is {minPayoutText(t, 'shown on your Payouts page')}. Smaller balances roll over until they reach it.</li>
+              <li>You can have one payout request in progress at a time.</li>
+            </ul>
+          )
         ),
       },
       {

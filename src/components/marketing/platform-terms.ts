@@ -13,7 +13,10 @@ export type PlatformTerms = {
   /** Platform fee brands pay on top of the price (0 = none). */
   brandFeePercent: number | null
   minPayout: number | null
-  holdDays: number | null
+  /** Hours from completion until an earning can be paid (0041; was days before). */
+  holdHours: number | null
+  /** Earnings are paid automatically once the hold passes (RazorpayX). */
+  autoPayouts: boolean | null
   responseHours: number | null
   autoApproveDays: number | null
   paymentExpiryHours: number | null
@@ -48,7 +51,8 @@ export function usePlatformTerms() {
       feePercent: toNumber(s.platform_fee_percentage),
       brandFeePercent: toNumber(s.brand_fee_percentage),
       minPayout: toNumber(s.minimum_payout_amount),
-      holdDays: toNumber(s.earning_hold_days),
+      holdHours: toNumber(s.earning_hold_hours) ?? (toNumber(s.earning_hold_days) != null ? toNumber(s.earning_hold_days)! * 24 : null),
+      autoPayouts: toBool(s.auto_payouts_enabled),
       responseHours: toNumber(s.creator_response_hours),
       autoApproveDays: toNumber(s.auto_approve_days),
       paymentExpiryHours: toNumber(s.payment_expiry_hours),
@@ -98,11 +102,16 @@ export function minPayoutText(t: PlatformTerms, fallback = 'the minimum shown on
   return t.minPayout != null ? formatINR(t.minPayout) : fallback
 }
 
+/** "24 hours", or "3 days" for whole days past one. */
+export function holdPeriodText(hours: number) {
+  return hours >= 48 && hours % 24 === 0 ? daysText(hours / 24) : hoursText(hours)
+}
+
 /** When a completed order's earning becomes withdrawable. */
 export function holdText(t: PlatformTerms) {
-  if (t.holdDays == null) return 'after a short holding period shown on your Earnings page'
-  if (t.holdDays <= 0) return 'as soon as the order is completed'
-  return `${daysText(t.holdDays)} after the order is completed`
+  if (t.holdHours == null) return 'after a short holding period shown on your Earnings page'
+  if (t.holdHours <= 0) return 'as soon as the order is completed'
+  return `${holdPeriodText(t.holdHours)} after the order is completed`
 }
 
 export function responseWindowText(t: PlatformTerms, fallback = 'the response window shown on the order') {

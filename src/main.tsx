@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import '@/styles/index.css'
 import { isNativeApp } from '@/lib/native'
 import App from './App'
+import { EnvironmentBadge } from '@/components/layout/environment-badge'
 
 // Inside the apps the page must not zoom: iOS zooms into any text field set
 // smaller than 16px when it's tapped, and an app never wants pinch-zoom. The
@@ -21,5 +22,6 @@ if (isNativeApp) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
+    <EnvironmentBadge />
   </StrictMode>,
 )

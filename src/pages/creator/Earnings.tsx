@@ -17,6 +17,7 @@ import { PageHeader, SectionTitle } from '@/components/shared/page-header'
 import { Seo } from '@/components/shared/seo'
 import { StatsCard } from '@/components/shared/stats-card'
 import { CreatorSetupRequired } from '@/components/creator-studio/parts'
+import { holdPeriodText } from '@/components/marketing/platform-terms'
 import { EARNING_STATUS_META } from '@/components/creator-studio/status'
 
 const PAGE_SIZE = 20
@@ -46,8 +47,19 @@ const columns: Column<EarningListItem>[] = [
   { key: 'gross', header: 'Gross', cell: (e) => <span className="tabular-nums">{formatINR(e.gross_amount)}</span>, className: 'text-right', headerClassName: 'text-right' },
   {
     key: 'fee',
-    header: 'Fee',
-    cell: (e) => <span className="text-muted tabular-nums">−{formatINR(e.platform_fee)}</span>,
+    header: 'Deductions',
+    // Old orders: commission taken out. New billing (0038): TDS and TCS only;
+    // commission is a separate invoice under Billing & tax.
+    cell: (e) => {
+      const taxes = Number(e.tds_amount ?? 0) + Number(e.tcs_amount ?? 0)
+      const total = Number(e.platform_fee) + taxes
+      return (
+        <span className="text-muted tabular-nums" title={taxes > 0 ? `TDS ${formatINR(e.tds_amount)} · TCS ${formatINR(e.tcs_amount)}` : undefined}>
+          {total > 0 ? `−${formatINR(total)}` : '—'}
+          {taxes > 0 && Number(e.platform_fee) === 0 && <span className="block text-xs">TDS / TCS</span>}
+        </span>
+      )
+    },
     className: 'text-right',
     headerClassName: 'text-right',
   },
@@ -92,7 +104,7 @@ export default function Earnings() {
     placeholderData: keepPreviousData,
   })
 
-  const holdDays = Number(settings.data?.earning_hold_days ?? 0)
+  const holdHours = Number(settings.data?.earning_hold_hours ?? Number(settings.data?.earning_hold_days ?? 0) * 24)
   const s = summary.data
 
   return (
@@ -167,8 +179,8 @@ export default function Earnings() {
                 <li className="flex gap-3">
                   <Hourglass className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />
                   <span>
-                    {holdDays > 0
-                      ? `Earnings unlock ${holdDays} day${holdDays === 1 ? '' : 's'} after an order is completed.`
+                    {holdHours > 0
+                      ? `Earnings unlock ${holdPeriodText(holdHours)} after an order is completed.`
                       : 'Earnings are added to your balance as soon as an order is completed.'}
                     {s.next_available_at && ` Next release: ${formatDate(s.next_available_at)}.`}
                   </span>

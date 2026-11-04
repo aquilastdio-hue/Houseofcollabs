@@ -24,7 +24,7 @@ export async function listEarnings(page = 1, pageSize = 20) {
 export type EarningListItem = Awaited<ReturnType<typeof listEarnings>>['items'][number]
 
 const PAYOUT_METHOD_COLUMNS =
-  'id, creator_id, method_type, account_holder_name, upi_id, bank_account_last4, ifsc_code, bank_name, verified, created_at, updated_at'
+  'id, creator_id, method_type, account_holder_name, upi_id, bank_account_last4, ifsc_code, bank_name, verified, created_at, updated_at, auto_payout_paused_at, auto_payout_error'
 
 export async function getPayoutMethod(creatorId: string): Promise<PayoutMethod | null> {
   return unwrap(await supabase.from('payout_methods').select(PAYOUT_METHOD_COLUMNS).eq('creator_id', creatorId).maybeSingle())

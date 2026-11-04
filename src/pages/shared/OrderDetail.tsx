@@ -279,13 +279,36 @@ export default function OrderDetail({ perspective }: { perspective: 'brand' | 'c
               ))}
               {perspective === 'brand' ? (
                 <>
+                  {Number(order.creator_gst_amount) > 0 && (
+                    <Line label={`GST on creator’s price (${Number(order.creator_gst_percent)}%)`} value={formatINR(order.creator_gst_amount)} />
+                  )}
                   {Number(order.brand_fee_amount) > 0 && (
                     <Line label={`Platform fee (${Number(order.brand_fee_percent)}%)`} value={formatINR(order.brand_fee_amount)} />
+                  )}
+                  {Number(order.brand_fee_gst_amount) > 0 && (
+                    <Line label={`GST on platform fee (${Number(order.brand_fee_gst_percent)}%)`} value={formatINR(order.brand_fee_gst_amount)} />
                   )}
                   <div className="border-t border-line pt-2.5">
                     <Line label="Total" value={formatINR(order.total_amount)} strong />
                   </div>
                 </>
+              ) : order.billing_version === 2 ? (
+                // New billing (0038): the commission isn't taken out; it's a separate invoice.
+                <div className="space-y-2.5 border-t border-line pt-2.5">
+                  <Line label="Order price" value={formatINR(Number(order.subtotal) + Number(order.addons_total))} />
+                  {Number(order.creator_gst_amount) > 0 && (
+                    <Line label={`GST (${Number(order.creator_gst_percent)}%)`} value={`+ ${formatINR(order.creator_gst_amount)}`} />
+                  )}
+                  <Line label="You earn, before TDS / TCS" value={formatINR(order.creator_earning_amount)} strong />
+                  <p className="text-xs text-muted">
+                    A small income-tax TDS (and GST TCS, if you’re registered) is withheld when the order completes. Our{' '}
+                    {Number(order.platform_fee_percent)}% commission ({formatINR(order.platform_fee_amount)} + GST) is a separate invoice under{' '}
+                    <Link to="/creator/billing" className="font-medium text-ink underline underline-offset-4">
+                      Billing & tax
+                    </Link>
+                    .
+                  </p>
+                </div>
               ) : (
                 // The creator's side starts from their price; the brand's fee isn't theirs.
                 <div className="space-y-2.5 border-t border-line pt-2.5">

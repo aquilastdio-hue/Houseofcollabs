@@ -119,15 +119,31 @@ export function OrderMoney({ order }: { order: OrderDetail }) {
         <div className="pb-2">
           <SummaryRow label="Service" value={formatINR(order.subtotal)} />
           <SummaryRow label="Add-ons" value={formatINR(order.addons_total)} />
+          {Number(order.creator_gst_amount) > 0 && (
+            <SummaryRow label={`Creator GST (${formatPercent(order.creator_gst_percent, 2)})`} value={formatINR(order.creator_gst_amount)} />
+          )}
           <SummaryRow label={`Brand platform fee (${formatPercent(order.brand_fee_percent, 2)})`} value={formatINR(order.brand_fee_amount)} />
+          {Number(order.brand_fee_gst_amount) > 0 && (
+            <SummaryRow label={`GST on platform fee (${formatPercent(order.brand_fee_gst_percent, 2)})`} value={formatINR(order.brand_fee_gst_amount)} />
+          )}
           <SummaryRow label="Brand paid" value={formatINR(order.total_amount)} strong />
         </div>
-        <div className="py-2">
-          <SummaryRow label="Order price" value={formatINR(Number(order.subtotal) + Number(order.addons_total))} />
-          <SummaryRow label={`Creator commission (${formatPercent(order.platform_fee_percent, 2)})`} value={`− ${formatINR(order.platform_fee_amount)}`} />
-          <SummaryRow label="Creator earning" value={formatINR(order.creator_earning_amount)} strong />
-          <SummaryRow label="Platform keeps" value={formatINR(Number(order.brand_fee_amount) + Number(order.platform_fee_amount))} />
-        </div>
+        {order.billing_version === 2 ? (
+          // New billing (0038): commission is invoiced to the creator, not deducted.
+          <div className="py-2">
+            <SummaryRow label="Order price" value={formatINR(Number(order.subtotal) + Number(order.addons_total))} />
+            <SummaryRow label="Creator earning, before TDS / TCS" value={formatINR(order.creator_earning_amount)} strong />
+            <SummaryRow label={`Creator commission (${formatPercent(order.platform_fee_percent, 2)}), invoiced`} value={formatINR(order.platform_fee_amount)} />
+            <SummaryRow label="HOC revenue (excl. GST)" value={formatINR(Number(order.brand_fee_amount) + Number(order.platform_fee_amount))} />
+          </div>
+        ) : (
+          <div className="py-2">
+            <SummaryRow label="Order price" value={formatINR(Number(order.subtotal) + Number(order.addons_total))} />
+            <SummaryRow label={`Creator commission (${formatPercent(order.platform_fee_percent, 2)})`} value={`− ${formatINR(order.platform_fee_amount)}`} />
+            <SummaryRow label="Creator earning" value={formatINR(order.creator_earning_amount)} strong />
+            <SummaryRow label="Platform keeps" value={formatINR(Number(order.brand_fee_amount) + Number(order.platform_fee_amount))} />
+          </div>
+        )}
         <div className="pt-2">
           <SummaryRow label="Captured" value={formatINR(captured)} muted={captured === 0} />
           <SummaryRow label="Refunded" value={refunded > 0 ? `− ${formatINR(refunded)}` : formatINR(0)} muted={refunded === 0} />

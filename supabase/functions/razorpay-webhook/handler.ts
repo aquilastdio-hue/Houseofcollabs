@@ -16,6 +16,24 @@ type Event = {
 
 const isNotOurs = (e: unknown) => typeof e === 'object' && e !== null && (e as { code?: string }).code === 'P0002'
 
+type Db = ReturnType<typeof adminClient>
+
+/**
+ * Not an order payment? It may be a creator paying a commission invoice
+ * (`invoice-payment`). Same idempotent confirm, keyed by the Razorpay order.
+ */
+async function confirmInvoicePayment(db: Db, payment: RzpPayment) {
+  const { error } = await db.rpc('confirm_invoice_payment', {
+    p_provider_order_id: payment.order_id,
+    p_provider_payment_id: payment.id,
+    p_method: payment.method ?? null,
+    p_amount_paise: payment.amount,
+    p_raw: payment,
+  })
+  if (error && !isNotOurs(error)) throw error
+  return error ? 'unknown_order' : 'invoice_captured'
+}
+
 async function applyEvent(evt: Event) {
   const db = adminClient()
   const payment = evt.payload.payment?.entity
@@ -24,9 +42,14 @@ async function applyEvent(evt: Event) {
       // Only needed when the account captures manually; Orders use auto-capture.
       if (!payment?.order_id) return 'ignored'
       const { data: ours } = await db.from('payments').select('order_id').eq('provider_order_id', payment.order_id).maybeSingle()
-      const mode = ours?.order_id ? await paymentModeForOrder(db, ours.order_id) : 'live'
+      const { data: invoicePay } = ours
+        ? { data: null }
+        : await db.from('invoice_payments').select('invoice:invoices(is_test)').eq('provider_order_id', payment.order_id).maybeSingle()
+      const invoiceIsTest = (invoicePay as { invoice: { is_test: boolean } | null } | null)?.invoice?.is_test
+      const mode = ours?.order_id ? await paymentModeForOrder(db, ours.order_id) : invoiceIsTest ? 'test' : 'live'
       const captured = await razorpayFor(mode).capturePayment(payment.id, payment.amount, payment.currency).catch(() => null)
       if (captured?.status !== 'captured') return 'authorized'
+      if (!ours) return confirmInvoicePayment(db, captured)
       const { error } = await db.rpc('confirm_order_payment', {
         p_provider_order_id: payment.order_id,
         p_provider_payment_id: payment.id,
@@ -48,7 +71,7 @@ async function applyEvent(evt: Event) {
         p_raw: payment,
       })
       if (error && !isNotOurs(error)) throw error
-      return error ? 'unknown_order' : 'captured'
+      return error ? confirmInvoicePayment(db, payment) : 'captured'
     }
     case 'payment.failed': {
       if (!payment?.order_id) return 'ignored'
@@ -84,24 +107,30 @@ async function applyEvent(evt: Event) {
     }
     case 'payout.processed':
     case 'payout.failed':
-    case 'payout.reversed': {
+    case 'payout.reversed':
+    case 'payout.rejected': {
       const payout = evt.payload.payout?.entity
       if (!payout) return 'ignored'
       const { data: txn } = await db
         .from('payout_transactions')
         .select('payout_request_id, payout_requests(status, processed_by)')
         .eq('provider_reference', payout.id)
+        .limit(1)
         .maybeSingle()
       const request = (txn as { payout_request_id: string; payout_requests: { status: string; processed_by: string | null } | null } | null)
-      if (!request || !request.payout_requests?.processed_by) return 'unknown_payout'
+      if (!request?.payout_requests) return 'unknown_payout'
       if (!['pending', 'processing'].includes(request.payout_requests.status)) return 'already_final'
+      // Automatic payouts (0041) have no admin behind them: the system completes them.
       const { error } = await db.rpc('complete_payout', {
         p_payout_request_id: request.payout_request_id,
-        p_actor_id: request.payout_requests.processed_by,
+        p_actor_id: request.payout_requests.processed_by ?? null,
         p_action: evt.event === 'payout.processed' ? 'paid' : 'failed',
         p_provider: 'razorpayx',
         p_reference: payout.utr ?? payout.id,
-        p_note: evt.event === 'payout.processed' ? 'Paid via RazorpayX' : `RazorpayX ${evt.event.split('.')[1]}`,
+        p_note:
+          evt.event === 'payout.processed'
+            ? 'Paid via RazorpayX'
+            : payout.status_details?.description || payout.failure_reason || `RazorpayX ${evt.event.split('.')[1]}`,
         p_metadata: { razorpayx: payout },
       })
       if (error) throw error

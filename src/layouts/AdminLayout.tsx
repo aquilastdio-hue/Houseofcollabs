@@ -15,6 +15,7 @@ import {
   Megaphone,
   MessageCircle,
   Package,
+  ReceiptText,
   Rocket,
   Send,
   Settings,
@@ -64,6 +65,7 @@ const sections: NavSection[] = [
       { label: 'Revenue', href: '/admin/finance', icon: TrendingUp },
       { label: 'Payments', href: '/admin/payments', icon: CreditCard },
       { label: 'Payouts', href: '/admin/payouts', icon: Wallet },
+      { label: 'Billing & tax', href: '/admin/billing', icon: ReceiptText },
     ],
   },
   {

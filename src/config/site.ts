@@ -20,6 +20,14 @@ export const site = {
   },
 } as const
 
+/**
+ * Which deployment this is. Only the staging site (Vercel's `staging` branch,
+ * its own Supabase project) sets VITE_ENVIRONMENT=staging: it then shows a
+ * "Testing site" badge and asks search engines not to index anything.
+ */
+export const environment = ((import.meta.env.VITE_ENVIRONMENT as string | undefined) || 'production').toLowerCase()
+export const isStaging = environment === 'staging'
+
 export function siteUrl(path = '/') {
   const base = site.url || (typeof window !== 'undefined' ? window.location.origin : '')
   return `${base}${path.startsWith('/') ? path : `/${path}`}`
