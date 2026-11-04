@@ -237,8 +237,16 @@ begin
 end;
 $$;
 
-drop policy if exists "Conversation participants receive channel events" on realtime.messages;
-drop policy if exists "Conversation participants send channel events" on realtime.messages;
+-- Guarded like 0014: a fresh project has no realtime.messages until Realtime
+-- starts, and `drop policy if exists` still needs the table to exist.
+do $$
+begin
+  if to_regclass('realtime.messages') is not null then
+    drop policy if exists "Conversation participants receive channel events" on realtime.messages;
+    drop policy if exists "Conversation participants send channel events" on realtime.messages;
+  end if;
+end;
+$$;
 
 -- -----------------------------------------------------------------------------
 -- 3. Attachments. Dropping the three policies is what actually closes the
