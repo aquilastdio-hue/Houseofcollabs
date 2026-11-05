@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { exportPhone, importInstagram, importPhone, parseFollowers, readImportFile, templateCsv } from './account-import'
+import { exportInstagram, exportPhone, importInstagram, importPhone, parseFollowers, readImportFile, templateCsv } from './account-import'
 import { toCsv } from './csv'
 
 describe('readImportFile', () => {
@@ -24,7 +24,6 @@ describe('readImportFile', () => {
         languages: ['Hindi', 'English'],
         youtube: 'https://youtube.com/@riyasharma',
         youtube_subscribers: 8000,
-        engagement_rate: 4.2,
       },
     ])
   })
@@ -129,8 +128,10 @@ describe('optional creator details', () => {
     )
     const { rows, problems } = readImportFile(csv, 'creator')
     expect(problems).toEqual([])
-    expect(rows[0]).toMatchObject({ gender: 'female', age: 24, languages: ['Hindi', 'English'], youtube: 'https://youtube.com/@riya', engagement_rate: 3.5 })
-    expect(rows[1]).toMatchObject({ gender: null, age: null, languages: [], youtube: null, engagement_rate: null })
+    expect(rows[0]).toMatchObject({ gender: 'female', age: 24, languages: ['Hindi', 'English'], youtube: 'https://youtube.com/@riya' })
+    expect(rows[1]).toMatchObject({ gender: null, age: null, languages: [], youtube: null })
+    // An engagement column is ignored: that number only comes from Instagram.
+    expect(rows[0]).not.toHaveProperty('engagement_rate')
   })
 })
 
@@ -140,6 +141,25 @@ describe('importInstagram', () => {
     expect(importInstagram('https://instagram.com/riya_s?igsh=abc')).toBe('riya_s')
     expect(importInstagram('')).toBeNull()
     expect(importInstagram('riya sharma')).toBeNull()
+  })
+})
+
+describe('exportInstagram', () => {
+  it('gives the profile link without the tracking Instagram adds when sharing', () => {
+    expect(exportInstagram('https://www.instagram.com/tuba_khan/?igsh=MTRxZ2Fh', 'tuba_khan')).toBe('https://www.instagram.com/tuba_khan/')
+    expect(exportInstagram('https://instagram.com/Riya.S?utm_source=qr', 'riya.s')).toBe('https://www.instagram.com/Riya.S/')
+    expect(exportInstagram('http://m.instagram.com/riya_s', '@riya_s')).toBe('https://www.instagram.com/riya_s/')
+  })
+
+  it('falls back to the handle when the link is missing or not an Instagram profile', () => {
+    expect(exportInstagram(null, '@riya.s')).toBe('riya.s')
+    expect(exportInstagram('', 'riya.s')).toBe('riya.s')
+    expect(exportInstagram('https://linktr.ee/riya', 'riya.s')).toBe('riya.s')
+    expect(exportInstagram('https://www.instagram.com/reel/C9xyz/', 'riya.s')).toBe('riya.s')
+  })
+
+  it('reads back in as the handle', () => {
+    expect(importInstagram(exportInstagram('https://www.instagram.com/tuba_khan/?igsh=x', 'tuba_khan'))).toBe('tuba_khan')
   })
 })
 

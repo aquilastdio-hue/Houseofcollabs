@@ -7,7 +7,7 @@ import { toCsv } from '@/lib/csv'
 import { CONTENT_TYPES, PRICE_COLUMN_TYPES, finalPricing, labelFor, servicePrice } from '@/lib/constants'
 import { formatINR } from '@/lib/format'
 import { site } from '@/config/site'
-import { exportPhone, type AccountKind, type ImportRow } from '@/lib/account-import'
+import { exportInstagram, exportPhone, type AccountKind, type ImportRow } from '@/lib/account-import'
 import { getProfileNames, listBrands, listCreators, type AdminCreatorParams } from './admin.service'
 import type { AccountStatus } from '@/types'
 
@@ -37,9 +37,10 @@ export async function exportCreatorsCsv(params: Omit<AdminCreatorParams, 'page' 
     inChunks(
       ids,
       async (chunk) =>
-        unwrap(await supabase.from('creator_social_accounts').select('creator_id, username').eq('platform', 'instagram').in('creator_id', chunk)) ??
-        [],
-    ).then((rows) => new Map(rows.map((r) => [r.creator_id, r.username.trim().replace(/^@/, '')]))),
+        unwrap(
+          await supabase.from('creator_social_accounts').select('creator_id, username, profile_url').eq('platform', 'instagram').in('creator_id', chunk),
+        ) ?? [],
+    ).then((rows) => new Map(rows.map((r) => [r.creator_id, exportInstagram(r.profile_url, r.username)]))),
     // Every service a brand can order, in storefront order, for the "All services" column.
     inChunks(
       ids,
@@ -71,7 +72,7 @@ export async function exportCreatorsCsv(params: Omit<AdminCreatorParams, 'page' 
     'Engagement rate (%)',
     'Avg views',
     ...PRICE_COLUMN_TYPES.map((type) => `${labelFor(CONTENT_TYPES, type)} (₹)`),
-    'Final pricing (₹)',
+    'IFCR (₹)',
     'All services',
     'Full name',
     'Storefront',

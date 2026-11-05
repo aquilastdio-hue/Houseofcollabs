@@ -86,9 +86,9 @@ export const creatorColumns: Column<AdminCreatorRow>[] = [
     }),
   ),
   {
-    // Avg views × ₹0.5 (FINAL_PRICE_PER_VIEW): a guide figure for admins, never charged.
-    key: 'final_pricing',
-    header: 'Final pricing',
+    // IFCR: avg views × ₹0.5 (FINAL_PRICE_PER_VIEW), a guide figure for admins, never charged.
+    key: 'ifcr',
+    header: 'IFCR',
     className: 'tabular-nums whitespace-nowrap font-medium',
     cell: (c) => {
       const price = finalPricing(c.avg_reel_views)

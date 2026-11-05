@@ -26,7 +26,6 @@ export type ImportRow = {
   languages?: string[]
   youtube?: string | null
   youtube_subscribers?: number | null
-  engagement_rate?: number | null
   website?: string | null
   industry?: string | null
 }
@@ -104,7 +103,6 @@ export const IMPORT_COLUMNS: Record<AccountKind, Column[]> = {
     { key: 'languages', header: 'Languages', aliases: ['language', 'languages spoken'], example: 'Hindi; English' },
     { key: 'youtube', header: 'YouTube', aliases: ['youtube channel', 'youtube url', 'youtube link', 'yt'], example: 'https://youtube.com/@riyasharma' },
     { key: 'youtube_subscribers', header: 'YouTube subscribers', aliases: ['subscribers', 'youtube subs'], example: '8K' },
-    { key: 'engagement_rate', header: 'Engagement rate', aliases: ['engagement', 'er', 'engagement %'], example: '4.2%' },
   ],
   brand: [
     {
@@ -209,6 +207,19 @@ export function exportPhone(value: string | null | undefined): string {
   return e164?.startsWith('+91') ? `${e164.slice(3, 8)} ${e164.slice(8)}` : value
 }
 
+/**
+ * The Instagram column of a downloaded spreadsheet: the creator's profile link,
+ * tidied to https://www.instagram.com/handle/ (no ?igsh= or ?utm_source
+ * tracking), or their handle when the saved link isn't an Instagram profile.
+ * `importInstagram` reads either back as the handle.
+ */
+export function exportInstagram(profileUrl: string | null | undefined, username: string | null | undefined): string {
+  const m = (profileUrl ?? '').trim().match(/^https?:\/\/(?:www\.|m\.)?instagram\.com\/([A-Za-z0-9._]{1,30})(?:[/?#]|$)/i)
+  const notProfile = ['p', 'reel', 'reels', 'stories', 'explore', 'tv']
+  if (m && !notProfile.includes(m[1]!.toLowerCase())) return `https://www.instagram.com/${m[1]}/`
+  return (username ?? '').trim().replace(/^@/, '')
+}
+
 /** "@riya.s", "riya.s" or an instagram.com link → "riya.s"; anything that can't be a handle → null. */
 export function importInstagram(value: string): string | null {
   const handle = value
@@ -232,10 +243,12 @@ const GENDER_WORDS: Record<string, Gender> = {
   'prefer not to say': 'prefer_not_to_say',
 }
 
-/** Optional creator details: anything unreadable is left blank, never a reason to refuse the row. */
+/**
+ * Optional creator details: anything unreadable is left blank, never a reason to refuse the row.
+ * No engagement rate: that only ever comes from the weekly Instagram fetch.
+ */
 function creatorExtras(get: (key: keyof ImportRow) => string) {
   const age = Number(get('age'))
-  const er = Number(get('engagement_rate').replace('%', '').trim())
   const youtube = get('youtube')
   return {
     headline: get('headline').slice(0, 120) || null,
@@ -251,7 +264,6 @@ function creatorExtras(get: (key: keyof ImportRow) => string) {
     ].slice(0, 10),
     youtube: /^(https?:\/\/)?(www\.|m\.)?(youtube\.com|youtu\.be)\//i.test(youtube) ? youtube.replace(/^(?!https?:\/\/)/, 'https://') : null,
     youtube_subscribers: parseFollowers(get('youtube_subscribers')),
-    engagement_rate: get('engagement_rate') && Number.isFinite(er) && er >= 0 && er <= 100 ? Math.round(er * 100) / 100 : null,
   }
 }
 

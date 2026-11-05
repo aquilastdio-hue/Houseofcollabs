@@ -134,7 +134,7 @@ export function labelFor(options: readonly Option[], value?: string | null) {
 /** The service kinds with their own price column in Admin → Creators and its CSV export. */
 export const PRICE_COLUMN_TYPES = ['ugc_video', 'reel', 'story', 'post', 'youtube_video'] as const
 
-/** Admin → Creators "Final pricing": what a creator is worth per piece, at this many rupees per average view. */
+/** Admin → Creators "IFCR": what a creator is worth per piece, at this many rupees per average view. */
 export const FINAL_PRICE_PER_VIEW = 0.5
 
 /** Average Instagram Reel views × FINAL_PRICE_PER_VIEW, to the rupee; null without a view count. */
