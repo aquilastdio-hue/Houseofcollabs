@@ -21,8 +21,7 @@ import {
   type BrandApplicationValues,
 } from '@/schemas/brand-application'
 import { Button } from '@/components/ui/button'
-import { GoogleButton } from '@/components/auth/auth-parts'
-import { signInWithGoogle } from '@/services/auth.service'
+import { SocialSignIn } from '@/components/auth/auth-parts'
 import { Card } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -282,20 +281,7 @@ export function Page3({ form }: { form: Form }) {
  * New brands should use BrandOnboarding component instead.
  */
 function Submitted({ email }: { email: string }) {
-  const [busy, setBusy] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
-
-  const go = async () => {
-    setBusy(true)
-    setError(null)
-    try {
-      await signInWithGoogle({ role: 'brand', redirect: '/brand' })
-      // A redirect to Google follows; leave the button spinning behind it.
-    } catch (e) {
-      setError(toAppError(e).message)
-      setBusy(false)
-    }
-  }
 
   return (
     <div className="container-page flex min-h-[calc(100dvh-var(--header-height))] items-center justify-center py-12">
@@ -307,7 +293,7 @@ function Submitted({ email }: { email: string }) {
         <p className="mt-3 text-muted">{BRAND_SUBMITTED_COPY.body}</p>
 
         <div className="mt-7">
-          <GoogleButton onClick={() => void go()} loading={busy} />
+          <SocialSignIn role="brand" redirect="/brand" onError={setError} />
         </div>
 
         <p className="mt-3 text-sm text-muted">

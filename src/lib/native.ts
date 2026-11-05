@@ -9,6 +9,9 @@ import { site } from '@/config/site'
  */
 export const isNativeApp = Capacitor.isNativePlatform()
 
+/** The iPhone app, where Apple requires Sign in with Apple next to Google. */
+export const isIOSApp = Capacitor.getPlatform() === 'ios'
+
 /**
  * Where links in emails and redirects should point. Inside the apps the page
  * origin is `capacitor://localhost` (iOS) or `https://localhost` (Android),

@@ -8,6 +8,7 @@ export const qk = {
   creatorTypes: ['creator-types'] as const,
   publicStats: ['public-stats'] as const,
   settings: ['platform-settings'] as const,
+  signInMethods: ['sign-in-methods'] as const,
 
   creators: {
     all: ['creators'] as const,

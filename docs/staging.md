@@ -8,7 +8,7 @@ houseofcollabs.com, its database or the `main` branch.
 | --- | --- | --- |
 | URL | www.houseofcollabs.com | `staging.houseofcollabs.com` (or the free `…vercel.app` branch URL) |
 | Git branch | `main` | `staging` |
-| Supabase project | `sxndiarrdfqiepnnczmy` | its own project (ref: `<STAGING_REF>`) |
+| Supabase project | `sxndiarrdfqiepnnczmy` | `loxojoiwteeyxbqskqyk` (hoc-staging, ap-northeast-2) |
 | Data | real | starts empty: sign up fresh creators and brands |
 | Marker | none | "Testing site" badge on every page, `noindex` everywhere, `robots.txt` blocks all crawlers |
 
@@ -28,7 +28,7 @@ The code is identical; `VITE_ENVIRONMENT=staging` (a Vercel variable for the
    - **Domains**: add `staging.houseofcollabs.com`, assign it to the Git
      branch `staging`, and add the CNAME it shows at your DNS provider.
    - **Environment Variables** → *Preview*, branch `staging` only:
-     `VITE_SUPABASE_URL` = `https://<STAGING_REF>.supabase.co`,
+     `VITE_SUPABASE_URL` = `https://loxojoiwteeyxbqskqyk.supabase.co`,
      `VITE_SUPABASE_ANON_KEY` = staging anon / publishable key,
      `VITE_ENVIRONMENT` = `staging`,
      `SITE_URL` = `https://staging.houseofcollabs.com`,
@@ -39,12 +39,12 @@ The code is identical; `VITE_ENVIRONMENT=staging` (a Vercel variable for the
    `RAZORPAY_WEBHOOK_SECRET`, `BREVO_API_KEY`, `APIFY_TOKEN` (optional),
    `FIREBASE_PROJECT_ID` (optional).
 4. **Razorpay** (live mode, and test mode if testing with test accounts):
-   add a second webhook: `https://<STAGING_REF>.supabase.co/functions/v1/razorpay-webhook`,
+   add a second webhook: `https://loxojoiwteeyxbqskqyk.supabase.co/functions/v1/razorpay-webhook`,
    same secret, events `payment.captured`, `payment.failed`, `order.paid`,
    `refund.processed`, `refund.failed`. Production's webhook stays as it is;
    each one ignores orders it doesn't know.
 5. **Google sign-in** (if used on staging): add
-   `https://<STAGING_REF>.supabase.co/auth/v1/callback` to the OAuth client's
+   `https://loxojoiwteeyxbqskqyk.supabase.co/auth/v1/callback` to the OAuth client's
    redirect URIs and paste the client id/secret into the staging project's
    Auth → Providers → Google. **Firebase**: add `staging.houseofcollabs.com`
    to Authorized domains.
@@ -52,14 +52,26 @@ The code is identical; `VITE_ENVIRONMENT=staging` (a Vercel variable for the
 
 ## 2. Agent: building the staging backend
 
+**Done on 4–5 Nov 2026**: every migration replayed, all Edge Functions
+deployed, `SITE_URL` / `ALLOWED_ORIGINS` / `NOTIFICATION_WEBHOOK_SECRET` /
+`RAZORPAY_WEBHOOK_SECRET` set, Brevo email (`EMAIL_PROVIDER=brevo`,
+`BREVO_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`) and Brevo SMTP for Auth,
+both Vault secrets created, `billing_v2_enabled` on, hold 0 hours, Auth URL
+configuration, Sign in with Apple, Vercel domain + Preview variables,
+Vercel Authentication off for previews, admin `aquilastdio@gmail.com`
+(profile made by hand: staging, like production, only creates profiles on
+approval). The database password and both webhook secrets are in
+`supabase/.env.staging` (gitignored). Still to do: the Razorpay keys and
+webhooks (section 1, steps 3–4).
+
 The staging project is empty, so replaying every migration is safe there,
 and only there. (On production `db push` is forbidden: see AGENTS.md rule 4.)
 
 ```bash
-supabase link --project-ref <STAGING_REF>
+supabase link --project-ref loxojoiwteeyxbqskqyk
 supabase db push                                   # every migration, in order, on the empty project
-supabase functions deploy --project-ref <STAGING_REF> --use-api   # all functions
-supabase secrets set --project-ref <STAGING_REF> \
+supabase functions deploy --project-ref loxojoiwteeyxbqskqyk --use-api   # all functions
+supabase secrets set --project-ref loxojoiwteeyxbqskqyk \
   SITE_URL=https://staging.houseofcollabs.com \
   ALLOWED_ORIGINS=https://staging.houseofcollabs.com \
   EMAIL_PROVIDER=brevo EMAIL_FROM="House of Collabs (staging) <…>" \
@@ -70,7 +82,7 @@ supabase link --project-ref sxndiarrdfqiepnnczmy   # ← back to production righ
 Then, in the staging project's SQL Editor (or `supabase db query` while linked):
 
 ```sql
-select vault.create_secret('https://<STAGING_REF>.supabase.co', 'project_url');
+select vault.create_secret('https://loxojoiwteeyxbqskqyk.supabase.co', 'project_url');
 select vault.create_secret('<same NOTIFICATION_WEBHOOK_SECRET>', 'notification_webhook_secret');
 update public.platform_settings set value = 'true' where key = 'billing_v2_enabled';   -- test the new billing
 -- after the owner signs in once:

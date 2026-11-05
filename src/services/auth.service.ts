@@ -18,18 +18,41 @@ export async function signInWithEmail(email: string, password: string) {
 }
 
 /** Google OAuth. The chosen role (signup) travels through the callback URL. */
-export async function signInWithGoogle(opts: { role?: Exclude<UserRole, 'admin'>; redirect?: string } = {}) {
+type SocialSignIn = { role?: Exclude<UserRole, 'admin'>; redirect?: string }
+
+/** Google or Apple: the page goes to the provider and comes back to /auth/callback. */
+async function signInWithProvider(provider: 'google' | 'apple', opts: SocialSignIn) {
   const params = new URLSearchParams()
   if (opts.role) params.set('role', opts.role)
   if (opts.redirect) params.set('redirect', opts.redirect)
   const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
+    provider,
     options: {
       redirectTo: `${origin()}/auth/callback${params.size ? `?${params}` : ''}`,
-      queryParams: { prompt: 'select_account' },
+      queryParams: provider === 'google' ? { prompt: 'select_account' } : undefined,
     },
   })
   if (error) throw toAppError(error)
+}
+
+export const signInWithGoogle = (opts: SocialSignIn = {}) => signInWithProvider('google', opts)
+export const signInWithApple = (opts: SocialSignIn = {}) => signInWithProvider('apple', opts)
+
+export type SignInMethods = { google: boolean; apple: boolean }
+
+/**
+ * The social sign-ins switched on in this Supabase project (Authentication →
+ * Sign In / Providers). Public, no session needed. The buttons follow it, so
+ * a provider only appears once it works there: staging and the live site can
+ * differ, and a button never goes live before its setup is finished.
+ */
+export async function getSignInMethods(): Promise<SignInMethods> {
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/settings`, {
+    headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '' },
+  })
+  if (!res.ok) throw new Error(`Couldn’t read sign-in settings (${res.status})`)
+  const body = (await res.json()) as { external?: Record<string, boolean> }
+  return { google: Boolean(body.external?.google), apple: Boolean(body.external?.apple) }
 }
 
 export async function signOut() {

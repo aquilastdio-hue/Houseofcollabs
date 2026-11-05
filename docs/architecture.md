@@ -37,7 +37,7 @@ layout see [codebase-map.md](codebase-map.md). For the tables see
 | Source control | **GitHub** `aquilastdio-hue/Houseofcollabs` | Branch `main` only; every push deploys | n/a |
 | Database | **Supabase Postgres 17** (project `sxndiarrdfqiepnnczmy`) | Tables, RLS, ~127 public + ~110 private functions, triggers | `supabase/migrations/*.sql` |
 | API | Supabase **PostgREST** | `/rest/v1` tables and `/rpc/*` | exposed schemas `public`, `graphql_public`; `max_rows = 1000` |
-| Auth | Supabase **Auth (GoTrue)** | Email + password, Google OAuth, invites, recovery, bans | `supabase/config.toml` `[auth]` + dashboard; invite template `supabase/templates/invite.html` |
+| Auth | Supabase **Auth (GoTrue)** | Email + password, Google and Apple OAuth, invites, recovery, bans | `supabase/config.toml` `[auth]` + dashboard; invite template `supabase/templates/invite.html` |
 | Files | Supabase **Storage** | 9 buckets, 15.8 GB (see [database.md](database.md#7-storage-buckets)) | migrations (`…0013_storage.sql` and later) |
 | Server code | Supabase **Edge Functions** (Deno 2) | 15 deployed functions | `supabase/functions/*`, `[functions.*]` in `config.toml` |
 | Scheduled jobs | **pg_cron** inside Postgres | 7 jobs: expiry, auto-cancel, auto-approve, earnings release, email queue, email campaigns, weekly Instagram | migrations (`…0014_realtime_cron_webhooks.sql` and later) |
@@ -163,7 +163,7 @@ not-found and validation errors.
 
 | Concept | Where |
 | --- | --- |
-| Login identity | `auth.users` (Supabase Auth): email + password, or Google |
+| Login identity | `auth.users` (Supabase Auth): email + password, Google, or Apple |
 | Profile | `public.profiles` (same id): `role` (`brand` / `creator` / `admin`), `status` (`active` / `suspended` / `deleted`), `onboarding_completed`, `is_test`, email preferences, `last_seen_at` |
 | Admin rights | **only** an active row in `public.admin_users` (`private.is_admin()`, `requireAdmin()`) |
 | Staff (non-login) | `public.employees`: referral codes that creators enter at sign-up |
@@ -183,8 +183,23 @@ used):
    [scaling-review.md](scaling-review.md#5-product-and-operations).
 3. **Admin CSV import**: `admin-import-accounts` creates accounts in batches of
    10, optionally emailing invites.
-4. **Google sign-in**: allowed for an email that already has an approved
-   application or account (migration `…0033_google_signin_for_approved.sql`).
+4. **Google or Apple sign-in**: allowed for an email that already has an approved
+   application or account (migration `…0033_google_signin_for_approved.sql`,
+   which matches on the email whatever the provider). Each button shows only
+   when that provider is switched on in the site's own Supabase project
+   (`getSignInMethods` reads `/auth/v1/settings`), so staging and production
+   can differ. Apple shows on the website and in the iPhone app, not Android.
+   - Apple's "Hide My Email" gives a `…@privaterelay.appleid.com` address,
+     which won't match an application: that person lands in onboarding as new.
+     Emails to relay addresses only arrive once the sending domain is
+     registered with Apple (Sign in with Apple for Email Communication).
+   - Apple setup: App ID `com.houseofcollabs.app` (team Aquila Studio, `7PJVZUNCCU`) with
+     Sign in with Apple, a Services ID for the web (`com.houseofcollabs.web`)
+     whose return URLs are each project's `https://<ref>.supabase.co/auth/v1/callback`,
+     and a Sign in with Apple key (.p8, kept offline). Supabase's
+     "Secret Key (for OAuth)" is made from that key with
+     `node scripts/apple-client-secret.mjs` and **expires after 6 months**: re-run
+     it and paste the new one into both projects before then.
 
 **One email is one kind of account.** A creator email can't become a brand,
 and the reverse (migration `…0024_one_account_kind_per_email.sql`). Phone and

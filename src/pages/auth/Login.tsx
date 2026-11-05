@@ -6,13 +6,13 @@ import { toast } from 'sonner'
 import { Building2, MailWarning, Sparkles } from 'lucide-react'
 import { isNativeApp } from '@/lib/native'
 import { loginSchema, type LoginValues } from '@/schemas/auth'
-import { resendVerification, signInWithEmail, signInWithGoogle } from '@/services/auth.service'
+import { resendVerification, signInWithEmail } from '@/services/auth.service'
 import { toAppError } from '@/lib/errors'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Seo } from '@/components/shared/seo'
-import { AuthHeading, GoogleButton, OrDivider, PasswordInput } from '@/components/auth/auth-parts'
+import { AuthHeading, PasswordInput, SocialSignIn } from '@/components/auth/auth-parts'
 
 export default function Login() {
   const [params] = useSearchParams()
@@ -22,7 +22,6 @@ export default function Login() {
   // and refuses 'admin' outright — so an existing account is unaffected.
   const roleParam = params.get('role')
   const role = roleParam === 'creator' ? 'creator' : roleParam === 'brand' ? 'brand' : undefined
-  const [googleLoading, setGoogleLoading] = React.useState(false)
   const [unconfirmed, setUnconfirmed] = React.useState<string | null>(null)
   const form = useForm<LoginValues>({ resolver: zodResolver(loginSchema), defaultValues: { email: '', password: '' } })
   const { errors, isSubmitting } = form.formState
@@ -44,25 +43,7 @@ export default function Login() {
       <Seo title="Log in" description="Log in to your House of Collabs workspace." noindex />
       <AuthHeading title="Welcome back" subtitle="Log in to manage your orders, messages and storefront." />
 
-      {/* Google refuses to sign in inside an app's web view, so the apps offer
-          email and password only. */}
-      {!isNativeApp && (
-        <>
-          <GoogleButton
-            loading={googleLoading}
-            onClick={async () => {
-              setGoogleLoading(true)
-              try {
-                await signInWithGoogle({ role, redirect })
-              } catch (e) {
-                toast.error(toAppError(e).message)
-                setGoogleLoading(false)
-              }
-            }}
-          />
-          <OrDivider />
-        </>
-      )}
+      <SocialSignIn role={role} redirect={redirect} onError={(message) => toast.error(message)} divider />
 
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <Field label="Email" htmlFor="email" error={errors.email?.message}>

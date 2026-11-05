@@ -5,7 +5,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, Eye, EyeOff, LinkIcon, MailCheck, Send } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toAppError } from '@/lib/errors'
-import { requestPasswordReset } from '@/services/auth.service'
+import { useQuery } from '@tanstack/react-query'
+import { isIOSApp, isNativeApp } from '@/lib/native'
+import { qk } from '@/lib/query-keys'
+import { getSignInMethods, requestPasswordReset, signInWithApple, signInWithGoogle } from '@/services/auth.service'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input, type InputProps } from '@/components/ui/input'
@@ -38,6 +41,75 @@ export function GoogleButton({ onClick, loading, label = 'Continue with Google' 
       {!loading && <GoogleIcon />}
       {label}
     </Button>
+  )
+}
+
+export function AppleIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn('size-4', className)} fill="currentColor" aria-hidden>
+      <path d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.72-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.53 2.66-.39 6.6 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.29-.88-2.31-3.49zM14.2 6.13c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.65-1.05 1.68-.92 2.67.97.08 1.96-.49 2.56-1.22z" />
+    </svg>
+  )
+}
+
+export function AppleButton({ onClick, loading }: { onClick: () => void; loading?: boolean }) {
+  return (
+    <Button type="button" variant="ink" size="lg" block onClick={onClick} loading={loading} className="bg-black hover:bg-black/85">
+      {!loading && <AppleIcon />}
+      Continue with Apple
+    </Button>
+  )
+}
+
+/**
+ * Continue with Google and Continue with Apple, each shown only when it's
+ * switched on in this site's Supabase project. Apple shows on the website and
+ * in the iPhone app (Apple rejects iPhone apps that offer Google without it),
+ * not in the Android app. In the apps both open in the phone's browser sheet
+ * and come back by themselves.
+ */
+export function SocialSignIn({
+  role,
+  redirect,
+  onError,
+  divider,
+}: {
+  role?: 'brand' | 'creator'
+  redirect?: string
+  onError: (message: string) => void
+  /** An "or" line underneath, only when there is a button above it. */
+  divider?: boolean
+}) {
+  // Until the answer arrives, or if it can't be fetched, Google shows as it always has.
+  const { data: methods = { google: true, apple: false } } = useQuery({
+    queryKey: qk.signInMethods,
+    queryFn: getSignInMethods,
+    staleTime: Infinity,
+    meta: { silent: true },
+  })
+  const showGoogle = methods.google
+  const showApple = methods.apple && (!isNativeApp || isIOSApp)
+  const [busy, setBusy] = React.useState<'google' | 'apple' | null>(null)
+  const go = async (provider: 'google' | 'apple') => {
+    setBusy(provider)
+    try {
+      await (provider === 'google' ? signInWithGoogle : signInWithApple)({ role, redirect })
+      // The website leaves for the provider; in the apps a sheet opens over this page.
+      if (isNativeApp) setBusy(null)
+    } catch (e) {
+      onError(toAppError(e).message)
+      setBusy(null)
+    }
+  }
+  if (!showGoogle && !showApple) return null
+  return (
+    <>
+      <div className="space-y-3">
+        {showGoogle && <GoogleButton onClick={() => void go('google')} loading={busy === 'google'} />}
+        {showApple && <AppleButton onClick={() => void go('apple')} loading={busy === 'apple'} />}
+      </div>
+      {divider && <OrDivider />}
+    </>
   )
 }
 
