@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { servicePrice } from './constants'
+import { finalPricing, servicePrice } from './constants'
 
 describe('servicePrice', () => {
   // As admin_list_creators returns it: content type → the lower price of that kind.
@@ -18,5 +18,19 @@ describe('servicePrice', () => {
     expect(servicePrice(prices, 'youtube_video')).toBeNull()
     expect(servicePrice({}, 'post')).toBeNull()
     expect(servicePrice(null, 'post')).toBeNull()
+  })
+})
+
+describe('finalPricing', () => {
+  it('is half a rupee per average view, to the rupee', () => {
+    expect(finalPricing(3444)).toBe(1722)
+    expect(finalPricing('31496.4')).toBe(15748)
+    expect(finalPricing(223)).toBe(112)
+  })
+
+  it('is null without a view count', () => {
+    expect(finalPricing(null)).toBeNull()
+    expect(finalPricing(undefined)).toBeNull()
+    expect(finalPricing('')).toBeNull()
   })
 })

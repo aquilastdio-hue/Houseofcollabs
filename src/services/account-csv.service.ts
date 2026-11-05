@@ -4,10 +4,10 @@ import { fetchAllPages } from '@/lib/fetch-all'
 import { invokeFunction } from '@/lib/supabase/functions'
 import { istParts } from '@/lib/india-time'
 import { toCsv } from '@/lib/csv'
-import { CONTENT_TYPES, PRICE_COLUMN_TYPES, labelFor, servicePrice } from '@/lib/constants'
+import { CONTENT_TYPES, PRICE_COLUMN_TYPES, finalPricing, labelFor, servicePrice } from '@/lib/constants'
 import { formatINR } from '@/lib/format'
 import { site } from '@/config/site'
-import type { AccountKind, ImportRow } from '@/lib/account-import'
+import { exportPhone, type AccountKind, type ImportRow } from '@/lib/account-import'
 import { getProfileNames, listBrands, listCreators, type AdminCreatorParams } from './admin.service'
 import type { AccountStatus } from '@/types'
 
@@ -69,8 +69,9 @@ export async function exportCreatorsCsv(params: Omit<AdminCreatorParams, 'page' 
     'City',
     'State',
     'Engagement rate (%)',
-    'Avg. Reel views',
+    'Avg views',
     ...PRICE_COLUMN_TYPES.map((type) => `${labelFor(CONTENT_TYPES, type)} (₹)`),
+    'Final pricing (₹)',
     'All services',
     'Full name',
     'Storefront',
@@ -88,7 +89,7 @@ export async function exportCreatorsCsv(params: Omit<AdminCreatorParams, 'page' 
   const rows = items.map((c) => [
     c.display_name,
     c.email,
-    c.whatsapp,
+    exportPhone(c.whatsapp),
     instagram.get(c.id) ?? '',
     c.followers_count,
     c.categories,
@@ -97,6 +98,7 @@ export async function exportCreatorsCsv(params: Omit<AdminCreatorParams, 'page' 
     c.engagement_rate == null ? '' : Number(c.engagement_rate).toFixed(2),
     c.avg_reel_views == null ? '' : Math.round(Number(c.avg_reel_views)),
     ...PRICE_COLUMN_TYPES.map((type) => servicePrice(c.service_prices, type) ?? ''),
+    finalPricing(c.avg_reel_views) ?? '',
     (services.get(c.id) ?? []).join('; '),
     names.get(c.profile_id) ?? '',
     c.deleted_at ? 'removed' : c.status,

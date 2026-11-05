@@ -196,6 +196,19 @@ export function importPhone(value: string): string | null {
   return local.length === 10 ? `+91${local}` : null
 }
 
+/**
+ * A WhatsApp number for a downloaded spreadsheet: an Indian one as "98765 43210".
+ * The space keeps it text in Excel and Google Sheets, so Excel neither drops a
+ * leading 0 nor shows twelve digits as 9.19877E+11, and with no "+" there's no
+ * formula guard to show either. `importPhone` reads it back as +91. Anything
+ * else goes out as it was typed.
+ */
+export function exportPhone(value: string | null | undefined): string {
+  if (!value) return ''
+  const e164 = importPhone(value)
+  return e164?.startsWith('+91') ? `${e164.slice(3, 8)} ${e164.slice(8)}` : value
+}
+
 /** "@riya.s", "riya.s" or an instagram.com link → "riya.s"; anything that can't be a handle → null. */
 export function importInstagram(value: string): string | null {
   const handle = value

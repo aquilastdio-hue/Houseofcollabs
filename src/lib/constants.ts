@@ -134,6 +134,16 @@ export function labelFor(options: readonly Option[], value?: string | null) {
 /** The service kinds with their own price column in Admin → Creators and its CSV export. */
 export const PRICE_COLUMN_TYPES = ['ugc_video', 'reel', 'story', 'post', 'youtube_video'] as const
 
+/** Admin → Creators "Final pricing": what a creator is worth per piece, at this many rupees per average view. */
+export const FINAL_PRICE_PER_VIEW = 0.5
+
+/** Average Instagram Reel views × FINAL_PRICE_PER_VIEW, to the rupee; null without a view count. */
+export function finalPricing(avgViews: unknown): number | null {
+  if (avgViews === null || avgViews === undefined || avgViews === '') return null
+  const views = Number(avgViews)
+  return Number.isFinite(views) ? Math.round(views * FINAL_PRICE_PER_VIEW) : null
+}
+
 /** A creator's price for one kind of service from `admin_list_creators.service_prices` (the lower one if they have two), or null. */
 export function servicePrice(prices: unknown, type: string): number | null {
   const value = prices && typeof prices === 'object' ? (prices as Record<string, unknown>)[type] : undefined

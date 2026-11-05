@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { importInstagram, importPhone, parseFollowers, readImportFile, templateCsv } from './account-import'
+import { exportPhone, importInstagram, importPhone, parseFollowers, readImportFile, templateCsv } from './account-import'
 import { toCsv } from './csv'
 
 describe('readImportFile', () => {
@@ -140,6 +140,24 @@ describe('importInstagram', () => {
     expect(importInstagram('https://instagram.com/riya_s?igsh=abc')).toBe('riya_s')
     expect(importInstagram('')).toBeNull()
     expect(importInstagram('riya sharma')).toBeNull()
+  })
+})
+
+describe('exportPhone', () => {
+  it('writes every form of an Indian number the same way, as text a spreadsheet keeps', () => {
+    for (const typed of ['9876543210', '09876543210', '919876543210', '+919876543210', '98765 43210', '+91 98765-43210']) {
+      expect(exportPhone(typed)).toBe('98765 43210')
+    }
+  })
+
+  it('reads back in as the same number', () => {
+    expect(importPhone(exportPhone('+919876543210'))).toBe('+919876543210')
+  })
+
+  it('leaves a foreign or unreadable number as typed, and a missing one empty', () => {
+    expect(exportPhone('+1 202 555 0123')).toBe('+1 202 555 0123')
+    expect(exportPhone('12345')).toBe('12345')
+    expect(exportPhone(null)).toBe('')
   })
 })
 

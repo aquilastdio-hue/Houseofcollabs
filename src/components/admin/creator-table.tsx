@@ -1,5 +1,5 @@
 import { BadgeCheck, Sparkles } from 'lucide-react'
-import { CONTENT_TYPES, PRICE_COLUMN_TYPES, labelFor, servicePrice } from '@/lib/constants'
+import { CONTENT_TYPES, PRICE_COLUMN_TYPES, finalPricing, labelFor, servicePrice } from '@/lib/constants'
 import { formatCompact, formatDate, formatINR, formatLocation, formatNumber, formatPercent } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import { RatingLabel } from '@/components/shared/star-rating'
@@ -14,7 +14,7 @@ export const CREATOR_SORTS = [
   { value: 'orders', label: 'Orders' },
   { value: 'followers', label: 'Followers' },
   { value: 'engagement', label: 'Engagement rate' },
-  { value: 'reel_views', label: 'Avg. Reel views' },
+  { value: 'reel_views', label: 'Avg views' },
   { value: 'rating', label: 'Rating' },
   { value: 'name', label: 'Name (A–Z)' },
 ] as const
@@ -69,8 +69,7 @@ export const creatorColumns: Column<AdminCreatorRow>[] = [
   },
   {
     key: 'reel_views',
-    header: 'Reel views',
-    mobileLabel: 'Avg. Reel views',
+    header: 'Avg views',
     className: 'tabular-nums',
     cell: (c) => (c.avg_reel_views == null ? <span className="text-faint">—</span> : formatCompact(Number(c.avg_reel_views))),
   },
@@ -86,6 +85,16 @@ export const creatorColumns: Column<AdminCreatorRow>[] = [
       },
     }),
   ),
+  {
+    // Avg views × ₹0.5 (FINAL_PRICE_PER_VIEW): a guide figure for admins, never charged.
+    key: 'final_pricing',
+    header: 'Final pricing',
+    className: 'tabular-nums whitespace-nowrap font-medium',
+    cell: (c) => {
+      const price = finalPricing(c.avg_reel_views)
+      return price === null ? <span className="text-faint">—</span> : formatINR(price)
+    },
+  },
   { key: 'orders', header: 'Orders', className: 'tabular-nums', cell: (c) => formatNumber(c.orders_count) },
   { key: 'revenue', header: 'Revenue', className: 'tabular-nums whitespace-nowrap', cell: (c) => formatINR(c.revenue) },
   { key: 'rating', header: 'Rating', cell: (c) => <RatingLabel rating={Number(c.rating ?? 0)} count={Number(c.review_count ?? 0)} /> },
