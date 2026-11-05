@@ -131,6 +131,15 @@ export function labelFor(options: readonly Option[], value?: string | null) {
   return options.find((o) => o.value === value)?.label ?? value ?? ''
 }
 
+/** The service kinds with their own price column in Admin → Creators and its CSV export. */
+export const PRICE_COLUMN_TYPES = ['ugc_video', 'reel', 'story', 'post', 'youtube_video'] as const
+
+/** A creator's price for one kind of service from `admin_list_creators.service_prices` (the lower one if they have two), or null. */
+export function servicePrice(prices: unknown, type: string): number | null {
+  const value = prices && typeof prices === 'object' ? (prices as Record<string, unknown>)[type] : undefined
+  return value === undefined || value === null ? null : Number(value)
+}
+
 /**
  * Creators per page on the discover/creators listing. Only the creator search
  * reads this — the admin tables each carry their own, so changing it here does

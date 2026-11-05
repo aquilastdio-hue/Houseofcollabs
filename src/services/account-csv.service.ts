@@ -4,6 +4,8 @@ import { fetchAllPages } from '@/lib/fetch-all'
 import { invokeFunction } from '@/lib/supabase/functions'
 import { istParts } from '@/lib/india-time'
 import { toCsv } from '@/lib/csv'
+import { CONTENT_TYPES, PRICE_COLUMN_TYPES, labelFor, servicePrice } from '@/lib/constants'
+import { formatINR } from '@/lib/format'
 import { site } from '@/config/site'
 import type { AccountKind, ImportRow } from '@/lib/account-import'
 import { getProfileNames, listBrands, listCreators, type AdminCreatorParams } from './admin.service'
@@ -29,14 +31,33 @@ async function inChunks<T>(ids: string[], fetch: (chunk: string[]) => Promise<T[
  */
 export async function exportCreatorsCsv(params: Omit<AdminCreatorParams, 'page' | 'pageSize'>) {
   const { items } = await fetchAllPages((page, pageSize) => listCreators({ ...params, page, pageSize }))
-  const [names, instagram] = await Promise.all([
+  const ids = items.map((c) => c.id)
+  const [names, instagram, services] = await Promise.all([
     getProfileNames(items.map((c) => c.profile_id)),
     inChunks(
-      items.map((c) => c.id),
+      ids,
       async (chunk) =>
         unwrap(await supabase.from('creator_social_accounts').select('creator_id, username').eq('platform', 'instagram').in('creator_id', chunk)) ??
         [],
     ).then((rows) => new Map(rows.map((r) => [r.creator_id, r.username.trim().replace(/^@/, '')]))),
+    // Every service a brand can order, in storefront order, for the "All services" column.
+    inChunks(
+      ids,
+      async (chunk) =>
+        unwrap(
+          await supabase
+            .from('creator_services')
+            .select('creator_id, title, price, sort_order')
+            .eq('active', true)
+            .is('archived_at', null)
+            .in('creator_id', chunk)
+            .order('sort_order'),
+        ) ?? [],
+    ).then((rows) => {
+      const byCreator = new Map<string, string[]>()
+      for (const r of rows) byCreator.set(r.creator_id, [...(byCreator.get(r.creator_id) ?? []), `${r.title}: ${formatINR(r.price)}`])
+      return byCreator
+    }),
   ])
   const header = [
     'Name',
@@ -47,6 +68,10 @@ export async function exportCreatorsCsv(params: Omit<AdminCreatorParams, 'page' 
     'Categories',
     'City',
     'State',
+    'Engagement rate (%)',
+    'Avg. Reel views',
+    ...PRICE_COLUMN_TYPES.map((type) => `${labelFor(CONTENT_TYPES, type)} (₹)`),
+    'All services',
     'Full name',
     'Storefront',
     'Account',
@@ -69,6 +94,10 @@ export async function exportCreatorsCsv(params: Omit<AdminCreatorParams, 'page' 
     c.categories,
     c.city,
     c.state,
+    c.engagement_rate == null ? '' : Number(c.engagement_rate).toFixed(2),
+    c.avg_reel_views == null ? '' : Math.round(Number(c.avg_reel_views)),
+    ...PRICE_COLUMN_TYPES.map((type) => servicePrice(c.service_prices, type) ?? ''),
+    (services.get(c.id) ?? []).join('; '),
     names.get(c.profile_id) ?? '',
     c.deleted_at ? 'removed' : c.status,
     c.account_status,
