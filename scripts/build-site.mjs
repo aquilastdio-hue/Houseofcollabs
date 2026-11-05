@@ -28,7 +28,13 @@ const isLocal = (u) => !u || /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:|
 /** Vercel exposes hostnames without a scheme; everything else arrives complete. */
 const withScheme = (u) => (!u || /^https?:\/\//i.test(u) ? u : `https://${u}`)
 
+// vercel.json pins SITE_URL to the live domain for every build, and it beats
+// the dashboard's variables, so the staging branch's own address (its
+// VITE_SITE_URL) has to come first there or its links point at production.
+const isStagingBuild = (process.env.VITE_ENVIRONMENT ?? '').toLowerCase() === 'staging'
+
 const candidates = [
+  isStagingBuild ? process.env.VITE_SITE_URL : undefined,
   process.env.SITE_URL,
   process.env.VITE_SITE_URL,
   process.env.VERCEL_PROJECT_PRODUCTION_URL,
