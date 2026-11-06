@@ -1,9 +1,15 @@
 // Public Instagram stats for creator profiles, read with Apify's Instagram
-// Profile Scraper (apify/instagram-profile-scraper).
+// Profile Scraper (apify/instagram-profile-scraper), and average Reel views
+// over each creator's latest 10 Reels from the Instagram Reel Scraper
+// (apify/instagram-reel-scraper): the profile scraper only sees ~12 recent
+// posts of any kind, which for many creators held a single Reel.
 //
 //  1. Weekly refresh (pg_cron → private.request_instagram_stats_refresh):
-//     header `x-webhook-secret`, body { action: 'refresh-all' }. Starts one
-//     Apify run for every live creator, with a webhook back to this function.
+//     header `x-webhook-secret`, body { action: 'refresh-all' }. Starts a
+//     profile run and a Reel run for every live creator, each with a webhook
+//     back to this function. The Reel run only ever writes the Reel average,
+//     and a profile save keeps the Reel average already stored, so the two
+//     can finish in either order.
 //  2. Apify webhook (run succeeded / timed out): Apify's default payload. None
 //     of it is trusted — the run is fetched again with our own token, so only a
 //     run in our Apify account can write anything. Results are saved in chunks,
@@ -19,10 +25,14 @@ import { handler, HttpError, json, readJson, requireUuid } from '../_shared/http
 import { adminClient, audit, requireAdmin } from '../_shared/supabase.ts'
 import { safeEqual } from '../_shared/razorpay.ts'
 import {
+  REELS_AVERAGED,
   normalizeHandle,
   notFoundRow,
+  reelOwner,
   summarizeProfile,
+  summarizeReels,
   type ApifyProfile,
+  type ApifyReel,
   type StatsRow,
 } from '../_shared/apify-instagram.ts'
 
@@ -31,7 +41,8 @@ const WEBHOOK_SECRET = Deno.env.get('NOTIFICATION_WEBHOOK_SECRET') ?? ''
 const SELF_URL = `${(Deno.env.get('SUPABASE_URL') ?? '').replace(/\/$/, '')}/functions/v1/instagram-stats`
 
 const APIFY = 'https://api.apify.com/v2'
-const ACTOR = 'apify~instagram-profile-scraper'
+const PROFILE_ACTOR = 'apify~instagram-profile-scraper'
+const REEL_ACTOR = 'apify~instagram-reel-scraper'
 const BUCKET = 'instagram-media'
 /** Creators saved per invocation: keeps each one well inside the time limit. */
 const CHUNK = 10
@@ -81,16 +92,19 @@ async function apify(path: string, init: RequestInit = {}): Promise<Response> {
   }
 }
 
-async function startRun(usernames: string[]): Promise<string> {
+async function startRun(actor: string, input: Record<string, unknown>): Promise<string> {
   const webhooks = btoa(
     JSON.stringify([{ eventTypes: ['ACTOR.RUN.SUCCEEDED', 'ACTOR.RUN.TIMED_OUT'], requestUrl: SELF_URL }]),
   )
-  const res = await apify(`/acts/${ACTOR}/runs?webhooks=${encodeURIComponent(webhooks)}`, {
+  const res = await apify(`/acts/${actor}/runs?webhooks=${encodeURIComponent(webhooks)}`, {
     method: 'POST',
-    body: JSON.stringify({ usernames }),
+    body: JSON.stringify(input),
   })
   return ((await res.json()) as { data: ApifyRun }).data.id
 }
+
+/** The Reel Scraper's input: each profile's latest Reels, pinned ones skipped (they're often old hits). */
+const reelInput = (usernames: string[]) => ({ username: usernames, resultsLimit: REELS_AVERAGED, skipPinnedPosts: true })
 
 async function getRun(runId: string): Promise<ApifyRun> {
   if (!/^[A-Za-z0-9]{1,40}$/.test(runId)) throw new HttpError(400, 'Invalid run.', 'BAD_REQUEST')
@@ -130,6 +144,45 @@ async function save(rows: (StatsRow & { creator_id: string })[]) {
       await db.from('creator_instagram_stats').insert({ creator_id: row.creator_id, username: row.username, status: 'error', last_error: note })
     }
   }
+  return saved
+}
+
+/**
+ * A profile save keeps the Reel average the Reel run last stored: the profile
+ * scraper's few recent posts would otherwise replace it with a worse one. A
+ * creator with no stats yet keeps the profile scraper's figure until then.
+ */
+async function keepReelAverages<T extends { creator_id: string; avg_reel_views: number | null; reels_sampled: number }>(rows: T[]): Promise<T[]> {
+  if (!rows.length) return rows
+  const { data, error } = await adminClient()
+    .from('creator_instagram_stats')
+    .select('creator_id, avg_reel_views, reels_sampled')
+    .in('creator_id', rows.map((r) => r.creator_id))
+  if (error) throw error
+  const stored = new Map((data ?? []).map((r) => [r.creator_id as string, r as { avg_reel_views: number | null; reels_sampled: number }]))
+  return rows.map((r) => {
+    const s = stored.get(r.creator_id)
+    return s ? { ...r, avg_reel_views: s.avg_reel_views, reels_sampled: s.reels_sampled } : r
+  })
+}
+
+/**
+ * Writes each creator's Reel average, and nothing else. A creator with no
+ * stats row yet gets one, which their profile run then fills in.
+ */
+async function saveReelAverages(entries: (Target & { avg_reel_views: number | null; reels_sampled: number })[]) {
+  const db = adminClient()
+  let saved = 0
+  await pool(entries, 8, async (e) => {
+    const values = { avg_reel_views: e.avg_reel_views, reels_sampled: e.reels_sampled, updated_at: new Date().toISOString() }
+    const updated = await db.from('creator_instagram_stats').update(values).eq('creator_id', e.creator_id).select('creator_id')
+    let error = updated.error
+    if (!error && !updated.data?.length) {
+      error = (await db.from('creator_instagram_stats').insert({ creator_id: e.creator_id, username: e.username, ...values })).error
+    }
+    if (error) console.error('instagram-stats: Reel average not saved', e.creator_id, error.message)
+    else saved++
+  })
   return saved
 }
 
@@ -222,22 +275,37 @@ async function refreshAll() {
   const list = await targets()
   const usernames = [...new Set(list.map((t) => t.username))]
   if (!usernames.length) return { started: false, profiles: 0 }
-  const runId = await startRun(usernames)
-  return { started: true, run_id: runId, profiles: usernames.length }
+  const runId = await startRun(PROFILE_ACTOR, { usernames })
+  // Without the Reel run everything but the Reel average still refreshes.
+  const reelRunId = await startRun(REEL_ACTOR, reelInput(usernames)).catch((e) => {
+    console.error('instagram-stats: Reel run not started', e)
+    return null
+  })
+  return { started: true, run_id: runId, reel_run_id: reelRunId, profiles: usernames.length }
 }
 
 async function refreshOne(creatorId: string) {
   const [target] = await targets(creatorId)
   if (!target) throw new HttpError(422, 'This creator has no Instagram account on file.', 'NO_INSTAGRAM')
-  const res = await apify(`/acts/${ACTOR}/run-sync-get-dataset-items?timeout=120`, {
-    method: 'POST',
-    body: JSON.stringify({ usernames: [target.username] }),
-  })
-  const items = (await res.json()) as ApifyProfile[]
+  const sync = (actor: string, input: Record<string, unknown>) =>
+    apify(`/acts/${actor}/run-sync-get-dataset-items?timeout=120`, { method: 'POST', body: JSON.stringify(input) }).then((res) => res.json())
+  const [profile, reels] = await Promise.allSettled([
+    sync(PROFILE_ACTOR, { usernames: [target.username] }) as Promise<ApifyProfile[]>,
+    sync(REEL_ACTOR, reelInput([target.username])) as Promise<ApifyReel[]>,
+  ])
+  if (profile.status === 'rejected') throw profile.reason
+  const items = profile.value
   const item = items.find((i) => normalizeHandle(i.username) === target.username) ?? items[0]
-  const row = item
+  let row = item
     ? { creator_id: creatorId, ...(await mirrorImages(creatorId, summarizeProfile(item, target.username), Date.now() + CHUNK_BUDGET_MS)) }
     : { creator_id: creatorId, ...notFoundRow(target.username) }
+  if (row.status === 'ok') {
+    // The latest 10 Reels; if that read failed, the average stored last time stays.
+    row =
+      reels.status === 'fulfilled'
+        ? { ...row, ...summarizeReels(reels.value.filter((r) => (reelOwner(r) ?? target.username) === target.username)) }
+        : (await keepReelAverages([row]))[0]!
+  }
   await save([row])
   return row
 }
@@ -250,7 +318,9 @@ async function ingest(runId: string, offset: number, delayMs = 0) {
 
   const input = (await (await apify(`/key-value-stores/${run.defaultKeyValueStoreId}/records/INPUT`)).json()) as {
     usernames?: unknown
+    username?: unknown
   }
+  if (Array.isArray(input.username)) return offset ? { skipped: 'a Reel run is saved in one go' } : await ingestReels(run, input.username)
   if (!Array.isArray(input.usernames)) return { skipped: 'not an Instagram profile run' }
   const requested = new Set(input.usernames.map((u) => normalizeHandle(String(u))).filter(Boolean) as string[])
   const byUsername = groupByUsername((await targets()).filter((t) => requested.has(t.username)))
@@ -275,7 +345,7 @@ async function ingest(runId: string, offset: number, delayMs = 0) {
       console.error('instagram-stats: skipped a profile', item.username, e)
     }
   })
-  let saved = await save(rows)
+  let saved = await save(await keepReelAverages(rows))
 
   if (!more && run.status === 'SUCCEEDED') {
     // Last chunk of a complete run: anyone Apify returned nothing for is gone
@@ -288,6 +358,26 @@ async function ingest(runId: string, offset: number, delayMs = 0) {
     saved += await save(missing.flatMap(([username, ids]) => ids.map((id) => ({ creator_id: id, ...notFoundRow(username) }))))
   }
   return { run_id: runId, offset, saved, total }
+}
+
+/**
+ * A finished Reel run: every creator's latest Reels, averaged and saved in one
+ * go (they're small, and there are no images to copy).
+ */
+async function ingestReels(run: ApifyRun, requestedRaw: unknown[]) {
+  const requested = new Set(requestedRaw.map((u) => normalizeHandle(String(u))).filter(Boolean) as string[])
+  const list = (await targets()).filter((t) => requested.has(t.username))
+  const fields = 'ownerUsername,inputUrl,shortCode,timestamp,videoPlayCount,videoViewCount,isPinned'
+  const reels = (await (await apify(`/datasets/${run.defaultDatasetId}/items?clean=true&fields=${fields}`)).json()) as ApifyReel[]
+  const byOwner = new Map<string, ApifyReel[]>()
+  for (const r of reels) {
+    const owner = reelOwner(r)
+    if (owner) byOwner.set(owner, [...(byOwner.get(owner) ?? []), r])
+  }
+  // A run that timed out proves nothing about a creator it returned no Reels for.
+  const complete = run.status === 'SUCCEEDED'
+  const entries = list.filter((t) => complete || byOwner.has(t.username)).map((t) => ({ ...t, ...summarizeReels(byOwner.get(t.username) ?? []) }))
+  return { run_id: run.id, reels: reels.length, saved: await saveReelAverages(entries) }
 }
 
 /** Calls this function again with the shared secret; it answers 202 straight away. */

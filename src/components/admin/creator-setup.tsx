@@ -1,10 +1,17 @@
 import * as React from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Check, ExternalLink, FileText, Minus } from 'lucide-react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Check, ExternalLink, Eye, EyeOff, FileText, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { formatDate, formatDateTime, titleCase } from '@/lib/format'
-import { getCreatorSetup, listCreatorVerifications, reviewVerification, verificationDocumentUrl, type AdminVerification } from '@/services/admin.service'
+import {
+  getCreatorSetup,
+  listCreatorVerifications,
+  revealVerification,
+  reviewVerification,
+  verificationDocumentUrl,
+  type AdminVerification,
+} from '@/services/admin.service'
 import { VERIFICATION_META } from '@/components/creator-studio/verification-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -88,7 +95,7 @@ export function CreatorSetupCard({ creatorId }: { creatorId: string }) {
   )
 }
 
-function DocumentLink({ path }: { path: string }) {
+function DocumentLink({ path, label = 'Open document' }: { path: string; label?: string }) {
   const [busy, setBusy] = React.useState(false)
   return (
     <Button
@@ -106,7 +113,7 @@ function DocumentLink({ path }: { path: string }) {
         }
       }}
     >
-      <FileText /> Open document
+      <FileText /> {label}
       <ExternalLink className="size-3.5" />
     </Button>
   )
@@ -116,6 +123,11 @@ function VerificationRow({ row, creatorId }: { row: AdminVerification; creatorId
   const [decision, setDecision] = React.useState<'approved' | 'rejected' | 'more_info' | null>(null)
   const meta = VERIFICATION_META[row.status as VerificationStatus]
   const open = row.status === 'pending' || row.status === 'more_info'
+  // Requests from the form with PAN, bank and UPI (migration 0047); older ones had optional ID details.
+  const withBank = row.bank_account_last4 !== null
+  const reveal = useMutation({ mutationFn: () => revealVerification(row.id) })
+  const [shown, setShown] = React.useState(false)
+  const full = shown ? reveal.data : undefined
 
   const review = useAdminMutation((vars: { status: 'approved' | 'rejected' | 'more_info'; reason?: string }) => reviewVerification(row.id, vars.status, vars.reason), {
     invalidate: [setupKeys.verifications(creatorId), setupKeys.detail(creatorId), qk.admin.creator(creatorId), qk.admin.all],
@@ -135,8 +147,50 @@ function VerificationRow({ row, creatorId }: { row: AdminVerification; creatorId
         </Badge>
       </div>
 
+      {withBank && (
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
+          {row.instagram_url && (
+            <div className="flex min-w-0 gap-2 sm:col-span-2">
+              <dt className="text-muted">Instagram</dt>
+              <dd className="min-w-0 truncate">
+                <a href={row.instagram_url} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline-offset-2 hover:underline">
+                  {row.instagram_url.replace(/^https:\/\/www\./, '')}
+                </a>
+              </dd>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <dt className="text-muted">PAN</dt>
+            <dd className="font-mono">{full?.pan_number ?? `••••••${row.document_number_last4 ?? ''}`}</dd>
+          </div>
+          <div className="flex gap-2">
+            <dt className="text-muted">UPI</dt>
+            <dd className="min-w-0 truncate font-mono">{full?.upi_id ?? row.upi_hint}</dd>
+          </div>
+          <div className="flex gap-2">
+            <dt className="text-muted">Account</dt>
+            <dd className="font-mono">{full?.bank_account_number ?? `••••${row.bank_account_last4}`}</dd>
+          </div>
+          <div className="flex gap-2">
+            <dt className="text-muted">IFSC</dt>
+            <dd className="font-mono">{row.ifsc_code}</dd>
+          </div>
+          <div className="flex gap-2 sm:col-span-2">
+            <dt className="shrink-0 text-muted">Branch</dt>
+            <dd className="min-w-0">{row.branch_address}</dd>
+          </div>
+          {row.terms_accepted_at && (
+            <p className="text-xs text-muted sm:col-span-2">
+              Agreed to the <a href="/verification-terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Creator Verification Terms</a>{' '}
+              (version {row.terms_version}) on {formatDateTime(row.terms_accepted_at)}.
+            </p>
+          )}
+          {full && <p className="text-xs text-muted sm:col-span-2">Full details shown. This view is recorded in the audit log.</p>}
+        </dl>
+      )}
+
       <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
-        {row.document_type && (
+        {!withBank && row.document_type && (
           <div className="flex gap-2">
             <dt className="text-muted">Document</dt>
             <dd>
@@ -167,7 +221,22 @@ function VerificationRow({ row, creatorId }: { row: AdminVerification; creatorId
       )}
 
       <div className="flex flex-wrap gap-2">
-        {row.document_path && <DocumentLink path={row.document_path} />}
+        {row.document_path && <DocumentLink path={row.document_path} label={withBank ? 'Open PAN card' : 'Open document'} />}
+        {withBank && (
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            loading={reveal.isPending}
+            onClick={() => {
+              if (shown) return setShown(false)
+              setShown(true)
+              if (!reveal.data) reveal.mutate()
+            }}
+          >
+            {!reveal.isPending && (shown ? <EyeOff /> : <Eye />)} {shown ? 'Hide details' : 'Show full details'}
+          </Button>
+        )}
         {open && (
           <>
             <Button type="button" size="sm" loading={review.isPending && review.variables?.status === 'approved'} onClick={() => review.mutate({ status: 'approved' })}>
@@ -211,7 +280,10 @@ export function CreatorVerificationsCard({ creatorId }: { creatorId: string }) {
   if (query.data.length === 0) return null
 
   return (
-    <DetailCard title="Identity verification" description="Requested by the creator. We keep only the last four characters of any document number.">
+    <DetailCard
+      title="Identity verification"
+      description="Requested by the creator, with their PAN, bank account and UPI ID. Full numbers stay hidden until you click Show full details, and each view is recorded."
+    >
       <ul className="divide-y divide-line">
         {query.data.map((row) => (
           <VerificationRow key={row.id} row={row} creatorId={creatorId} />

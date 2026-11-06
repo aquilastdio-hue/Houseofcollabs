@@ -1,25 +1,11 @@
 /**
  * CSV the way Google Sheets and Excel write and read it (RFC 4180): commas,
  * double-quoted cells, "" for a quote inside one, line breaks allowed inside
- * quotes.
+ * quotes. The writer is shared with the Edge Functions (`@shared/spreadsheet`).
  */
+import { FORMULA_START, toCsv } from '@shared/spreadsheet'
 
-/**
- * A cell starting with = + - or @ is a formula to a spreadsheet, which can run
- * whatever someone typed into their bio. A leading ' keeps it as plain text.
- */
-const FORMULA_START = /^[=+\-@\t\r]/
-
-function cell(value: unknown): string {
-  if (value === null || value === undefined) return ''
-  let text = Array.isArray(value) ? value.join('; ') : String(value)
-  if (FORMULA_START.test(text)) text = `'${text}`
-  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
-}
-
-export function toCsv(header: readonly string[], rows: readonly (readonly unknown[])[]): string {
-  return [header, ...rows].map((row) => row.map(cell).join(',')).join('\r\n')
-}
+export { toCsv }
 
 /** Rows of cells; blank lines are dropped. Reads what `toCsv` writes, and what spreadsheets export. */
 export function parseCsv(text: string): string[][] {

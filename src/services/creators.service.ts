@@ -212,7 +212,7 @@ export async function getMyCreator(userId: string): Promise<CreatorOwnProfile | 
 export type CreatorEditable = Pick<
   TablesUpdate<'creators'>,
   | 'display_name' | 'slug' | 'headline' | 'bio' | 'profile_image_url' | 'intro_video_url'
-  | 'gender' | 'age' | 'city' | 'state' | 'country' | 'creator_type' | 'engagement_rate' | 'available'
+  | 'gender' | 'age' | 'city' | 'state' | 'country' | 'creator_type' | 'available'
   | 'response_time' | 'onboarding_step' | 'barter_stance' | 'travel_scope'
 >
 
@@ -292,31 +292,34 @@ export async function getRequirements(): Promise<CreatorRequirements> {
 
 export type VerificationInput = {
   legal_name: string
-  document_type?: string | null
-  /** Last four characters only — the full number is never sent or stored. */
-  document_number_last4?: string | null
-  document_path?: string | null
-  date_of_birth?: string | null
-  address_line?: string | null
-  city?: string | null
-  state?: string | null
-  postal_code?: string | null
-  note?: string | null
+  instagram_url: string
+  pan: string
+  /** The PAN card file already uploaded with `uploadVerificationDocument`. */
+  pan_document_path: string
+  bank_account_number: string
+  ifsc: string
+  branch_address: string
+  upi_id: string
+  /** The Creator Verification Terms version they agreed to (VERIFICATION_TERMS_VERSION). */
+  terms_version: string
 }
 
+/**
+ * Asks for the verified badge (migrations 0047, 0050). The full PAN, account number
+ * and UPI ID are kept where only admins can see them, each view recorded.
+ */
 export async function requestVerification(input: VerificationInput) {
   return unwrap(
-    await supabase.rpc('request_creator_verification', {
+    await supabase.rpc('submit_creator_verification', {
       p_legal_name: input.legal_name,
-      p_document_type: input.document_type || undefined,
-      p_document_number_last4: input.document_number_last4 || undefined,
-      p_document_path: input.document_path || undefined,
-      p_date_of_birth: input.date_of_birth || undefined,
-      p_address_line: input.address_line || undefined,
-      p_city: input.city || undefined,
-      p_state: input.state || undefined,
-      p_postal_code: input.postal_code || undefined,
-      p_note: input.note || undefined,
+      p_instagram_url: input.instagram_url,
+      p_pan: input.pan,
+      p_pan_document_path: input.pan_document_path,
+      p_bank_account_number: input.bank_account_number,
+      p_ifsc: input.ifsc,
+      p_branch_address: input.branch_address,
+      p_upi_id: input.upi_id,
+      p_terms_version: input.terms_version,
     }),
   )
 }

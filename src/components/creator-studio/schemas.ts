@@ -163,12 +163,6 @@ export const creatorInfoSchema = z
     categories: z.array(z.string()).min(1, 'Choose at least one category').max(5, 'Choose up to 5 categories'),
     primary_category: z.string(),
     creator_type: z.string().min(1, 'Choose the type that fits you best'),
-    engagement_rate: z
-      .string()
-      .transform((v) => clean(v).replace(/%$/, ''))
-      .refine((v) => v === '' || /^\d{1,3}(\.\d{1,2})?$/.test(v), 'Enter a percentage, like 4.5')
-      .transform((v) => (v === '' ? null : Number(v)))
-      .refine((v) => v === null || v <= 100, 'Must be between 0 and 100'),
     response_time: z.string(),
     available: z.boolean(),
     barter_stance: z.enum(['yes', 'selectively', 'no']).nullable(),

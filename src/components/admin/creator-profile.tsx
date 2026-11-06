@@ -1,8 +1,9 @@
 import { BadgeCheck, Package, Phone, Sparkles, Star, Truck } from 'lucide-react'
-import { formatCompact, formatDate, formatDateTime, formatDays, formatINR, formatLocation, formatNumber, formatRelative, titleCase } from '@/lib/format'
+import { formatCompact, formatDate, formatDateTime, formatDays, formatINR, formatLocation, formatNumber, formatPercent, formatRelative, titleCase } from '@/lib/format'
 import { ADDON_TYPES, CONTENT_TYPES, GENDERS, PLATFORMS, RESPONSE_TIMES, labelFor } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { whatsappHref } from '@/lib/whatsapp'
+import { useInstagramStats } from '@/hooks/use-creators'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/shared/states'
 import type { AdminCreatorDetail } from '@/services/admin.service'
@@ -98,6 +99,8 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
 
 export function CreatorOverview({ creator: c }: { creator: AdminCreatorDetail }) {
   const contentTypes = (c.content_types ?? []).map((t) => labelFor(CONTENT_TYPES, t))
+  // The same weekly Instagram numbers as the stats card below (shared cache).
+  const instagram = useInstagramStats(c.id)
   
   return (
     <DetailCard title="Profile" description="What brands see on the storefront, plus internal review data.">
@@ -129,7 +132,9 @@ export function CreatorOverview({ creator: c }: { creator: AdminCreatorDetail })
         <DetailItem label="Response time">{c.response_time ? labelFor(RESPONSE_TIMES, c.response_time) : null}</DetailItem>
         <DetailItem label="Starting price">{c.starting_price != null ? formatINR(c.starting_price) : null}</DetailItem>
         <DetailItem label="Fastest delivery">{c.fastest_delivery_days != null ? formatDays(c.fastest_delivery_days) : null}</DetailItem>
-        <DetailItem label="Engagement rate">{c.engagement_rate != null ? `${Number(c.engagement_rate)}%` : null}</DetailItem>
+        <DetailItem label="Engagement rate">
+          {instagram.data?.status === 'ok' && instagram.data.engagement_rate !== null ? `${formatPercent(Number(instagram.data.engagement_rate), 2)} (Instagram)` : null}
+        </DetailItem>
         <DetailItem label="Accepting orders">{c.available ? 'Yes' : 'No'}</DetailItem>
         <DetailItem label="Content types" className="sm:col-span-2">
           {contentTypes.length > 0 ? (

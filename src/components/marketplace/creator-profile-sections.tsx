@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { Link } from 'react-router'
-import { BadgeCheck, CalendarDays, Cake, Handshake, Images, Languages, MapPin, Package, Plane, Timer, TrendingUp, UserRound, type LucideIcon } from 'lucide-react'
+import { BadgeCheck, CalendarDays, Cake, Handshake, Images, Languages, MapPin, Package, Plane, Timer, UserRound, type LucideIcon } from 'lucide-react'
 import { cn, isDefined } from '@/lib/utils'
-import { formatDate, formatINR, formatLocation, formatPercent } from '@/lib/format'
+import { formatDate, formatINR, formatLocation } from '@/lib/format'
 import { CONTENT_TYPES, GENDERS, RESPONSE_TIMES, labelFor } from '@/lib/constants'
 import { TRAVEL_SCOPES } from '@/schemas/creator-application'
 import { isVideoUrl } from '@/utils/media'
@@ -256,7 +256,6 @@ export function AboutSection({ creator }: { creator: CreatorProfile }) {
     { icon: MapPin, label: 'Based in', value: formatLocation(creator.city, creator.state, creator.country) },
     languages.length > 0 ? { icon: Languages, label: 'Languages', value: languages.join(', ') } : null,
     creator.creator_type_info ? { icon: BadgeCheck, label: 'Creator type', value: creator.creator_type_info.name } : null,
-    creator.engagement_rate != null ? { icon: TrendingUp, label: 'Engagement rate', value: formatPercent(creator.engagement_rate) } : null,
     response ? { icon: Timer, label: 'Response time', value: response } : null,
     creator.published_at ? { icon: CalendarDays, label: 'On House of Collabs since', value: formatDate(creator.published_at, 'MMM yyyy') } : null,
   ].filter(isDefined)

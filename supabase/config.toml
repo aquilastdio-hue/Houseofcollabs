@@ -504,6 +504,11 @@ verify_jwt = false
 [functions.sitemap]
 verify_jwt = false
 
+# Live creators spreadsheet for Excel / Google Sheets: they can't send a login,
+# so the random key in the link is checked by the database (migration 0046).
+[functions.creators-feed]
+verify_jwt = false
+
 # Anonymous self-serve brand signup — authenticates via anon key only.
 [functions.create-brand-account]
 verify_jwt = false

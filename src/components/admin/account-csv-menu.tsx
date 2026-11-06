@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Download, EllipsisVertical, FileSpreadsheet, Upload } from 'lucide-react'
+import { Download, EllipsisVertical, FileSpreadsheet, Link2, Upload } from 'lucide-react'
 import { downloadCsv, toCsv } from '@/lib/csv'
 import { toAppError } from '@/lib/errors'
 import { formatNumber } from '@/lib/format'
@@ -25,6 +25,7 @@ import { CheckboxRow } from '@/components/ui/checkbox'
 import { Modal } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Progress } from '@/components/ui/progress'
+import { CreatorsLiveLinkDialog } from './creators-live-link'
 
 const NOUN: Record<AccountKind, [one: string, many: string]> = {
   creator: ['creator', 'creators'],
@@ -35,12 +36,14 @@ const today = () => istParts(new Date().toISOString()).date
 
 /**
  * Admin → Creators / Brands, right of the filters: the ⋮ menu → Export CSV (the
- * list as a spreadsheet) or Upload CSV (a spreadsheet of new people, each
- * added as an approved account).
+ * list as a spreadsheet), Upload CSV (a spreadsheet of new people, each added
+ * as an approved account) and, for creators, a live link that keeps a Google
+ * Sheet or Excel workbook up to date by itself.
  */
 export function AccountCsvMenu({ kind, onExport }: { kind: AccountKind; onExport: () => Promise<{ csv: string; count: number }> }) {
   const [exporting, setExporting] = React.useState(false)
   const [uploading, setUploading] = React.useState(false)
+  const [liveLink, setLiveLink] = React.useState(false)
 
   async function runExport() {
     setExporting(true)
@@ -70,9 +73,15 @@ export function AccountCsvMenu({ kind, onExport }: { kind: AccountKind; onExport
           <DropdownMenuItem onSelect={() => setUploading(true)}>
             <Upload /> Upload CSV
           </DropdownMenuItem>
+          {kind === 'creator' && (
+            <DropdownMenuItem onSelect={() => setLiveLink(true)}>
+              <Link2 /> Live link
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <UploadDialog kind={kind} open={uploading} onOpenChange={setUploading} />
+      {kind === 'creator' && <CreatorsLiveLinkDialog open={liveLink} onOpenChange={setLiveLink} />}
     </>
   )
 }

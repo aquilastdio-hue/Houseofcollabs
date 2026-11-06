@@ -1,12 +1,22 @@
 // Turns one item from Apify's Instagram Profile Scraper (apify/instagram-profile-scraper)
-// into the row stored in public.creator_instagram_stats. Pure: no Deno, no
-// network — the Edge Function does the fetching and image mirroring.
+// into the row stored in public.creator_instagram_stats, and a creator's Reels
+// from the Instagram Reel Scraper (apify/instagram-reel-scraper) into their
+// average Reel views. Pure: no Deno, no network — the Edge Function does the
+// fetching and image mirroring.
 //
 // Public numbers only. Instagram hides like counts on some posts; Apify then
 // reports -1 or nothing, and those posts are left out of the averages rather
 // than counted as zero.
 
 export const RECENT_POSTS_SHOWN = 6
+
+/**
+ * Average Reel views are over a creator's latest this-many Reels (fewer when
+ * they have fewer). The profile scraper only sees ~12 recent posts of any
+ * kind, which for many creators held just one Reel, so Reels are read on
+ * their own with the Reel Scraper.
+ */
+export const REELS_AVERAGED = 10
 
 export type ApifyPost = {
   type?: string
@@ -20,6 +30,17 @@ export type ApifyPost = {
   timestamp?: string
   caption?: string | null
   productType?: string
+  isPinned?: boolean
+}
+
+/** One item from the Instagram Reel Scraper. */
+export type ApifyReel = {
+  ownerUsername?: string
+  inputUrl?: string
+  shortCode?: string
+  timestamp?: string
+  videoViewCount?: number | null
+  videoPlayCount?: number | null
   isPinned?: boolean
 }
 
@@ -98,7 +119,7 @@ const round = (n: number | null, places = 0) => (n === null ? null : Math.round(
 
 export const isReel = (p: ApifyPost) => p.productType === 'clips' || (p.type === 'Video' && p.productType !== 'feed')
 
-const views = (p: ApifyPost) => count(p.videoPlayCount) ?? count(p.videoViewCount)
+const views = (p: Pick<ApifyPost, 'videoPlayCount' | 'videoViewCount'>) => count(p.videoPlayCount) ?? count(p.videoViewCount)
 
 function empty(username: string, status: StatsRow['status'], lastError: string | null = null): StatsRow {
   return {
@@ -174,3 +195,20 @@ export function summarizeProfile(item: ApifyProfile, username = normalizeHandle(
     recent_posts: recent,
   }
 }
+
+/** Whose Reel this is, as a handle (the scraper names the owner; the input it came from is the fallback). */
+export const reelOwner = (r: ApifyReel) => normalizeHandle(r.ownerUsername ?? r.inputUrl)
+
+/**
+ * A creator's average Reel views: their latest REELS_AVERAGED Reels by date,
+ * pinned ones left out (often old hits), each counted once. Reels whose views
+ * Instagram hides are left out of the average rather than counted as zero;
+ * `reels_sampled` is how many were averaged.
+ */
+export function summarizeReels(reels: ApifyReel[]): { avg_reel_views: number | null; reels_sampled: number } {
+  const unique = [...new Map(reels.filter((r) => r.shortCode && !r.isPinned).map((r) => [r.shortCode!, r])).values()]
+  const latest = unique.sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? '')).slice(0, REELS_AVERAGED)
+  const counted = latest.map((r) => views(r)).filter((v): v is number => v !== null)
+  return { avg_reel_views: round(mean(counted)), reels_sampled: counted.length }
+}
+

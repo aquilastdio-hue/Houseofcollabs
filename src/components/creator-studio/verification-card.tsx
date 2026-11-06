@@ -51,7 +51,7 @@ export function VerificationCard({ className }: { className?: string }) {
       </div>
 
       <p className="mt-3 text-sm text-muted">
-        {meta?.description ?? 'A verified badge tells brands you are who you say you are. It takes a couple of minutes.'}
+        {meta?.description ?? 'A verified badge tells brands you are who you say you are. Keep your PAN card, bank account details and UPI ID handy.'}
       </p>
 
       {verification?.review_note && (status === 'rejected' || status === 'more_info') && (

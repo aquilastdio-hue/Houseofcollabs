@@ -4,6 +4,7 @@ import { fetchAllPages } from '@/lib/fetch-all'
 import { invokeFunction } from '@/lib/supabase/functions'
 import { istParts } from '@/lib/india-time'
 import { toCsv } from '@/lib/csv'
+import { creatorsCsv } from '@shared/creators-csv'
 import { site } from '@/config/site'
 import type { AccountKind, ImportRow } from '@/lib/account-import'
 import { getProfileNames, listBrands, listCreators, type AdminCreatorParams } from './admin.service'
@@ -15,7 +16,6 @@ import type { AccountStatus } from '@/types'
  */
 
 const day = (iso: string | null | undefined) => (iso ? istParts(iso).date : '')
-const yes = (v: boolean | null | undefined) => (v ? 'Yes' : 'No')
 
 /** Runs `fetch` over the ids 100 at a time (a URL can only hold so many). */
 async function inChunks<T>(ids: string[], fetch: (chunk: string[]) => Promise<T[]>): Promise<T[]> {
@@ -29,60 +29,55 @@ async function inChunks<T>(ids: string[], fetch: (chunk: string[]) => Promise<T[
  */
 export async function exportCreatorsCsv(params: Omit<AdminCreatorParams, 'page' | 'pageSize'>) {
   const { items } = await fetchAllPages((page, pageSize) => listCreators({ ...params, page, pageSize }))
-  const [names, instagram] = await Promise.all([
+  const ids = items.map((c) => c.id)
+  const [names, instagram, services] = await Promise.all([
     getProfileNames(items.map((c) => c.profile_id)),
     inChunks(
-      items.map((c) => c.id),
+      ids,
       async (chunk) =>
-        unwrap(await supabase.from('creator_social_accounts').select('creator_id, username').eq('platform', 'instagram').in('creator_id', chunk)) ??
-        [],
-    ).then((rows) => new Map(rows.map((r) => [r.creator_id, r.username.trim().replace(/^@/, '')]))),
+        unwrap(
+          await supabase.from('creator_social_accounts').select('creator_id, username, profile_url').eq('platform', 'instagram').in('creator_id', chunk),
+        ) ?? [],
+    ).then((rows) => new Map(rows.map((r) => [r.creator_id, r]))),
+    // Every service a brand can order, in storefront order, for the "All services" column.
+    inChunks(
+      ids,
+      async (chunk) =>
+        unwrap(
+          await supabase
+            .from('creator_services')
+            .select('creator_id, title, price, sort_order')
+            .eq('active', true)
+            .is('archived_at', null)
+            .in('creator_id', chunk)
+            .order('sort_order'),
+        ) ?? [],
+    ).then((rows) => {
+      const byCreator = new Map<string, { title: string; price: number }[]>()
+      for (const r of rows) byCreator.set(r.creator_id, [...(byCreator.get(r.creator_id) ?? []), r])
+      return byCreator
+    }),
   ])
-  const header = [
-    'Name',
-    'Email',
-    'WhatsApp',
-    'Instagram',
-    'Followers',
-    'Categories',
-    'City',
-    'State',
-    'Full name',
-    'Storefront',
-    'Account',
-    'Verified',
-    'Featured',
-    'Orders',
-    'Revenue (₹)',
-    'Rating',
-    'Reviews',
-    'Referral code',
-    'Profile link',
-    'Joined',
-  ]
-  const rows = items.map((c) => [
-    c.display_name,
-    c.email,
-    c.whatsapp,
-    instagram.get(c.id) ?? '',
-    c.followers_count,
-    c.categories,
-    c.city,
-    c.state,
-    names.get(c.profile_id) ?? '',
-    c.deleted_at ? 'removed' : c.status,
-    c.account_status,
-    yes(c.verified),
-    yes(c.featured),
-    c.orders_count,
-    c.revenue,
-    c.review_count ? c.rating : '',
-    c.review_count,
-    c.referral_code,
-    c.slug ? `${site.url || window.location.origin}/creators/${c.slug}` : '',
-    day(c.joined_at),
-  ])
-  return { csv: toCsv(header, rows), count: items.length }
+  // The same builder serves the live link (Edge Function creators-feed), so both always match.
+  const csv = creatorsCsv(items, { names, instagram, services, siteUrl: site.url || window.location.origin })
+  return { csv, count: items.length }
+}
+
+export type CreatorsLiveLink = { key: string; created_at: string; last_used_at: string | null; uses: number }
+
+/** Admin → Creators → More → Live link: the current link, or null while it's off (migration 0046). */
+export async function getCreatorsLiveLink(): Promise<CreatorsLiveLink | null> {
+  return (unwrap(await supabase.rpc('admin_creators_feed')) as CreatorsLiveLink | null) ?? null
+}
+
+/** On: a new link, and any old one stops working at once. Off: no link at all. */
+export async function setCreatorsLiveLink(on: boolean): Promise<CreatorsLiveLink | null> {
+  return (unwrap(await supabase.rpc('admin_set_creators_feed', { p_on: on })) as CreatorsLiveLink | null) ?? null
+}
+
+/** The address a spreadsheet opens: the creators CSV, fresh on every request (Edge Function creators-feed). */
+export function creatorsLiveLinkUrl(key: string) {
+  return `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/creators-feed?key=${key}`
 }
 
 /** Every brand matching the page's filters, template columns first. */

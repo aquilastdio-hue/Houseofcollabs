@@ -10,7 +10,6 @@ import { useCategories, useCreatorTypes } from '@/hooks/use-catalog'
 import { setCreatorCategories, updateMyCreator, type CreatorProfile } from '@/services/creators.service'
 import { Badge } from '@/components/ui/badge'
 import { Field } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
 import { MultiSelect } from '@/components/ui/combobox'
 import { RadioCard, RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select } from '@/components/ui/select'
@@ -43,12 +42,13 @@ function matchesAudience(t: CreatorTypeRow, followers: number) {
 }
 
 /**
- * Categories (+ primary), creator type, engagement, response time and
- * availability. Requires an existing creator record.
+ * Categories (+ primary), creator type, response time and availability.
+ * Requires an existing creator record. There's no engagement rate to type in:
+ * the storefront shows the real one from Instagram.
  *
- * `essentials` hides the "How you work" block (engagement rate, response time,
- * availability) so signup only asks what a reviewer needs. Those keep their
- * existing values and are edited later in Profile.
+ * `essentials` hides the "How you work" block (response time, availability)
+ * so signup only asks what a reviewer needs. Those keep their existing values
+ * and are edited later in Profile.
  */
 export function CreatorInfoForm({
   creator,
@@ -76,7 +76,6 @@ export function CreatorInfoForm({
       categories: current.map((c) => c.category.id),
       primary_category: (current.find((c) => c.is_primary) ?? current[0])?.category.id ?? '',
       creator_type: creator.creator_type ?? '',
-      engagement_rate: creator.engagement_rate != null ? String(creator.engagement_rate) : '',
       response_time: creator.response_time ?? '',
       available: creator.available,
       barter_stance: (creator.barter_stance as 'yes' | 'selectively' | 'no' | null) ?? null,
@@ -100,7 +99,6 @@ export function CreatorInfoForm({
         await setCreatorCategories(values.categories, values.primary_category)
         return await updateMyCreator(creator.id, {
           creator_type: values.creator_type,
-          engagement_rate: values.engagement_rate,
           response_time: values.response_time || null,
           available: values.available,
           barter_stance: values.barter_stance,
@@ -251,22 +249,6 @@ export function CreatorInfoForm({
       {!essentials && (
       <StudioSection title="How you work" description="Set expectations so brands know what to expect before they order.">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <Field
-            label="Engagement rate"
-            htmlFor="engagement_rate"
-            optional
-            hint="Average across your main account, from your analytics."
-            error={errors.engagement_rate?.message}
-          >
-            <Input
-              id="engagement_rate"
-              inputMode="decimal"
-              autoComplete="off"
-              placeholder="e.g. 4.5"
-              rightSlot={<span className="px-2 text-sm text-muted">%</span>}
-              {...form.register('engagement_rate')}
-            />
-          </Field>
           <Field label="Typical response time" htmlFor="response_time" optional error={errors.response_time?.message}>
             <Controller
               control={form.control}

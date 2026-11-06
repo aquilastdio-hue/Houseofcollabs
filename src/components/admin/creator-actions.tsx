@@ -15,7 +15,6 @@ type CreatorAction =
   | 'approve'
   | 'reject'
   | 'reinstate'
-  | 'verify'
   | 'unverify'
   | 'feature'
   | 'unfeature'
@@ -57,10 +56,14 @@ function configFor(action: CreatorAction, name: string): ActionConfig {
         success: 'Creator reinstated',
         reason: { label: 'Internal note', placeholder: 'Why is the creator being reinstated?', required: false },
       }
-    case 'verify':
-      return { title: `Verify ${name}?`, description: 'Adds the verified badge to the storefront and cards. The creator is notified.', confirmLabel: 'Verify creator', success: 'Creator verified' }
     case 'unverify':
-      return { title: `Remove ${name}’s verified badge?`, description: 'The badge disappears from the storefront and search results.', confirmLabel: 'Remove badge', success: 'Verified badge removed', destructive: true }
+      return {
+        title: `Remove ${name}’s verified badge?`,
+        description: 'The badge disappears from the storefront and search results. To get it back, they send a new verification request.',
+        confirmLabel: 'Remove badge',
+        success: 'Verified badge removed',
+        destructive: true,
+      }
     case 'feature':
       return { title: `Feature ${name}?`, description: 'Featured creators are highlighted on the homepage and in discovery.', confirmLabel: 'Feature creator', success: 'Creator featured' }
     case 'unfeature':
@@ -102,8 +105,6 @@ export function CreatorActionsPanel({ creator: c }: { creator: AdminCreatorDetai
           return setCreatorStatus(c.id, 'published', note)
         case 'reject':
           return setCreatorStatus(c.id, 'rejected', reason)
-        case 'verify':
-          return setCreatorFlags(c.id, { verified: true })
         case 'unverify':
           return setCreatorFlags(c.id, { verified: false })
         case 'feature':
@@ -169,9 +170,12 @@ export function CreatorActionsPanel({ creator: c }: { creator: AdminCreatorDetai
             Badges
           </h3>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant={c.verified ? 'secondary' : 'outline'} onClick={() => setPending(c.verified ? 'unverify' : 'verify')}>
-              <BadgeCheck /> {c.verified ? 'Unverify' : 'Verify'}
-            </Button>
+            {/* The verified badge comes only from approving an Identity verification request (migration 0047). */}
+            {c.verified && (
+              <Button size="sm" variant="secondary" onClick={() => setPending('unverify')}>
+                <BadgeCheck /> Remove verified badge
+              </Button>
+            )}
             <Button size="sm" variant={c.featured ? 'secondary' : 'outline'} onClick={() => setPending(c.featured ? 'unfeature' : 'feature')}>
               <Sparkles /> {c.featured ? 'Unfeature' : 'Feature'}
             </Button>

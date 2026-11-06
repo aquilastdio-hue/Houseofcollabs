@@ -7,21 +7,9 @@ import { Seo } from '@/components/shared/seo'
 import { Breadcrumb } from '@/components/shared/breadcrumb'
 import { usePlatformTerms } from '@/components/marketing/platform-terms'
 import { ANCHOR_OFFSET, DotGrid, Eyebrow } from '@/components/marketing/primitives'
-import { LAST_UPDATED, LEGAL_DOCS, LEGAL_INDEX, isLegalDocKey, type LegalDocKey, type LegalSection } from './legal'
+import { LAST_UPDATED, LEGAL_DOCS, LEGAL_INDEX, LEGAL_PROSE as PROSE, isLegalDocKey, type LegalDocKey, type LegalSection } from './legal'
 
 /** Readable long-form styling for policy bodies (no typography plugin needed). */
-const PROSE = cn(
-  'text-[0.975rem] leading-7 text-ink-soft',
-  '[&_p]:mt-4 [&_p:first-child]:mt-0',
-  '[&_h3]:mt-7 [&_h3]:font-display [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:tracking-tight [&_h3]:text-ink [&_h3:first-child]:mt-0',
-  '[&_h3+p]:mt-2 [&_h3+ul]:mt-2',
-  '[&_ul]:mt-4 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-5 [&_ul:first-child]:mt-0',
-  '[&_ol]:mt-4 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-5 [&_ol:first-child]:mt-0',
-  '[&_li]:pl-1 [&_li::marker]:text-faint',
-  '[&_strong]:font-semibold [&_strong]:text-ink',
-  '[&_code]:rounded-md [&_code]:bg-subtle [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-[0.85em] [&_code]:text-ink',
-  '[&_a]:font-medium [&_a]:text-ink [&_a]:underline [&_a]:decoration-ink/25 [&_a]:underline-offset-4 [&_a:hover]:decoration-ink',
-)
 
 /** Tracks which section currently sits in the reading band near the top of the viewport. */
 function useActiveSection(ids: string[]) {
@@ -100,7 +88,7 @@ export default function LegalPage({ doc }: { doc?: unknown }) {
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">{legalDoc.summary}</p>
           <p className="mt-6 inline-flex items-center gap-2 rounded-pill border border-line bg-surface px-3.5 py-1.5 text-sm text-ink-soft">
             <CalendarDays className="size-4 text-muted" aria-hidden />
-            Last updated <time dateTime="2026-10-02">{LAST_UPDATED}</time>
+            Last updated <time dateTime={legalDoc.updated?.iso ?? '2026-10-02'}>{legalDoc.updated?.label ?? LAST_UPDATED}</time>
           </p>
         </div>
       </header>

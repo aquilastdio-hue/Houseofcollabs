@@ -26,6 +26,6 @@
       "@shared/*": ["./supabase/functions/_shared/*"]
     }
   },
-  "include": ["src", "supabase/functions/_shared/smart-search-parser.ts"],
+  "include": ["src", "supabase/functions/_shared/smart-search-parser.ts", "supabase/functions/_shared/spreadsheet.ts", "supabase/functions/_shared/creators-csv.ts"],
   "exclude": ["src/**/*.test.ts"]
 }

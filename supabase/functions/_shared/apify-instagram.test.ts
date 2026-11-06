@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clip, normalizeHandle, notFoundRow, summarizeProfile, type ApifyProfile } from './apify-instagram'
+import { REELS_AVERAGED, clip, normalizeHandle, notFoundRow, reelOwner, summarizeProfile, summarizeReels, type ApifyProfile, type ApifyReel } from './apify-instagram'
 
 describe('normalizeHandle', () => {
   it.each([
@@ -78,3 +78,46 @@ describe('clip', () => {
     expect(clip('ok\ud83d then', 140)).toBe('ok then')
   })
 })
+
+describe('summarizeReels', () => {
+  const reel = (n: number, extra: Partial<ApifyReel> = {}): ApifyReel => ({
+    ownerUsername: 'mansi',
+    shortCode: `r${n}`,
+    // r1 is the newest
+    timestamp: new Date(Date.UTC(2026, 10, 30 - n)).toISOString(),
+    videoPlayCount: n * 1000,
+    ...extra,
+  })
+
+  it(`averages the latest ${REELS_AVERAGED} Reels by date, whatever order they come in`, () => {
+    const twelve = Array.from({ length: 12 }, (_, i) => reel(12 - i)) // oldest first
+    // r1…r10: (1+…+10) × 1000 / 10
+    expect(summarizeReels(twelve)).toEqual({ avg_reel_views: 5500, reels_sampled: 10 })
+  })
+
+  it('uses all of them when there are fewer than ten', () => {
+    expect(summarizeReels([reel(1), reel(2), reel(3)])).toEqual({ avg_reel_views: 2000, reels_sampled: 3 })
+  })
+
+  it('leaves out pinned Reels, repeats, and hidden view counts', () => {
+    const reels = [
+      reel(1, { isPinned: true, videoPlayCount: 9_000_000 }),
+      reel(2),
+      reel(2),
+      reel(3, { videoPlayCount: null, videoViewCount: -1 }),
+      reel(4, { videoPlayCount: undefined, videoViewCount: 4400 }),
+    ]
+    // r2 (2000) and r4 (4400, from the view count)
+    expect(summarizeReels(reels)).toEqual({ avg_reel_views: 3200, reels_sampled: 2 })
+  })
+
+  it('has no average without Reels', () => {
+    expect(summarizeReels([])).toEqual({ avg_reel_views: null, reels_sampled: 0 })
+  })
+
+  it('knows whose Reel it is from the owner, or the profile it was asked for', () => {
+    expect(reelOwner({ ownerUsername: 'Mansi.Rana' })).toBe('mansi.rana')
+    expect(reelOwner({ inputUrl: 'https://www.instagram.com/_mansirana.07/' })).toBe('_mansirana.07')
+  })
+})
+

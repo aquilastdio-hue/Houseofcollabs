@@ -1,5 +1,6 @@
 import { BadgeCheck, Sparkles } from 'lucide-react'
-import { formatCompact, formatDate, formatINR, formatLocation, formatNumber } from '@/lib/format'
+import { CONTENT_TYPES, PRICE_COLUMN_TYPES, finalPricing, labelFor, servicePrice } from '@/lib/constants'
+import { formatCompact, formatDate, formatINR, formatLocation, formatNumber, formatPercent } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import { RatingLabel } from '@/components/shared/star-rating'
 import type { Column } from '@/components/shared/data-table'
@@ -12,6 +13,8 @@ export const CREATOR_SORTS = [
   { value: 'revenue', label: 'Revenue' },
   { value: 'orders', label: 'Orders' },
   { value: 'followers', label: 'Followers' },
+  { value: 'engagement', label: 'Engagement rate' },
+  { value: 'reel_views', label: 'Avg views' },
   { value: 'rating', label: 'Rating' },
   { value: 'name', label: 'Name (A–Z)' },
 ] as const
@@ -56,6 +59,42 @@ export const creatorColumns: Column<AdminCreatorRow>[] = [
   },
   { key: 'location', header: 'Location', cell: (c) => <span className="whitespace-nowrap">{formatLocation(c.city, c.state)}</span> },
   { key: 'followers', header: 'Followers', className: 'tabular-nums', cell: (c) => formatCompact(c.followers_count) },
+  // From the weekly Instagram fetch, as on the creator's stats card. Empty until
+  // the first fetch, and for private or missing accounts.
+  {
+    key: 'engagement',
+    header: 'Engagement',
+    className: 'tabular-nums',
+    cell: (c) => (c.engagement_rate == null ? <span className="text-faint">—</span> : formatPercent(Number(c.engagement_rate), 2)),
+  },
+  {
+    key: 'reel_views',
+    header: 'Avg views',
+    className: 'tabular-nums',
+    cell: (c) => (c.avg_reel_views == null ? <span className="text-faint">—</span> : formatCompact(Number(c.avg_reel_views))),
+  },
+  // What a brand pays for each kind of service (on, not deleted); "—" when they don't offer it.
+  ...PRICE_COLUMN_TYPES.map(
+    (type): Column<AdminCreatorRow> => ({
+      key: `price_${type}`,
+      header: labelFor(CONTENT_TYPES, type),
+      className: 'tabular-nums whitespace-nowrap',
+      cell: (c) => {
+        const price = servicePrice(c.service_prices, type)
+        return price === null ? <span className="text-faint">—</span> : formatINR(price)
+      },
+    }),
+  ),
+  {
+    // IFCR: avg views × ₹0.5 (FINAL_PRICE_PER_VIEW), a guide figure for admins, never charged.
+    key: 'ifcr',
+    header: 'IFCR',
+    className: 'tabular-nums whitespace-nowrap font-medium',
+    cell: (c) => {
+      const price = finalPricing(c.avg_reel_views)
+      return price === null ? <span className="text-faint">—</span> : formatINR(price)
+    },
+  },
   { key: 'orders', header: 'Orders', className: 'tabular-nums', cell: (c) => formatNumber(c.orders_count) },
   { key: 'revenue', header: 'Revenue', className: 'tabular-nums whitespace-nowrap', cell: (c) => formatINR(c.revenue) },
   { key: 'rating', header: 'Rating', cell: (c) => <RatingLabel rating={Number(c.rating ?? 0)} count={Number(c.review_count ?? 0)} /> },

@@ -131,6 +131,9 @@ export function labelFor(options: readonly Option[], value?: string | null) {
   return options.find((o) => o.value === value)?.label ?? value ?? ''
 }
 
+/** Service price columns and IFCR for Admin → Creators: shared with the spreadsheet builder. */
+export { FINAL_PRICE_PER_VIEW, PRICE_COLUMN_TYPES, finalPricing, servicePrice } from '@shared/creators-csv'
+
 /**
  * Creators per page on the discover/creators listing. Only the creator search
  * reads this — the admin tables each carry their own, so changing it here does

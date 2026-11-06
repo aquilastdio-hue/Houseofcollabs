@@ -64,6 +64,7 @@ const LEGAL = [
   ['/brand-guidelines', 'Brand Guidelines', `What ${SITE_NAME} expects from brands ordering on the marketplace.`],
   ['/refund-policy', 'Refund Policy', `When an order can be cancelled or refunded on ${SITE_NAME}.`],
   ['/payout-policy', 'Payout Policy', `When and how creators are paid for completed work on ${SITE_NAME}.`],
+  ['/verification-terms', 'Creator Verification Terms', `What you agree to when you send ${SITE_NAME} your PAN, bank and UPI details to get the verified badge, and how we look after them.`],
 ]
 
 const routes = [

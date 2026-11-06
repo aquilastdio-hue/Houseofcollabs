@@ -84,6 +84,7 @@ export const qk = {
     stats: ['admin', 'stats'] as const,
     timeseries: (days: number) => ['admin', 'timeseries', days] as const,
     creators: (params: unknown) => ['admin', 'creators', params] as const,
+    creatorsLiveLink: ['admin', 'creators-live-link'] as const,
     creatorReferralCount: (code: string, includeDeleted: boolean) => ['admin', 'creator-referral-count', code, includeDeleted] as const,
     creator: (id: string) => ['admin', 'creator', id] as const,
     brands: (params: unknown) => ['admin', 'brands', params] as const,

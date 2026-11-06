@@ -1,4 +1,7 @@
+import { importPhone } from '@shared/spreadsheet'
 import { parseCsv, toCsv, uncell } from './csv'
+
+export { exportInstagram, exportPhone, importPhone } from '@shared/spreadsheet'
 
 /**
  * Admin → Creators / Brands → More → Upload CSV: turning a spreadsheet into
@@ -26,7 +29,6 @@ export type ImportRow = {
   languages?: string[]
   youtube?: string | null
   youtube_subscribers?: number | null
-  engagement_rate?: number | null
   website?: string | null
   industry?: string | null
 }
@@ -104,7 +106,6 @@ export const IMPORT_COLUMNS: Record<AccountKind, Column[]> = {
     { key: 'languages', header: 'Languages', aliases: ['language', 'languages spoken'], example: 'Hindi; English' },
     { key: 'youtube', header: 'YouTube', aliases: ['youtube channel', 'youtube url', 'youtube link', 'yt'], example: 'https://youtube.com/@riyasharma' },
     { key: 'youtube_subscribers', header: 'YouTube subscribers', aliases: ['subscribers', 'youtube subs'], example: '8K' },
-    { key: 'engagement_rate', header: 'Engagement rate', aliases: ['engagement', 'er', 'engagement %'], example: '4.2%' },
   ],
   brand: [
     {
@@ -176,26 +177,6 @@ export function parseFollowers(value: string): number | null {
   return Number.isFinite(n) ? Math.round(n) : null
 }
 
-/**
- * A creator's WhatsApp number: ten digits, with or without a country code.
- * Without one it's an Indian number, so "98765 43210", "09876543210" and
- * "919876543210" all become "+919876543210". One written with "+" keeps its
- * own code ("+1 202 555 0123").
- */
-export function importPhone(value: string): string | null {
-  const trimmed = value.trim()
-  if (!/^\+?[\d\s().-]+$/.test(trimmed)) return null
-  const digits = trimmed.replace(/\D/g, '')
-  if (trimmed.startsWith('+')) {
-    // +91 is followed by exactly ten; other codes are one to three digits long.
-    const ok = digits.startsWith('91') ? digits.length === 12 : digits.length >= 11 && digits.length <= 13
-    return ok ? `+${digits}` : null
-  }
-  const local =
-    digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits.length === 11 && digits.startsWith('0') ? digits.slice(1) : digits
-  return local.length === 10 ? `+91${local}` : null
-}
-
 /** "@riya.s", "riya.s" or an instagram.com link → "riya.s"; anything that can't be a handle → null. */
 export function importInstagram(value: string): string | null {
   const handle = value
@@ -219,10 +200,12 @@ const GENDER_WORDS: Record<string, Gender> = {
   'prefer not to say': 'prefer_not_to_say',
 }
 
-/** Optional creator details: anything unreadable is left blank, never a reason to refuse the row. */
+/**
+ * Optional creator details: anything unreadable is left blank, never a reason to refuse the row.
+ * No engagement rate: that only ever comes from the weekly Instagram fetch.
+ */
 function creatorExtras(get: (key: keyof ImportRow) => string) {
   const age = Number(get('age'))
-  const er = Number(get('engagement_rate').replace('%', '').trim())
   const youtube = get('youtube')
   return {
     headline: get('headline').slice(0, 120) || null,
@@ -238,7 +221,6 @@ function creatorExtras(get: (key: keyof ImportRow) => string) {
     ].slice(0, 10),
     youtube: /^(https?:\/\/)?(www\.|m\.)?(youtube\.com|youtu\.be)\//i.test(youtube) ? youtube.replace(/^(?!https?:\/\/)/, 'https://') : null,
     youtube_subscribers: parseFollowers(get('youtube_subscribers')),
-    engagement_rate: get('engagement_rate') && Number.isFinite(er) && er >= 0 && er <= 100 ? Math.round(er * 100) / 100 : null,
   }
 }
 

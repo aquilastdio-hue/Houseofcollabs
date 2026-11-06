@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Info } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { site, supportEmailHref } from '@/config/site'
 import type { PlatformTerms } from '@/components/marketing/platform-terms'
 
@@ -11,6 +12,7 @@ export const LEGAL_DOC_KEYS = [
   'brand-guidelines',
   'refund-policy',
   'payout-policy',
+  'verification-terms',
 ] as const
 
 export type LegalDocKey = (typeof LEGAL_DOC_KEYS)[number]
@@ -28,9 +30,25 @@ export type LegalDoc = {
   summary: string
   intro: React.ReactNode
   sections: LegalSection[]
+  /** When this document last changed, if not the shared LAST_UPDATED: shown text and ISO date. */
+  updated?: { label: string; iso: string }
 }
 
 export type LegalBuilder = (terms: PlatformTerms) => LegalDoc
+
+/** Body text of a legal document: the full page and the Verification Terms popup. */
+export const LEGAL_PROSE = cn(
+  'text-[0.975rem] leading-7 text-ink-soft',
+  '[&_p]:mt-4 [&_p:first-child]:mt-0',
+  '[&_h3]:mt-7 [&_h3]:font-display [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:tracking-tight [&_h3]:text-ink [&_h3:first-child]:mt-0',
+  '[&_h3+p]:mt-2 [&_h3+ul]:mt-2',
+  '[&_ul]:mt-4 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-5 [&_ul:first-child]:mt-0',
+  '[&_ol]:mt-4 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-5 [&_ol:first-child]:mt-0',
+  '[&_li]:pl-1 [&_li::marker]:text-faint',
+  '[&_strong]:font-semibold [&_strong]:text-ink',
+  '[&_code]:rounded-md [&_code]:bg-subtle [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-[0.85em] [&_code]:text-ink',
+  '[&_a]:font-medium [&_a]:text-ink [&_a]:underline [&_a]:decoration-ink/25 [&_a]:underline-offset-4 [&_a:hover]:decoration-ink',
+)
 
 export const LAST_UPDATED = '2 October 2026'
 export const COMPANY = `${site.name} Technologies`
