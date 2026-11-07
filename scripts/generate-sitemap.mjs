@@ -34,6 +34,7 @@ const pages = [
   ['/brand-guidelines', '0.4', 'yearly'],
   ['/refund-policy', '0.4', 'yearly'],
   ['/payout-policy', '0.4', 'yearly'],
+  ['/verification-terms', '0.3', 'yearly'],
 ]
 const urls = pages.map(([p, priority, freq]) => ({ loc: `${site}${p}`, priority, freq }))
 

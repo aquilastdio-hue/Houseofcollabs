@@ -6,8 +6,9 @@ import { privacyPolicy } from './privacy'
 import { refundPolicy } from './refund-policy'
 import type { LegalBuilder, LegalDocKey } from './shared'
 import { termsOfService } from './terms'
+import { verificationTerms } from './verification-terms'
 
-export { LAST_UPDATED, isLegalDocKey, type LegalDoc, type LegalDocKey, type LegalSection } from './shared'
+export { LAST_UPDATED, LEGAL_PROSE, isLegalDocKey, type LegalDoc, type LegalDocKey, type LegalSection } from './shared'
 
 export const LEGAL_DOCS: Record<LegalDocKey, LegalBuilder> = {
   privacy: privacyPolicy,
@@ -17,6 +18,7 @@ export const LEGAL_DOCS: Record<LegalDocKey, LegalBuilder> = {
   'brand-guidelines': brandGuidelines,
   'refund-policy': refundPolicy,
   'payout-policy': payoutPolicy,
+  'verification-terms': verificationTerms,
 }
 
 /** Navigation metadata for "related documents" links (route = `/${key}`). */
@@ -26,6 +28,7 @@ export const LEGAL_INDEX: { key: LegalDocKey; title: string; blurb: string }[] =
   { key: 'cookie-policy', title: 'Cookie Policy', blurb: 'The essential storage we use — and what we don’t.' },
   { key: 'refund-policy', title: 'Refund Policy', blurb: 'Cancellations, order problems and refunds.' },
   { key: 'payout-policy', title: 'Payout Policy', blurb: 'Fees, earnings and payouts for creators.' },
+  { key: 'verification-terms', title: 'Creator Verification Terms', blurb: 'Your PAN, bank and UPI details for the verified badge.' },
   { key: 'creator-guidelines', title: 'Creator Guidelines', blurb: 'Honest storefronts and disclosed ads.' },
   { key: 'brand-guidelines', title: 'Brand Guidelines', blurb: 'Briefs, claims and prohibited products.' },
 ]

@@ -109,7 +109,8 @@ export async function setCreatorStatus(id: string, status: CreatorStatus, reason
   return unwrap(await supabase.rpc('admin_set_creator_status', { p_creator_id: id, p_status: status, p_reason: reason }))
 }
 
-export async function setCreatorFlags(id: string, flags: { verified?: boolean; featured?: boolean }) {
+/** Featured on or off, or the verified badge off. The badge itself only comes from an approved verification request. */
+export async function setCreatorFlags(id: string, flags: { verified?: false; featured?: boolean }) {
   return unwrap(await supabase.rpc('admin_set_creator_flags', { p_creator_id: id, p_verified: flags.verified, p_featured: flags.featured }))
 }
 
@@ -791,7 +792,7 @@ export async function listCreatorVerifications(creatorId: string) {
     await supabase
       .from('creator_verifications')
       .select(
-        'id, status, legal_name, date_of_birth, document_type, document_number_last4, document_path, address_line, city, state, postal_code, note, review_note, reviewed_at, submitted_at',
+        'id, status, legal_name, date_of_birth, document_type, document_number_last4, document_path, address_line, city, state, postal_code, note, review_note, reviewed_at, submitted_at, instagram_url, bank_account_last4, ifsc_code, branch_address, upi_hint, terms_version, terms_accepted_at',
       )
       .eq('creator_id', creatorId)
       .order('submitted_at', { ascending: false }),
@@ -802,6 +803,11 @@ export type AdminVerification = Awaited<ReturnType<typeof listCreatorVerificatio
 
 export async function reviewVerification(id: string, status: 'approved' | 'rejected' | 'more_info', note?: string) {
   return unwrap(await supabase.rpc('admin_review_creator_verification', { p_id: id, p_status: status, p_note: note || undefined }))
+}
+
+/** The full PAN, bank account number and UPI ID of one request. Every call is recorded in the audit log. */
+export async function revealVerification(id: string) {
+  return unwrap(await supabase.rpc('admin_reveal_verification', { p_id: id })) as { pan_number: string; bank_account_number: string; upi_id: string }
 }
 
 /** Short-lived link to an identity document. Admin-only by storage policy. */

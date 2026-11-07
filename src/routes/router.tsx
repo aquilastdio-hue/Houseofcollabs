@@ -17,7 +17,7 @@ function page<P extends object>(load: () => Promise<{ default: React.ComponentTy
   }
 }
 
-type LegalDoc = 'privacy' | 'terms' | 'cookie-policy' | 'creator-guidelines' | 'brand-guidelines' | 'refund-policy' | 'payout-policy'
+type LegalDoc = 'privacy' | 'terms' | 'cookie-policy' | 'creator-guidelines' | 'brand-guidelines' | 'refund-policy' | 'payout-policy' | 'verification-terms'
 const legal = (doc: LegalDoc) => page(() => import('@/pages/public/LegalPage'), { doc })
 
 const BrandLayout = React.lazy(() => import('@/layouts/BrandLayout'))
@@ -58,6 +58,7 @@ const routes: RouteObject[] = [
           { path: 'brand-guidelines', ...legal('brand-guidelines') },
           { path: 'refund-policy', ...legal('refund-policy') },
           { path: 'payout-policy', ...legal('payout-policy') },
+          { path: 'verification-terms', ...legal('verification-terms') },
           { path: '*', ...page(() => import('@/pages/public/NotFound')) },
         ],
       },
